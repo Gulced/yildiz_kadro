@@ -1,0 +1,357 @@
+import 'package:flutter/material.dart';
+import 'package:yildiz_kadro/app/theme/app_colors.dart';
+import 'package:yildiz_kadro/app/theme/app_spacing.dart';
+import 'package:yildiz_kadro/features/contestants/domain/contestant.dart';
+import 'package:yildiz_kadro/features/contestants/presentation/widgets/contestant_portrait.dart';
+import 'package:yildiz_kadro/features/contestants/presentation/widgets/dossier_tag.dart';
+import 'package:yildiz_kadro/features/contestants/presentation/widgets/stat_bar.dart';
+
+class ContestantDetailScreen extends StatelessWidget {
+  const ContestantDetailScreen({required this.contestant, super.key});
+
+  final Contestant contestant;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.ink,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 860),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.lg,
+                  AppSpacing.sm,
+                  AppSpacing.lg,
+                  AppSpacing.section,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: IconButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        tooltip: 'Yarışmacılara dön',
+                        icon: const Icon(Icons.arrow_back_rounded),
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    _IdentityHeader(contestant: contestant),
+                    const SizedBox(height: AppSpacing.xl),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 430),
+                        child: AspectRatio(
+                          aspectRatio: 0.82,
+                          child: ContestantPortrait(contestant: contestant),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.xl),
+                    _Quote(quote: contestant.quote),
+                    const SizedBox(height: AppSpacing.section),
+                    _StorySection(contestant: contestant),
+                    const SizedBox(height: AppSpacing.section),
+                    _PersonalitySection(contestant: contestant),
+                    const SizedBox(height: AppSpacing.xxl),
+                    _FeatureSection(
+                      label: 'ÖZEL ÖZELLİK',
+                      icon: Icons.bolt_rounded,
+                      title: contestant.specialTraitTitle,
+                      description: contestant.specialTraitDescription,
+                      accent: true,
+                    ),
+                    const SizedBox(height: AppSpacing.xl),
+                    _FeatureSection(
+                      label: 'RİSK',
+                      icon: Icons.warning_amber_rounded,
+                      title: contestant.riskTitle,
+                      description: contestant.riskDescription,
+                    ),
+                    const SizedBox(height: AppSpacing.section),
+                    _TalentReport(contestant: contestant),
+                    const SizedBox(height: AppSpacing.section),
+                    _RoleSection(contestant: contestant),
+                    const SizedBox(height: AppSpacing.section),
+                    _ProducerNote(note: contestant.producerNote),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _IdentityHeader extends StatelessWidget {
+  const _IdentityHeader({required this.contestant});
+
+  final Contestant contestant;
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'YARIŞMACI ${contestant.number}',
+          style: textTheme.labelMedium?.copyWith(color: AppColors.accentSoft),
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.centerLeft,
+          child: Text(contestant.displayName, style: textTheme.displayLarge),
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        Text(
+          '${contestant.age} • ${contestant.city}',
+          style:
+              textTheme.headlineSmall?.copyWith(color: AppColors.accentBright),
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        Text(
+          contestant.occupationOrEducation,
+          style: textTheme.bodyLarge?.copyWith(color: AppColors.paper),
+        ),
+      ],
+    );
+  }
+}
+
+class _Quote extends StatelessWidget {
+  const _Quote({required this.quote});
+
+  final String quote;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.only(left: AppSpacing.lg),
+      decoration: const BoxDecoration(
+        border: Border(left: BorderSide(color: AppColors.accent, width: 3)),
+      ),
+      child: Text(
+        '“$quote”',
+        style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+              fontStyle: FontStyle.italic,
+              fontWeight: FontWeight.w500,
+              height: 1.35,
+            ),
+      ),
+    );
+  }
+}
+
+class _StorySection extends StatelessWidget {
+  const _StorySection({required this.contestant});
+
+  final Contestant contestant;
+
+  @override
+  Widget build(BuildContext context) {
+    return _EditorialSection(
+      label: 'HİKÂYESİ',
+      child: Text(
+        contestant.fullBackground,
+        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+              color: AppColors.paper,
+              height: 1.65,
+            ),
+      ),
+    );
+  }
+}
+
+class _PersonalitySection extends StatelessWidget {
+  const _PersonalitySection({required this.contestant});
+
+  final Contestant contestant;
+
+  @override
+  Widget build(BuildContext context) {
+    return _EditorialSection(
+      label: 'KİŞİLİK',
+      child: Wrap(
+        spacing: AppSpacing.xs,
+        runSpacing: AppSpacing.xs,
+        children: [
+          for (final trait in contestant.personalityTraits)
+            DossierTag(label: trait.toUpperCase()),
+        ],
+      ),
+    );
+  }
+}
+
+class _FeatureSection extends StatelessWidget {
+  const _FeatureSection({
+    required this.label,
+    required this.icon,
+    required this.title,
+    required this.description,
+    this.accent = false,
+  });
+
+  final String label;
+  final IconData icon;
+  final String title;
+  final String description;
+  final bool accent;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
+      decoration: const BoxDecoration(
+        border: Border(
+          top: BorderSide(color: AppColors.line),
+          bottom: BorderSide(color: AppColors.line),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: Theme.of(context).textTheme.labelMedium),
+          const SizedBox(height: AppSpacing.sm),
+          Row(
+            children: [
+              Icon(
+                icon,
+                color: accent ? AppColors.accent : AppColors.accentSoft,
+              ),
+              const SizedBox(width: AppSpacing.xs),
+              Expanded(
+                child: Text(
+                  title.toUpperCase(),
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                        color:
+                            accent ? AppColors.accentBright : AppColors.paper,
+                      ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Text(description, style: Theme.of(context).textTheme.bodyLarge),
+        ],
+      ),
+    );
+  }
+}
+
+class _TalentReport extends StatelessWidget {
+  const _TalentReport({required this.contestant});
+
+  final Contestant contestant;
+
+  @override
+  Widget build(BuildContext context) {
+    return _EditorialSection(
+      label: 'YETENEK RAPORU',
+      child: Column(
+        children: [
+          StatBar(label: 'VOKAL', value: contestant.vocal),
+          const SizedBox(height: AppSpacing.md),
+          StatBar(label: 'DANS', value: contestant.dance),
+          const SizedBox(height: AppSpacing.md),
+          StatBar(label: 'SAHNE', value: contestant.stage),
+          const SizedBox(height: AppSpacing.md),
+          StatBar(label: 'POPÜLERLİK', value: contestant.popularity),
+          const SizedBox(height: AppSpacing.md),
+          StatBar(label: 'POTANSİYEL', value: contestant.potential),
+        ],
+      ),
+    );
+  }
+}
+
+class _RoleSection extends StatelessWidget {
+  const _RoleSection({required this.contestant});
+
+  final Contestant contestant;
+
+  @override
+  Widget build(BuildContext context) {
+    return _EditorialSection(
+      label: 'ROL',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            contestant.primaryRole,
+            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  color: AppColors.accentBright,
+                ),
+          ),
+          if (contestant.secondaryRoles.isNotEmpty) ...[
+            const SizedBox(height: AppSpacing.xs),
+            Text(
+              contestant.secondaryRoles.join(' • '),
+              style: Theme.of(context).textTheme.bodyLarge,
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _ProducerNote extends StatelessWidget {
+  const _ProducerNote({required this.note});
+
+  final String note;
+
+  @override
+  Widget build(BuildContext context) {
+    return _EditorialSection(
+      label: 'YAPIMCI NOTU',
+      child: Container(
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        color: AppColors.inkSoft,
+        child: Text(
+          '“$note”',
+          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                color: AppColors.paper,
+                fontStyle: FontStyle.italic,
+              ),
+        ),
+      ),
+    );
+  }
+}
+
+class _EditorialSection extends StatelessWidget {
+  const _EditorialSection({required this.label, required this.child});
+
+  final String label;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            Flexible(
+              child:
+                  Text(label, style: Theme.of(context).textTheme.labelMedium),
+            ),
+            const SizedBox(width: AppSpacing.md),
+            const Expanded(child: Divider(height: 1)),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.lg),
+        child,
+      ],
+    );
+  }
+}
