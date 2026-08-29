@@ -63,9 +63,9 @@ const groupTaskProfiles = <int, GroupTaskProfile>{
       workStyle: WorkStyle.chaotic),
   13: GroupTaskProfile(
       contestantId: 13,
-      primaryRole: GroupRole.vocal,
-      secondaryRole: GroupRole.allRounder,
-      workStyle: WorkStyle.protective),
+      primaryRole: GroupRole.stage,
+      secondaryRole: GroupRole.dance,
+      workStyle: WorkStyle.experienced),
   14: GroupTaskProfile(
       contestantId: 14,
       primaryRole: GroupRole.vocal,

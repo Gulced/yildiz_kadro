@@ -10,6 +10,8 @@ import 'package:yildiz_kadro/features/group_task/data/group_task_profiles.dart';
 import 'package:yildiz_kadro/features/group_task/domain/day6_final_result.dart';
 import 'package:yildiz_kadro/features/group_task/domain/group_task_profile.dart';
 import 'package:yildiz_kadro/features/postgame/presentation/season_complete_hub_screen.dart';
+import 'package:yildiz_kadro/features/postgame/presentation/final_group_customization_screen.dart';
+import 'package:yildiz_kadro/features/postgame/presentation/group_naming_screen.dart';
 import 'package:yildiz_kadro/shared/widgets/app_button.dart';
 import 'package:yildiz_kadro/shared/widgets/contestant_dialogue_bubble.dart';
 import 'package:yildiz_kadro/shared/widgets/max_width_container.dart';
@@ -388,6 +390,16 @@ class _Day6GrandFinalScreenState extends State<Day6GrandFinalScreen> {
     if (accepted != true || !mounted) return;
     GameScope.of(context).confirmFinalLineup(
         contestantIds: selected, balance: balance, suggestedRoles: assignments);
+    final customized = await Navigator.of(context).push<bool>(
+      MaterialPageRoute<bool>(
+        builder: (_) => const FinalGroupCustomizationScreen(),
+      ),
+    );
+    if (customized != true || !mounted) return;
+    final named = await Navigator.of(context).push<bool>(
+      MaterialPageRoute<bool>(builder: (_) => const GroupNamingScreen()),
+    );
+    if (named != true || !mounted) return;
     setState(() {
       revealCount = 1;
       phase = _FinalPhase.transition;

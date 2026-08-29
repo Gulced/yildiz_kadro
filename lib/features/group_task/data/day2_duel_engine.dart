@@ -13,6 +13,8 @@ Day2DuelResultSnapshot calculateDay2DuelResult({
   required Map<int, EvaluationResult> firstResults,
   required Day2GroupPerformanceSnapshot groupPerformance,
   required Day2JuryResultSnapshot jury,
+  Map<int, int> moraleByContestant = const {},
+  Map<int, int> professionalismByContestant = const {},
 }) {
   if (contestantIds.length != 2 || contestantIds.toSet().length != 2) {
     throw ArgumentError('Düelloda 2 benzersiz yarışmacı olmalı.');
@@ -49,6 +51,10 @@ Day2DuelResultSnapshot calculateDay2DuelResult({
     final approachFit = _approachFit(approach, profile);
     final coachingFit =
         _coachingFit(coaching, first, profile, juryResult.developmentScore);
+    final formModifier = _formModifier(
+      moraleByContestant[id],
+      professionalismByContestant[id],
+    );
     results[id] = DuelContestantResult(
       contestantId: id,
       vocal: vocal,
@@ -57,7 +63,9 @@ Day2DuelResultSnapshot calculateDay2DuelResult({
       conceptFitModifier: conceptFit,
       approachModifier: approachFit,
       coachingModifier: coachingFit,
-      rawScore: (base + conceptFit + approachFit + coachingFit).clamp(0, 100),
+      formModifier: formModifier,
+      rawScore: (base + conceptFit + approachFit + coachingFit + formModifier)
+          .clamp(0, 100),
       scoreWithoutPlayerModifiers: base.clamp(0, 100),
     );
   }
@@ -111,6 +119,25 @@ Day2DuelResultSnapshot calculateDay2DuelResult({
     eliminatedContestantId: ranking.last,
     playerChangedOutcome: ranking.first != baseline.first,
   );
+}
+
+int _formModifier(int? morale, int? professionalism) {
+  if (morale == null && professionalism == null) return 0;
+  final moraleEffect = morale == null
+      ? 0
+      : morale >= 82
+          ? 2
+          : morale < 52
+              ? -2
+              : 0;
+  final professionalEffect = professionalism == null
+      ? 0
+      : professionalism >= 88
+          ? 1
+          : professionalism < 55
+              ? -1
+              : 0;
+  return (moraleEffect + professionalEffect).clamp(-3, 3);
 }
 
 int _conceptFit(Day2DuelConcept concept, GroupTaskProfile profile) {

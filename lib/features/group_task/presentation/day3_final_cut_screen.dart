@@ -46,6 +46,16 @@ class _Day3FinalCutScreenState extends State<Day3FinalCutScreen> {
     super.didChangeDependencies();
     final state = GameScope.of(context);
     final pair = state.day3FinalCutContestantIds;
+    final storedResult = state.day3FinalCutResultSnapshot;
+    if (storedResult != null) {
+      if (pair.length != 2 ||
+          !storedResult.results.keys.toSet().containsAll(pair)) {
+        throw StateError('Kaydedilmiş Final Cut sonucu geçersiz.');
+      }
+      _result = storedResult;
+      _phase = _Phase.survivor;
+      return;
+    }
     if (pair.length != 2 ||
         pair.toSet().length != 2 ||
         pair.any(state.eliminatedContestantIds.contains) ||
@@ -54,10 +64,6 @@ class _Day3FinalCutScreenState extends State<Day3FinalCutScreen> {
             .intersection(pair.toSet())
             .isNotEmpty) {
       throw StateError('Final Cut ikilisi geçersiz.');
-    }
-    if (state.day3FinalCutResultSnapshot != null) {
-      _result = state.day3FinalCutResultSnapshot;
-      _phase = _Phase.survivor;
     }
   }
 
@@ -70,8 +76,32 @@ class _Day3FinalCutScreenState extends State<Day3FinalCutScreen> {
         firstResults: state.evaluation1Results,
         icon: state.day3IconResultSnapshot!,
         setup: state.day3IdentitySetupSnapshot!);
-    state.completeDay3FinalCut(_result!);
     _go(_Phase.performance);
+  }
+
+  void _commitAndShowSurvivor() {
+    final result = _result;
+    if (result == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Final Cut sonucu hazırlanamadı.')),
+      );
+      return;
+    }
+    final state = GameScope.of(context);
+    try {
+      if (state.day3FinalCutResultSnapshot == null) {
+        state.completeDay3FinalCut(result);
+      }
+    } on StateError catch (error) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error.message.toString())),
+      );
+      return;
+    }
+    if (!mounted) return;
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute<void>(builder: (_) => const Day3FinalCutScreen()),
+    );
   }
 
   @override
@@ -314,8 +344,7 @@ class _Day3FinalCutScreenState extends State<Day3FinalCutScreen> {
             trailing: Text('FINAL CUT ${_result!.results[id]!.finalScore}',
                 style: _label(context)))),
         const SizedBox(height: AppSpacing.xl),
-        AppButton(
-            label: 'GÜVENDEKİ İSMİ AÇ', onPressed: () => _go(_Phase.survivor))
+        AppButton(label: 'GÜVENDEKİ İSMİ AÇ', onPressed: _commitAndShowSurvivor)
       ]));
   Widget _survivor() {
     final state = GameScope.of(context);

@@ -12,8 +12,26 @@ import 'package:yildiz_kadro/features/group_task/domain/day3_final_cut_result.da
 import 'package:yildiz_kadro/features/group_task/domain/day4_position_result.dart';
 import 'package:yildiz_kadro/features/group_task/domain/day5_live_result.dart';
 import 'package:yildiz_kadro/features/group_task/domain/day6_final_result.dart';
+import 'package:yildiz_kadro/features/postgame/domain/final_group_customization.dart';
+import 'package:yildiz_kadro/features/postgame/domain/group_archive.dart';
+import 'package:yildiz_kadro/features/postgame/data/group_tag_normalizer.dart';
+import 'package:yildiz_kadro/features/contestants/data/contestant_seed_data.dart';
+import 'package:yildiz_kadro/features/producer/data/story_event_engine.dart';
+import 'package:yildiz_kadro/features/producer/domain/contestant_social_state.dart';
+import 'package:yildiz_kadro/features/producer/domain/story_event.dart';
+import 'package:yildiz_kadro/features/producer/domain/performance_aftermath.dart';
 
 class GameState extends ChangeNotifier {
+  GameState({int? seasonSeed})
+      : _seasonSeed = seasonSeed ?? DateTime.now().microsecondsSinceEpoch {
+    _resetLivingSeason();
+  }
+
+  int _seasonSeed;
+  Map<int, ContestantSocialState> _contestantSocialStates = const {};
+  Map<int, Map<int, int>> _contestantRelationships = const {};
+  List<StoryEventRecord> _eventHistory = const [];
+  final Set<String> _seenEventFamilies = {};
   List<int> _playerRadarContestantIds = const [];
   bool _evaluation1Completed = false;
   Map<int, EvaluationResult> _evaluation1Results = const {};
@@ -66,8 +84,16 @@ class GameState extends ChangeNotifier {
   LineupBalance? _finalLineupBalance;
   Map<FinalGroupRole, int> _suggestedFinalRoles = const {};
   bool _day6FinalLineupConfirmed = false;
+  Map<FinalMemberPosition, int> _finalMemberPositions = const {};
+  int? _finalLeaderId;
+  Map<int, MemberColor> _finalMemberColors = const {};
+  Map<int, List<String>> _automaticGroupTags = const {};
   bool _finalRevealCompleted = false;
   bool _seasonCompleted = false;
+  String? _groupName;
+  final List<GroupArchiveEntry> _groupArchive = [];
+  final Map<String, PerformanceAftermath> _performanceAftermath = {};
+  final Set<String> _seenMissionBriefings = {};
 
   List<int> get playerRadarContestantIds =>
       List.unmodifiable(_playerRadarContestantIds);
@@ -155,8 +181,181 @@ class GameState extends ChangeNotifier {
   Map<FinalGroupRole, int> get suggestedFinalRoles =>
       Map.unmodifiable(_suggestedFinalRoles);
   bool get day6FinalLineupConfirmed => _day6FinalLineupConfirmed;
+  Map<FinalMemberPosition, int> get finalMemberPositions =>
+      Map.unmodifiable(_finalMemberPositions);
+  int? get finalLeaderId => _finalLeaderId;
+  Map<int, MemberColor> get finalMemberColors =>
+      Map.unmodifiable(_finalMemberColors);
+  Map<int, List<String>> get automaticGroupTags =>
+      normalizeAutomaticGroupTags(_automaticGroupTags);
   bool get finalRevealCompleted => _finalRevealCompleted;
   bool get seasonCompleted => _seasonCompleted;
+  String? get groupName => _groupName;
+  List<GroupArchiveEntry> get groupArchive => List.unmodifiable(_groupArchive);
+  PerformanceAftermath? performanceAftermath(String stageId) =>
+      _performanceAftermath[stageId];
+  int get seasonSeed => _seasonSeed;
+  Map<int, ContestantSocialState> get contestantSocialStates =>
+      Map.unmodifiable(_contestantSocialStates);
+  List<StoryEventRecord> get eventHistory => List.unmodifiable(_eventHistory);
+  Set<String> get seenEventFamilies => Set.unmodifiable(_seenEventFamilies);
+
+  StoryEventRecord? storyEventForDay(int day) {
+    for (final record in _eventHistory) {
+      if (record.day == day) return record;
+    }
+    return null;
+  }
+
+  bool hasSeenMissionBriefing(String stageId) =>
+      _seenMissionBriefings.contains(stageId);
+
+  void markMissionBriefingSeen(String stageId) {
+    if (_seenMissionBriefings.add(stageId)) notifyListeners();
+  }
+
+  ContestantSocialState socialStateFor(int contestantId) =>
+      _contestantSocialStates[contestantId]!;
+
+  int relationshipBetween(int firstId, int secondId) =>
+      _contestantRelationships[firstId]?[secondId] ?? 50;
+
+  StoryEventRecord ensureStoryEvent(int day) {
+    final existing = _eventHistory.where((record) => record.day == day);
+    if (existing.isNotEmpty) return existing.first;
+    final activeIds = contestantSeedData
+        .map((contestant) => contestant.id)
+        .where((id) => !_eliminatedContestantIds.contains(id))
+        .toList();
+    final event = createStoryEvent(
+      seasonSeed: _seasonSeed,
+      day: day,
+      eligibleIds: activeIds,
+      seenEventIds: _eventHistory
+          .map((record) => record.event.id.split('_d').first)
+          .toSet(),
+      socialStates: _contestantSocialStates,
+      relationships: _contestantRelationships,
+    );
+    final record = StoryEventRecord(day: day, event: event);
+    _eventHistory = List.unmodifiable([..._eventHistory, record]);
+    _seenEventFamilies.add(event.family.name);
+    notifyListeners();
+    return record;
+  }
+
+  void resolveStoryEvent({required int day, required String choiceId}) {
+    final index = _eventHistory.indexWhere((record) => record.day == day);
+    if (index < 0) throw StateError('Önce hikâye olayı oluşturulmalı.');
+    final record = _eventHistory[index];
+    if (record.choiceId != null) return;
+    final choice =
+        record.event.choices.firstWhere((value) => value.id == choiceId);
+    final before = {
+      for (final id in record.event.contestantIds)
+        id: _storyMetricSnapshot(_contestantSocialStates[id]!),
+    };
+    for (final id in record.event.contestantIds) {
+      final current = _contestantSocialStates[id]!;
+      final effects = adjustedStoryEffects(choice: choice, contestantId: id);
+      _contestantSocialStates = Map.unmodifiable({
+        ..._contestantSocialStates,
+        id: current.apply(
+          popularity: effects['popularity'] ?? 0,
+          buzz: effects['buzz'] ?? 0,
+          followers: effects['followers'] ?? 0,
+          morale: effects['morale'] ?? 0,
+          confidence: effects['confidence'] ?? 0,
+          professionalism: effects['professionalism'] ?? 0,
+          energy: effects['energy'] ?? 0,
+          preparation: effects['preparation'] ?? 0,
+          vocalCoachImpression: effects['vocalCoach'] ?? 0,
+          danceCoachImpression: effects['danceCoach'] ?? 0,
+          day: day,
+          reason: record.event.title,
+          experienceXp: 12,
+        )
+      });
+    }
+    if (record.event.contestantIds.length == 2) {
+      final firstEffects = adjustedStoryEffects(
+        choice: choice,
+        contestantId: record.event.contestantIds.first,
+      );
+      _changeRelationship(record.event.contestantIds[0],
+          record.event.contestantIds[1], firstEffects['relationship'] ?? 0);
+    }
+    final records = [..._eventHistory];
+    final after = {
+      for (final id in record.event.contestantIds)
+        id: _storyMetricSnapshot(_contestantSocialStates[id]!),
+    };
+    records[index] = record.resolve(choiceId, before: before, after: after);
+    _eventHistory = List.unmodifiable(records);
+    notifyListeners();
+  }
+
+  Map<int, Map<String, int>> previewStoryChoice(
+    StoryEvent event,
+    StoryChoice choice,
+  ) =>
+      Map.unmodifiable({
+        for (final id in event.contestantIds)
+          id: adjustedStoryEffects(choice: choice, contestantId: id),
+      });
+
+  Map<String, int> _storyMetricSnapshot(ContestantSocialState social) => {
+        'motivation': social.motivation,
+        'popularity': social.popularity,
+        'buzz': social.buzz,
+        'confidence': social.confidence,
+        'energy': social.energy,
+        'preparation': social.preparation,
+        'professionalism': social.professionalism,
+        'followers': social.followers,
+      };
+
+  void _changeRelationship(int first, int second, int delta) {
+    final next = _contestantRelationships
+        .map((id, values) => MapEntry(id, Map<int, int>.from(values)));
+    next[first]![second] = ((next[first]![second] ?? 50) + delta).clamp(0, 100);
+    next[second]![first] = next[first]![second]!;
+    _contestantRelationships = Map<int, Map<int, int>>.unmodifiable(next
+        .map((id, values) => MapEntry(id, Map<int, int>.unmodifiable(values))));
+  }
+
+  void _resetLivingSeason() {
+    _eventHistory = const [];
+    _seenEventFamilies.clear();
+    _contestantSocialStates = Map.unmodifiable({
+      for (final contestant in contestantSeedData)
+        contestant.id: ContestantSocialState(
+          popularity: contestant.popularity,
+          buzz: 35 + contestant.stage ~/ 5,
+          followers: 12000 + contestant.popularity * 1250,
+          morale: contestant.initialMotivation,
+          confidence: 55 + contestant.stage ~/ 3,
+          professionalism: 58 + (contestant.vocal + contestant.dance) ~/ 6,
+          energy: 78,
+          preparation: 65,
+          vocalCoachImpression: contestant.vocal,
+          danceCoachImpression: contestant.dance,
+          followerHistory: [
+            FollowerSnapshot(
+                day: 0,
+                count: 12000 + contestant.popularity * 1250,
+                reason: 'Sezon başlangıcı')
+          ],
+        ),
+    });
+    _contestantRelationships = Map<int, Map<int, int>>.unmodifiable({
+      for (final contestant in contestantSeedData)
+        contestant.id: Map<int, int>.unmodifiable({
+          for (final other in contestantSeedData)
+            if (other.id != contestant.id) other.id: 50
+        }),
+    });
+  }
 
   void savePlayerRadar(Iterable<int> contestantIds) {
     final ids = contestantIds.toSet().toList(growable: false);
@@ -174,6 +373,13 @@ class GameState extends ChangeNotifier {
     }
     _evaluation1Results = Map.unmodifiable(results);
     _evaluation1Completed = true;
+    _applyPerformanceImpact(
+      stageId: 'evaluation_1',
+      scores:
+          results.map((id, result) => MapEntry(id, result.overall.toDouble())),
+      reason: 'İlk sahne testi izleyicinin dikkatini değiştirdi.',
+      xpBase: 30,
+    );
     notifyListeners();
   }
 
@@ -258,7 +464,7 @@ class GameState extends ChangeNotifier {
 
   void lockDay2PlayerInterventionTeam(String teamId) {
     if (_day2PlayerInterventionTeamId != null) return;
-    if (teamId != 'A' && teamId != 'B') {
+    if (teamId != 'A' && teamId != 'B' && teamId != 'BOTH') {
       throw ArgumentError.value(teamId, 'teamId');
     }
     _day2PlayerInterventionTeamId = teamId;
@@ -272,7 +478,53 @@ class GameState extends ChangeNotifier {
       throw StateError('Prova setup verisi bulunamadı.');
     }
     _day2RehearsalOutcome = outcome;
+    final choices = outcome.playerChoicesByTeam.isNotEmpty
+        ? outcome.playerChoicesByTeam
+        : {
+            outcome.playerInterventionTeamId: outcome.playerChoice,
+            outcome.captainResolutionTeamId: outcome.captainChoice,
+          };
+    for (final entry in choices.entries) {
+      final crisis = entry.key == 'A'
+          ? _day2RehearsalSetup!.teamACrisis
+          : _day2RehearsalSetup!.teamBCrisis;
+      final choice = entry.value;
+      final participants = <int>{
+        crisis.primaryContestantId,
+        if (crisis.secondaryContestantId != null) crisis.secondaryContestantId!,
+      };
+      for (final id in participants) {
+        final social = _contestantSocialStates[id]!;
+        _contestantSocialStates = Map.unmodifiable({
+          ..._contestantSocialStates,
+          id: social.apply(
+            morale: choice.harmonyModifier - 1,
+            confidence: choice.energyModifier > 0 ? 2 : 0,
+            professionalism: choice.readinessModifier > 2 ? 2 : 0,
+            experienceXp: 20,
+          ),
+        });
+      }
+      if (participants.length == 2) {
+        _changeRelationship(
+          participants.first,
+          participants.last,
+          choice.harmonyModifier,
+        );
+      }
+    }
     _day2RehearsalCompleted = true;
+    _applyPerformanceImpact(
+      stageId: 'day2_rehearsal',
+      scores: {
+        for (final id in _day2TeamAIds)
+          id: outcome.teamAFinalMetrics.readiness.toDouble(),
+        for (final id in _day2TeamBIds)
+          id: outcome.teamBFinalMetrics.readiness.toDouble(),
+      },
+      reason: 'Zorlu prova deneyim ve momentum kazandırdı.',
+      xpBase: 35,
+    );
     notifyListeners();
   }
 
@@ -284,6 +536,13 @@ class GameState extends ChangeNotifier {
       throw StateError('Prova tamamlanmadan grup performansı başlatılamaz.');
     }
     _day2GroupPerformanceSnapshot = snapshot;
+    _applyPerformanceImpact(
+      stageId: 'day2_group_stage',
+      scores: snapshot.individualResults
+          .map((id, result) => MapEntry(id, result.overall.toDouble())),
+      reason: 'Grup sahnesindeki görünürlük fan ilgisine yansıdı.',
+      xpBase: 45,
+    );
     notifyListeners();
   }
 
@@ -349,6 +608,13 @@ class GameState extends ChangeNotifier {
       throw StateError('Day 2 Düello sonucu geçersiz.');
     }
     _day2DuelResultSnapshot = snapshot;
+    _applyPerformanceImpact(
+      stageId: 'day2_duel',
+      scores: snapshot.results
+          .map((id, result) => MapEntry(id, result.finalScore.toDouble())),
+      reason: 'Bire bir düello izleyici ilgisini keskin biçimde değiştirdi.',
+      xpBase: 55,
+    );
     _eliminatedContestantIds.add(snapshot.eliminatedContestantId);
     if (_eliminatedContestantIds.toSet().length != 2 ||
         activeContestantCount != 13) {
@@ -358,6 +624,81 @@ class GameState extends ChangeNotifier {
     _day2Completed = true;
     notifyListeners();
   }
+
+  void _applyPerformanceImpact({
+    required String stageId,
+    required Map<int, double> scores,
+    required String reason,
+    required int xpBase,
+  }) {
+    if (_performanceAftermath.containsKey(stageId)) return;
+    final changes = <PerformanceChange>[];
+    for (final entry in scores.entries) {
+      final before = _contestantSocialStates[entry.key];
+      if (before == null) continue;
+      final score = entry.value.round().clamp(0, 100);
+      final popularity = score >= 88
+          ? 4
+          : score >= 78
+              ? 2
+              : score < 62
+                  ? -1
+                  : 0;
+      final motivation = score >= 84
+          ? 5
+          : score >= 72
+              ? 2
+              : score < 60
+                  ? -4
+                  : -1;
+      final followers = 1200 + score * 135 + (popularity.clamp(0, 9) * 850);
+      final after = before.apply(
+        popularity: popularity,
+        morale: motivation,
+        confidence: score >= 80
+            ? 3
+            : score < 60
+                ? -2
+                : 1,
+        followers: followers,
+        experienceXp: xpBase + score ~/ 6,
+        day: _currentDay,
+        reason: reason,
+      );
+      _contestantSocialStates = Map.unmodifiable({
+        ..._contestantSocialStates,
+        entry.key: after,
+      });
+      changes.add(PerformanceChange(
+        contestantId: entry.key,
+        before: before,
+        after: after,
+        reason: _impactReason(score, reason),
+      ));
+    }
+    _performanceAftermath[stageId] = PerformanceAftermath(
+      stageId: stageId,
+      changes: List.unmodifiable(changes),
+    );
+  }
+
+  int get _currentDay => _day5Completed
+      ? 6
+      : _day4Completed
+          ? 5
+          : _day3Completed
+              ? 4
+              : _day2Completed
+                  ? 3
+                  : _lastChance1Completed
+                      ? 2
+                      : 1;
+
+  String _impactReason(int score, String fallback) => score >= 88
+      ? 'Sahnedeki güçlü anı sosyal medyada karşılık buldu.'
+      : score < 62
+          ? 'Zorlanan performans motivasyonunu etkiledi; deneyim kazandırdı.'
+          : fallback;
 
   void initializeDay3Identity(Day3IdentityAllocation allocation) {
     if (_day3IdentityAllocation != null) return;
@@ -546,6 +887,65 @@ class GameState extends ChangeNotifier {
     _finalLineupBalance = balance;
     _suggestedFinalRoles = Map.unmodifiable(suggestedRoles);
     _day6FinalLineupConfirmed = true;
+    notifyListeners();
+  }
+
+  void completeFinalCustomization({
+    required Map<FinalMemberPosition, int> positions,
+    required int leaderId,
+    required Map<int, MemberColor> colors,
+    required Object? automaticTags,
+  }) {
+    if (_seasonCompleted) return;
+    final lineup = _playerFinalLineupIds.toSet();
+    final normalizedTags = normalizeAutomaticGroupTags(automaticTags);
+    final valid = _day6FinalLineupConfirmed &&
+        positions.keys.toSet().containsAll(FinalMemberPosition.values) &&
+        positions.values.toSet().length == 5 &&
+        lineup.containsAll(positions.values) &&
+        lineup.contains(leaderId) &&
+        colors.keys.toSet().containsAll(lineup) &&
+        colors.values.toSet().length == 5 &&
+        normalizedTags.keys.toSet().containsAll(lineup);
+    if (!valid) throw StateError('Final grup kişiselleştirmesi geçersiz.');
+    _finalMemberPositions = Map.unmodifiable(positions);
+    _finalLeaderId = leaderId;
+    _finalMemberColors = Map.unmodifiable(colors);
+    _automaticGroupTags = normalizedTags;
+    notifyListeners();
+  }
+
+  void nameAndCompleteGroup(String value) {
+    if (_seasonCompleted) return;
+    final name = value.trim();
+    if (name.isEmpty ||
+        name.length > 24 ||
+        !_day6FinalLineupConfirmed ||
+        _finalMemberPositions.length != 5 ||
+        _finalLeaderId == null) {
+      throw ArgumentError.value(
+          value, 'value', 'Grup adı veya final verisi geçersiz.');
+    }
+    _groupName = name;
+    final lineup = _playerFinalLineupIds;
+    final mostPopular = lineup.reduce((a, b) =>
+        socialStateFor(a).popularity >= socialStateFor(b).popularity ? a : b);
+    final balance = _finalLineupBalance!;
+    final overall = (balance.vocal +
+            balance.dance +
+            balance.stage +
+            balance.camera +
+            balance.harmony) ~/
+        5;
+    _groupArchive.add(GroupArchiveEntry(
+      groupName: name,
+      memberIds: List.unmodifiable(lineup),
+      positions: Map.unmodifiable(_finalMemberPositions),
+      leaderId: _finalLeaderId!,
+      overallScore: overall,
+      mostPopularMemberId: mostPopular,
+      completedAt: DateTime.now(),
+    ));
     _seasonCompleted = true;
     notifyListeners();
   }
@@ -560,6 +960,8 @@ class GameState extends ChangeNotifier {
   }
 
   void resetSeason() {
+    _seasonSeed = DateTime.now().microsecondsSinceEpoch;
+    _resetLivingSeason();
     _playerRadarContestantIds = const [];
     _evaluation1Completed = false;
     _evaluation1Results = const {};
@@ -612,8 +1014,15 @@ class GameState extends ChangeNotifier {
     _finalLineupBalance = null;
     _suggestedFinalRoles = const {};
     _day6FinalLineupConfirmed = false;
+    _finalMemberPositions = const {};
+    _finalLeaderId = null;
+    _finalMemberColors = const {};
+    _automaticGroupTags = const {};
     _finalRevealCompleted = false;
     _seasonCompleted = false;
+    _groupName = null;
+    _performanceAftermath.clear();
+    _seenMissionBriefings.clear();
     notifyListeners();
   }
 }

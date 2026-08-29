@@ -9,6 +9,7 @@ import 'package:yildiz_kadro/features/evaluation/data/evaluation1_data.dart';
 import 'package:yildiz_kadro/features/evaluation/domain/evaluation_result.dart';
 import 'package:yildiz_kadro/features/game/application/game_scope.dart';
 import 'package:yildiz_kadro/features/jury/presentation/jury_decision_screen.dart';
+import 'package:yildiz_kadro/features/producer/presentation/widgets/performance_aftermath_panel.dart';
 import 'package:yildiz_kadro/shared/widgets/app_button.dart';
 
 class EvaluationResultsScreen extends StatelessWidget {
@@ -154,6 +155,13 @@ class EvaluationResultsScreen extends StatelessWidget {
                               );
                             },
                           ),
+                        ),
+                        PerformanceAftermathPanel(
+                          stageId: 'evaluation_1',
+                          contestantIds: topFive
+                              .take(4)
+                              .map((result) => result.contestantId),
+                          limit: 4,
                         ),
                         const SizedBox(height: AppSpacing.xxl),
                         ConstrainedBox(

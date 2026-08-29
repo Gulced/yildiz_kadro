@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:yildiz_kadro/app/theme/app_colors.dart';
 import 'package:yildiz_kadro/app/theme/app_spacing.dart';
 import 'package:yildiz_kadro/features/contestants/domain/contestant.dart';
+import 'package:yildiz_kadro/features/contestants/data/contestant_identity_profiles.dart';
 import 'package:yildiz_kadro/features/contestants/presentation/widgets/contestant_portrait.dart';
+import 'package:yildiz_kadro/features/contestants/presentation/widgets/contestant_detail_back_button.dart';
 import 'package:yildiz_kadro/features/contestants/presentation/widgets/dossier_tag.dart';
 import 'package:yildiz_kadro/features/contestants/presentation/widgets/stat_bar.dart';
+import 'package:yildiz_kadro/features/contestants/presentation/contestant_dashboard_screen.dart';
 
 class ContestantDetailScreen extends StatelessWidget {
   const ContestantDetailScreen({required this.contestant, super.key});
@@ -13,77 +16,118 @@ class ContestantDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.ink,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 860),
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  AppSpacing.lg,
-                  AppSpacing.sm,
-                  AppSpacing.lg,
-                  AppSpacing.section,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: IconButton(
-                        onPressed: () => Navigator.of(context).pop(),
-                        tooltip: 'Yarışmacılara dön',
-                        icon: const Icon(Icons.arrow_back_rounded),
+    final navigator = Navigator.of(context);
+    final canPop = navigator.canPop();
+    return PopScope(
+      canPop: canPop,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _openContestantDashboard(context);
+      },
+      child: Scaffold(
+        backgroundColor: AppColors.ink,
+        body: Stack(
+          children: [
+            SafeArea(
+              child: SingleChildScrollView(
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 860),
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(
+                        AppSpacing.lg,
+                        AppSpacing.sm,
+                        AppSpacing.lg,
+                        AppSpacing.section,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          const SizedBox(height: 44),
+                          const SizedBox(height: AppSpacing.md),
+                          _IdentityHeader(contestant: contestant),
+                          const SizedBox(height: AppSpacing.xl),
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: ConstrainedBox(
+                              constraints: const BoxConstraints(maxWidth: 430),
+                              child: AspectRatio(
+                                aspectRatio: 0.82,
+                                child:
+                                    ContestantPortrait(contestant: contestant),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: AppSpacing.xl),
+                          _Quote(quote: contestant.quote),
+                          const SizedBox(height: AppSpacing.section),
+                          _StorySection(contestant: contestant),
+                          const SizedBox(height: AppSpacing.section),
+                          _PersonalitySection(contestant: contestant),
+                          const SizedBox(height: AppSpacing.xl),
+                          _EditorialSection(
+                            label: 'HEDEF',
+                            child: Text(identityFor(contestant).goal),
+                          ),
+                          const SizedBox(height: AppSpacing.xxl),
+                          _FeatureSection(
+                            label: 'ÖZEL ÖZELLİK',
+                            icon: Icons.bolt_rounded,
+                            title: contestant.specialTraitTitle,
+                            description: contestant.specialTraitDescription,
+                            accent: true,
+                          ),
+                          const SizedBox(height: AppSpacing.xl),
+                          _FeatureSection(
+                            label: 'RİSK',
+                            icon: Icons.warning_amber_rounded,
+                            title: contestant.riskTitle,
+                            description: contestant.riskDescription,
+                          ),
+                          const SizedBox(height: AppSpacing.section),
+                          _TalentReport(contestant: contestant),
+                          const SizedBox(height: AppSpacing.section),
+                          _RoleSection(contestant: contestant),
+                          const SizedBox(height: AppSpacing.section),
+                          _ProducerNote(note: contestant.producerNote),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: AppSpacing.md),
-                    _IdentityHeader(contestant: contestant),
-                    const SizedBox(height: AppSpacing.xl),
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 430),
-                        child: AspectRatio(
-                          aspectRatio: 0.82,
-                          child: ContestantPortrait(contestant: contestant),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.xl),
-                    _Quote(quote: contestant.quote),
-                    const SizedBox(height: AppSpacing.section),
-                    _StorySection(contestant: contestant),
-                    const SizedBox(height: AppSpacing.section),
-                    _PersonalitySection(contestant: contestant),
-                    const SizedBox(height: AppSpacing.xxl),
-                    _FeatureSection(
-                      label: 'ÖZEL ÖZELLİK',
-                      icon: Icons.bolt_rounded,
-                      title: contestant.specialTraitTitle,
-                      description: contestant.specialTraitDescription,
-                      accent: true,
-                    ),
-                    const SizedBox(height: AppSpacing.xl),
-                    _FeatureSection(
-                      label: 'RİSK',
-                      icon: Icons.warning_amber_rounded,
-                      title: contestant.riskTitle,
-                      description: contestant.riskDescription,
-                    ),
-                    const SizedBox(height: AppSpacing.section),
-                    _TalentReport(contestant: contestant),
-                    const SizedBox(height: AppSpacing.section),
-                    _RoleSection(contestant: contestant),
-                    const SizedBox(height: AppSpacing.section),
-                    _ProducerNote(note: contestant.producerNote),
-                  ],
+                  ),
                 ),
               ),
             ),
-          ),
+            PositionedDirectional(
+              top: 0,
+              start: 0,
+              child: SafeArea(
+                minimum: const EdgeInsets.only(
+                  left: AppSpacing.lg,
+                  top: AppSpacing.sm,
+                ),
+                child: ContestantDetailBackButton(
+                  onPressed: () => _handleBack(context),
+                ),
+              ),
+            ),
+          ],
         ),
+      ),
+    );
+  }
+
+  void _handleBack(BuildContext context) {
+    final navigator = Navigator.of(context);
+    if (navigator.canPop()) {
+      navigator.pop();
+      return;
+    }
+    _openContestantDashboard(context);
+  }
+
+  void _openContestantDashboard(BuildContext context) {
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute<void>(
+        builder: (_) => const ContestantDashboardScreen(),
       ),
     );
   }

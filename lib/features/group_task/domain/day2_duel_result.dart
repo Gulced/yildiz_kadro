@@ -13,6 +13,7 @@ class DuelContestantResult {
     required this.conceptFitModifier,
     required this.approachModifier,
     required this.coachingModifier,
+    this.formModifier = 0,
     required this.rawScore,
     required this.scoreWithoutPlayerModifiers,
   });
@@ -23,11 +24,12 @@ class DuelContestantResult {
   final int conceptFitModifier;
   final int approachModifier;
   final int coachingModifier;
+  final int formModifier;
   final double rawScore;
   final double scoreWithoutPlayerModifiers;
   int get finalScore => rawScore.round().clamp(0, 100);
   int get totalModifier =>
-      conceptFitModifier + approachModifier + coachingModifier;
+      conceptFitModifier + approachModifier + coachingModifier + formModifier;
 }
 
 class Day2DuelResultSnapshot {

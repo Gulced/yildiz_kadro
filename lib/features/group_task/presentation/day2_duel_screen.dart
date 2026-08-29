@@ -12,6 +12,7 @@ import 'package:yildiz_kadro/features/group_task/domain/group_task_profile.dart'
 import 'package:yildiz_kadro/features/group_task/presentation/day2_results_screen.dart';
 import 'package:yildiz_kadro/shared/widgets/app_button.dart';
 import 'package:yildiz_kadro/shared/widgets/max_width_container.dart';
+import 'package:yildiz_kadro/features/producer/presentation/widgets/performance_aftermath_panel.dart';
 
 enum _Phase {
   intro,
@@ -50,16 +51,23 @@ class _Day2DuelScreenState extends State<Day2DuelScreen> {
     super.didChangeDependencies();
     final state = GameScope.of(context);
     final pair = state.day2DuelContestantIds;
+    if (state.day2DuelCompleted) {
+      final storedResult = state.day2DuelResultSnapshot;
+      if (storedResult == null ||
+          pair.length != 2 ||
+          !storedResult.results.keys.toSet().containsAll(pair)) {
+        throw StateError('Kaydedilmiş düello sonucu geçersiz.');
+      }
+      _preview = storedResult;
+      _phase = _Phase.winner;
+      return;
+    }
     if (pair.length != 2 ||
         pair.toSet().length != 2 ||
         pair.any(state.eliminatedContestantIds.contains) ||
         pair.contains(state.day2JurySavedContestantId) ||
         pair.contains(state.day2StarImmunityContestantId)) {
       throw StateError('Düello katılımcıları geçersiz.');
-    }
-    if (state.day2DuelCompleted) {
-      _preview = state.day2DuelResultSnapshot;
-      _phase = _Phase.winner;
     }
   }
 
@@ -73,9 +81,42 @@ class _Day2DuelScreenState extends State<Day2DuelScreen> {
       firstResults: state.evaluation1Results,
       groupPerformance: state.day2GroupPerformanceSnapshot!,
       jury: state.day2JuryResultSnapshot!,
+      moraleByContestant: {
+        for (final id in state.day2DuelContestantIds)
+          id: state.socialStateFor(id).morale,
+      },
+      professionalismByContestant: {
+        for (final id in state.day2DuelContestantIds)
+          id: state.socialStateFor(id).professionalism,
+      },
     );
-    state.completeDay2Duel(_preview!);
     setState(() => _phase = _Phase.performance);
+  }
+
+  void _commitAndRevealWinner() {
+    final state = GameScope.of(context);
+    final result = _preview;
+    if (result == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Düello sonucu hazırlanamadı.')),
+      );
+      return;
+    }
+    try {
+      if (!state.day2DuelCompleted) state.completeDay2Duel(result);
+    } on StateError catch (error) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error.message.toString())),
+      );
+      return;
+    }
+    if (!mounted) return;
+    // Start the stored-result route with a fresh State object. Depending on a
+    // local AnimatedSwitcher phase after GameScope notifies its listeners left
+    // some devices on the reveal frame even though the duel had been saved.
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute<void>(builder: (_) => const Day2DuelScreen()),
+    );
   }
 
   @override
@@ -340,11 +381,12 @@ class _Day2DuelScreenState extends State<Day2DuelScreen> {
               contentPadding: EdgeInsets.zero,
               title: Text(_contestant(id).displayName),
               subtitle: Text(
-                  'VOKAL ${r.vocal}  •  DANS ${r.dance}  •  SAHNE ${r.stage}'),
+                  'VOKAL ${r.vocal}  •  DANS ${r.dance}  •  SAHNE ${r.stage}'
+                  '${r.formModifier == 0 ? '' : '\nGÜNCEL FORM ${r.formModifier > 0 ? '+' : ''}${r.formModifier}'}'),
               trailing: const Text('--'));
         }),
         const SizedBox(height: AppSpacing.xl),
-        AppButton(label: 'SONUCU AÇ  →', onPressed: () => _go(_Phase.winner)),
+        AppButton(label: 'SONUCU AÇ  →', onPressed: _commitAndRevealWinner),
       ]));
 
   Widget _winner() {
@@ -375,6 +417,8 @@ class _Day2DuelScreenState extends State<Day2DuelScreen> {
             textAlign: TextAlign.center, style: _label(context)),
       if (state.playerRadarContestantIds.contains(id))
         Text('★ Radarındaki isim düelloyu kazandı.', style: _label(context)),
+      PerformanceAftermathPanel(
+          stageId: 'day2_duel', contestantIds: [id], limit: 1),
       const SizedBox(height: AppSpacing.xl),
       AppButton(label: 'VEDAYI GÖR', onPressed: () => _go(_Phase.farewell)),
     ]));
@@ -414,6 +458,8 @@ class _Day2DuelScreenState extends State<Day2DuelScreen> {
       if (id == state.day2CaptainAId || id == state.day2CaptainBId)
         Text('Onu bu sabah kaptan seçmiştin.',
             style: Theme.of(context).textTheme.bodySmall),
+      PerformanceAftermathPanel(
+          stageId: 'day2_duel', contestantIds: [id], limit: 1),
       const SizedBox(height: AppSpacing.xl),
       AppButton(
           label: '2. GÜN SONUÇLARI',

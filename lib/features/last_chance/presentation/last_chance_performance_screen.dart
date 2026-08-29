@@ -11,6 +11,7 @@ import 'package:yildiz_kadro/features/game/application/game_scope.dart';
 import 'package:yildiz_kadro/features/last_chance/data/last_chance_data.dart';
 import 'package:yildiz_kadro/features/last_chance/domain/last_chance_result.dart';
 import 'package:yildiz_kadro/features/roster/presentation/post_elimination_roster_screen.dart';
+import 'package:yildiz_kadro/features/producer/presentation/producer_dashboard_screen.dart';
 import 'package:yildiz_kadro/shared/widgets/app_button.dart';
 import 'package:yildiz_kadro/shared/widgets/max_width_container.dart';
 
@@ -46,7 +47,8 @@ class _LastChancePerformanceScreenState
       contestantSeedData.firstWhere((contestant) => contestant.id == id);
 
   List<int> get _trio => GameScope.of(context).lastChanceContestantIds;
-  int get _coachId => GameScope.of(context).lastChanceCoachContestantId!;
+  int? get _coachIdOrNull => GameScope.of(context).lastChanceCoachContestantId;
+  int get _coachId => _coachIdOrNull!;
   List<int> get _revealIds =>
       lastChanceRevealPriority.where(_trio.contains).toList(growable: false);
   List<LastChanceResult> get _ranking => rankLastChanceResults(
@@ -183,16 +185,43 @@ class _LastChancePerformanceScreenState
     super.dispose();
   }
 
+  bool get _hasBaseState {
+    final state = GameScope.of(context);
+    return state.juryDecision1Completed &&
+        _trio.length == 3 &&
+        _trio.toSet().length == 3 &&
+        _trio.every(lastChanceResults.containsKey);
+  }
+
+  bool get _hasPhaseState =>
+      _hasBaseState &&
+      (_phase.index < _Phase.reveal.index || _coachIdOrNull != null) &&
+      (_phase != _Phase.farewell ||
+          GameScope.of(context).eliminatedContestantIds.isNotEmpty);
+
   @override
   Widget build(BuildContext context) => Scaffold(
         backgroundColor: AppColors.ink,
         body: SafeArea(
-          child: AnimatedSwitcher(
-            duration: const Duration(milliseconds: 240),
-            child: _buildPhase(context),
-          ),
+          child: !_hasPhaseState
+              ? _MissingLastChanceState(onExit: () => _safeExit(context))
+              : AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 240),
+                  child: _buildPhase(context),
+                ),
         ),
       );
+
+  void _safeExit(BuildContext context) {
+    final navigator = Navigator.of(context);
+    if (navigator.canPop()) {
+      navigator.pop();
+    } else {
+      navigator.pushReplacement(MaterialPageRoute<void>(
+        builder: (_) => const ProducerDashboardScreen(day: 1),
+      ));
+    }
+  }
 
   Widget _buildPhase(BuildContext context) {
     switch (_phase) {
@@ -259,6 +288,30 @@ class _LastChancePerformanceScreenState
         );
     }
   }
+}
+
+class _MissingLastChanceState extends StatelessWidget {
+  const _MissingLastChanceState({required this.onExit});
+  final VoidCallback onExit;
+
+  @override
+  Widget build(BuildContext context) => Center(
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.lg),
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            Text('SON ŞANS HENÜZ HAZIR DEĞİL',
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.headlineLarge),
+            const SizedBox(height: AppSpacing.md),
+            const Text(
+              'Jüri kararı tamamlanmadan bu sahne açılamaz.',
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            AppButton(label: 'GERİ DÖN', onPressed: onExit),
+          ]),
+        ),
+      );
 }
 
 class _Intro extends StatelessWidget {

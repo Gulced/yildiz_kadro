@@ -26,22 +26,34 @@ class _State extends State<Day4PositionBattleScreen> {
   Day4Room? selected;
   Day4MentorChoice? choice;
   Day4ResultSnapshot? result;
+  bool initializationScheduled = false;
   Contestant c(int id) => contestantSeedData.firstWhere((x) => x.id == id);
   void go(_Phase p) => setState(() => phase = p);
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     final s = GameScope.of(context);
-    if (s.day4RoomAllocation == null) {
-      final ids = contestantSeedData
-          .where((c) => !s.eliminatedContestantIds.contains(c.id))
-          .map((c) => c.id)
-          .toList();
-      s.initializeDay4Rooms(allocateDay4Rooms(
+    if (s.day4RoomAllocation == null && !initializationScheduled) {
+      initializationScheduled = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        final game = GameScope.of(context);
+        final day2 = game.day2GroupPerformanceSnapshot;
+        final day3 = game.day3IconResultSnapshot;
+        if (game.day4RoomAllocation != null || day2 == null || day3 == null) {
+          return;
+        }
+        final ids = contestantSeedData
+            .where((c) => !game.eliminatedContestantIds.contains(c.id))
+            .map((c) => c.id)
+            .toList();
+        game.initializeDay4Rooms(allocateDay4Rooms(
           activeIds: ids,
-          first: s.evaluation1Results,
-          day2: s.day2GroupPerformanceSnapshot!,
-          day3: s.day3IconResultSnapshot!));
+          first: game.evaluation1Results,
+          day2: day2,
+          day3: day3,
+        ));
+      });
     }
     if (s.day4Completed) {
       result = s.day4ResultSnapshot;
@@ -68,17 +80,19 @@ class _State extends State<Day4PositionBattleScreen> {
   Widget build(BuildContext context) => Scaffold(
       backgroundColor: AppColors.ink,
       body: SafeArea(
-          child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 220),
-              child: switch (phase) {
-                _Phase.intro => intro(),
-                _Phase.reveal => reveal(),
-                _Phase.rooms => rooms(),
-                _Phase.mentor => mentor(),
-                _Phase.choice => coaching(),
-                _Phase.result => roomResult(),
-                _Phase.summary => summary()
-              })));
+          child: GameScope.of(context).day4RoomAllocation == null
+              ? const Center(child: CircularProgressIndicator())
+              : AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 220),
+                  child: switch (phase) {
+                    _Phase.intro => intro(),
+                    _Phase.reveal => reveal(),
+                    _Phase.rooms => rooms(),
+                    _Phase.mentor => mentor(),
+                    _Phase.choice => coaching(),
+                    _Phase.result => roomResult(),
+                    _Phase.summary => summary()
+                  })));
   Widget intro() => page([
         Text('4. GÜN', style: label()),
         Text('POZİSYON SAVAŞI',

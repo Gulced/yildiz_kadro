@@ -11,6 +11,7 @@ import 'package:yildiz_kadro/features/group_task/domain/day4_position_result.dar
 import 'package:yildiz_kadro/features/group_task/domain/day6_final_result.dart';
 import 'package:yildiz_kadro/features/group_task/domain/group_task_profile.dart';
 import 'package:yildiz_kadro/features/home/presentation/home_screen.dart';
+import 'package:yildiz_kadro/features/postgame/domain/final_group_customization.dart';
 import 'package:yildiz_kadro/features/postgame/presentation/widgets/debut_lineup_poster.dart';
 import 'package:yildiz_kadro/shared/widgets/app_button.dart';
 import 'package:yildiz_kadro/shared/widgets/contestant_dialogue_bubble.dart';
@@ -22,7 +23,10 @@ class SeasonCompleteHubScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final state = GameScope.of(context);
-    _validateSeason(state);
+    final validation = _validateSeason(state);
+    if (!validation.isValid) {
+      return _IncompleteSeasonScreen(message: validation.message);
+    }
     return PopScope(
       canPop: false,
       child: Scaffold(
@@ -37,7 +41,7 @@ class SeasonCompleteHubScreen extends StatelessWidget {
                   children: [
                     DebutLineupPoster(memberIds: state.playerFinalLineupIds),
                     const SizedBox(height: AppSpacing.lg),
-                    Text('YILDIZ KADRO HAZIR',
+                    Text('${state.groupName!.toUpperCase()} HAZIR',
                         style: Theme.of(context).textTheme.displayLarge),
                     const Text(
                         '15 kişiyle başladı. 5 kişiyle sahneye çıkıyor.'),
@@ -65,6 +69,11 @@ class SeasonCompleteHubScreen extends StatelessWidget {
                         subtitle: '15 yarışmacının sezon arşivi',
                         onTap: () =>
                             _open(context, const _SeasonJourneyScreen())),
+                    _HubButton(
+                        label: 'GRUP ARŞİVİ',
+                        subtitle: 'Tamamladığın sezonların kadroları',
+                        onTap: () =>
+                            _open(context, const _GroupArchiveScreen())),
                     _HubButton(
                         label: 'YENİ SEZON',
                         subtitle: 'Bu kez kimi farklı göreceksin?',
@@ -157,7 +166,7 @@ class _GroupProfileScreen extends StatelessWidget {
             entries.entries.reduce((a, b) => a.value >= b.value ? a : b),
         developing =
             entries.entries.reduce((a, b) => a.value <= b.value ? a : b);
-    return _PostgameScaffold(title: 'GRUP PROFİLİ', children: [
+    return _PostgameScaffold(title: state.groupName!.toUpperCase(), children: [
       Text(groupProfile(balance),
           style: Theme.of(context).textTheme.displayLarge),
       DebutLineupPoster(memberIds: state.playerFinalLineupIds, height: 310),
@@ -178,9 +187,10 @@ class _GroupProfileScreen extends StatelessWidget {
       _InfoBlock(
           label: 'GRUP KİMYASI', value: chemistry(balance.harmony), body: ''),
       const SizedBox(height: AppSpacing.xl),
-      Text('ÖNERİLEN ROLLER', style: _accent(context)),
-      ...FinalGroupRole.values.map((role) {
-        final id = state.suggestedFinalRoles[role]!;
+      Text('KESİN KADRO', style: _accent(context)),
+      ...FinalMemberPosition.values.map((role) {
+        final id = state.finalMemberPositions[role]!;
+        final color = state.finalMemberColors[id]!;
         return ListTile(
             contentPadding: EdgeInsets.zero,
             leading: ClipOval(
@@ -188,9 +198,17 @@ class _GroupProfileScreen extends StatelessWidget {
                     width: 48,
                     height: 48,
                     child: ContestantPortrait(contestant: _contestant(id)))),
-            title: Text(_contestant(id).displayName),
-            subtitle: Text(finalRoleLabel(role)));
+            title: Text(
+                '${_contestant(id).displayName}${state.finalLeaderId == id ? '  •  LİDER' : ''}'),
+            subtitle: Text(
+                '${finalPositionLabel(role)}  •  ${memberColorLabel(color)}'));
       }),
+      const SizedBox(height: AppSpacing.md),
+      Text('GRUP ETİKETLERİ', style: _accent(context)),
+      Text(state.automaticGroupTags.values
+          .expand((tags) => tags)
+          .toSet()
+          .join('  •  ')),
       const SizedBox(height: AppSpacing.xl),
       Text('İLK GRUP ANI', style: _accent(context)),
       ..._groupDialogue(state).asMap().entries.map((entry) => Padding(
@@ -199,6 +217,47 @@ class _GroupProfileScreen extends StatelessWidget {
               contestant: _contestant(entry.value.$1),
               text: entry.value.$2,
               alignRight: entry.key.isOdd))),
+    ]);
+  }
+}
+
+class _GroupArchiveScreen extends StatelessWidget {
+  const _GroupArchiveScreen();
+
+  @override
+  Widget build(BuildContext context) {
+    final archive = GameScope.of(context).groupArchive.reversed.toList();
+    return _PostgameScaffold(title: 'GRUP ARŞİVİ', children: [
+      if (archive.isEmpty)
+        const Text('Henüz tamamlanmış bir sezon bulunmuyor.'),
+      ...archive.map((entry) => Padding(
+            padding: const EdgeInsets.only(bottom: AppSpacing.lg),
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: AppColors.inkSoft,
+                border: Border.all(color: AppColors.line),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(AppSpacing.md),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(entry.groupName.toUpperCase(),
+                        style: Theme.of(context).textTheme.headlineMedium),
+                    Text('GENEL PUAN  ${entry.overallScore}',
+                        style: _accent(context)),
+                    const SizedBox(height: AppSpacing.md),
+                    DebutLineupPoster(memberIds: entry.memberIds, height: 220),
+                    const SizedBox(height: AppSpacing.sm),
+                    Text(
+                      'EN POPÜLER  ${_contestant(entry.mostPopularMemberId).displayName}',
+                      style: _accent(context),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          )),
     ]);
   }
 }
@@ -349,8 +408,8 @@ class _JourneySection extends StatelessWidget {
                         Text(_contestant(id).displayName),
                         Text(
                             debut
-                                ? finalRoleLabel(state
-                                    .suggestedFinalRoles.entries
+                                ? finalPositionLabel(state
+                                    .finalMemberPositions.entries
                                     .firstWhere((entry) => entry.value == id)
                                     .key)
                                 : finalist
@@ -591,12 +650,13 @@ void _showHistory(BuildContext context, int id, GameState state) {
                   ]))));
 }
 
-void _validateSeason(GameState state) {
+({bool isValid, String message}) _validateSeason(GameState state) {
   final debut = state.playerFinalLineupIds.toSet(),
       finalists = state.day5FinalistIds.toSet(),
       outside = state.finalistsOutsideDebutLineupIds.toSet(),
       eliminated = state.eliminatedContestantIds.toSet(),
-      roles = state.suggestedFinalRoles.values.toSet();
+      roles = state.finalMemberPositions.values.toSet(),
+      colors = state.finalMemberColors.values.toSet();
   final valid = state.seasonCompleted &&
       debut.length == 5 &&
       finalists.length == 7 &&
@@ -606,6 +666,67 @@ void _validateSeason(GameState state) {
       eliminated.length == 8 &&
       {...debut, ...outside, ...eliminated}.length == 15 &&
       roles.length == 5 &&
-      roles.containsAll(debut);
-  if (!valid) throw StateError('Tamamlanmış sezon verisi geçersiz.');
+      roles.containsAll(debut) &&
+      state.finalMemberPositions.length == 5 &&
+      state.finalMemberColors.length == 5 &&
+      colors.length == 5 &&
+      state.groupName?.trim().isNotEmpty == true &&
+      state.finalLineupBalance != null &&
+      state.finalLeaderId != null &&
+      debut.contains(state.finalLeaderId) &&
+      state.automaticGroupTags.isNotEmpty;
+  return (
+    isValid: valid,
+    message: valid
+        ? ''
+        : 'Sezon finali verileri henüz tamamlanmadı. Önce mevcut oyun akışına dön.',
+  );
+}
+
+class _IncompleteSeasonScreen extends StatelessWidget {
+  const _IncompleteSeasonScreen({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+        backgroundColor: AppColors.ink,
+        body: SafeArea(
+          child: MaxWidthContainer(
+            child: Padding(
+              padding: const EdgeInsets.all(AppSpacing.lg),
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'SEZON HENÜZ TAMAMLANMADI',
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.headlineSmall,
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    Text(message, textAlign: TextAlign.center),
+                    const SizedBox(height: AppSpacing.xl),
+                    AppButton(
+                      label: 'OYUNA DÖN',
+                      onPressed: () {
+                        final navigator = Navigator.of(context);
+                        if (navigator.canPop()) {
+                          navigator.pop();
+                        } else {
+                          navigator.pushReplacement(
+                            MaterialPageRoute<void>(
+                              builder: (_) => const HomeScreen(),
+                            ),
+                          );
+                        }
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
 }

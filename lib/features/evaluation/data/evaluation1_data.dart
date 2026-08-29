@@ -3,12 +3,12 @@ import 'package:yildiz_kadro/features/evaluation/domain/evaluation_result.dart';
 const evaluation1Results = <int, EvaluationResult>{
   1: EvaluationResult(
       contestantId: 1,
-      vocal: 78,
-      dance: 76,
-      stage: 90,
-      overall: 82,
-      comment: 'Kamerayı hemen buldu.',
-      tag: 'DOĞAL IŞIK'),
+      vocal: 92,
+      dance: 90,
+      stage: 95,
+      overall: 93,
+      comment: 'Üç alanda da gecenin standardını yükseltti.',
+      tag: 'DOĞAL YILDIZ'),
   2: EvaluationResult(
       contestantId: 2,
       vocal: 96,
@@ -99,12 +99,12 @@ const evaluation1Results = <int, EvaluationResult>{
       tag: 'KAOS İŞE YARADI'),
   13: EvaluationResult(
       contestantId: 13,
-      vocal: 87,
-      dance: 74,
-      stage: 88,
-      overall: 83,
-      comment: 'Ses güçlüydü, hareketler temkinli kaldı.',
-      tag: 'SAĞLAM TEMEL'),
+      vocal: 72,
+      dance: 81,
+      stage: 83,
+      overall: 80,
+      comment: 'Temposunu korudu; duygusal ifadesi geride kaldı.',
+      tag: 'SAHA DİSİPLİNİ'),
   14: EvaluationResult(
       contestantId: 14,
       vocal: 88,

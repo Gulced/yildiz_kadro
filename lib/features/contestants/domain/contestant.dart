@@ -23,6 +23,7 @@ class Contestant {
     required this.riskDescription,
     required this.producerNote,
     required this.quote,
+    this.initialMotivation = 70,
     this.portraitAsset,
   });
 
@@ -49,6 +50,7 @@ class Contestant {
   final String riskDescription;
   final String producerNote;
   final String quote;
+  final int initialMotivation;
   final String? portraitAsset;
 
   String get displayName =>

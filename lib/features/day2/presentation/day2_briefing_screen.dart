@@ -7,6 +7,7 @@ import 'package:yildiz_kadro/core/responsive/breakpoints.dart';
 import 'package:yildiz_kadro/features/contestants/data/contestant_seed_data.dart';
 import 'package:yildiz_kadro/features/contestants/domain/contestant.dart';
 import 'package:yildiz_kadro/features/contestants/presentation/widgets/contestant_portrait.dart';
+import 'package:yildiz_kadro/features/day2/presentation/manual_day2_team_builder_screen.dart';
 import 'package:yildiz_kadro/features/evaluation/data/evaluation1_data.dart';
 import 'package:yildiz_kadro/features/game/application/game_scope.dart';
 import 'package:yildiz_kadro/features/group_task/data/day2_team_draft.dart';
@@ -82,36 +83,16 @@ class _Day2BriefingScreenState extends State<Day2BriefingScreen> {
     );
     if (confirmed == true && mounted) {
       _confirming = true;
-      final result = generateDay2Teams(
-        activeContestantIds:
-            _activeContestants.map((contestant) => contestant.id),
-        captainAId: captainA.id,
-        captainBId: captainB.id,
-        evaluationResults: evaluation1Results,
+      await Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => ManualDay2TeamBuilderScreen(
+            captainAId: captainA.id,
+            captainBId: captainB.id,
+          ),
+        ),
       );
-      GameScope.of(context).completeDay2TeamFormation(result);
-      setState(() {
-        _phase = _Phase.draft;
-        _revealedPicks = 0;
-      });
-      _startDraftReveal();
+      if (mounted) _confirming = false;
     }
-  }
-
-  void _startDraftReveal() {
-    _draftTimer?.cancel();
-    _draftTimer = Timer.periodic(const Duration(milliseconds: 700), (timer) {
-      if (!mounted || _phase != _Phase.draft) {
-        timer.cancel();
-        return;
-      }
-      final total = GameScope.of(context).day2TeamDraftEvents.length;
-      if (_revealedPicks >= total) {
-        timer.cancel();
-        return;
-      }
-      setState(() => _revealedPicks++);
-    });
   }
 
   void _showAllPicks() {

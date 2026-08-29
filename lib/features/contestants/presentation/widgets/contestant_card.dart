@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:yildiz_kadro/app/theme/app_colors.dart';
 import 'package:yildiz_kadro/app/theme/app_spacing.dart';
 import 'package:yildiz_kadro/features/contestants/domain/contestant.dart';
+import 'package:yildiz_kadro/features/contestants/data/contestant_identity_profiles.dart';
 import 'package:yildiz_kadro/features/contestants/presentation/widgets/contestant_portrait.dart';
 
 class ContestantCard extends StatelessWidget {
@@ -87,8 +88,8 @@ class ContestantCard extends StatelessWidget {
                 ),
                 const SizedBox(height: AppSpacing.xs),
                 Text(
-                  contestant.personalityTraits.take(2).join(' • '),
-                  maxLines: 1,
+                  identityFor(contestant).hook,
+                  maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: AppColors.paperMuted,

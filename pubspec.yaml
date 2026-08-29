@@ -30,7 +30,6 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -67,6 +66,7 @@ flutter:
     - assets/contestants/arya/
     - assets/contestants/mina/
     - assets/contestants/naz/
+    - assets/contestants/zeynep_ela/
     - assets/contestants/serra/
     - assets/contestants/nil/
 

@@ -32,7 +32,10 @@ Day2JuryResultSnapshot calculateDay2JuryResult({
     final teamResult = day2.teamId == 'A'
         ? groupPerformance.teamAResult
         : groupPerformance.teamBResult;
-    final isSpotlight = day2.assignedRole != 'GRUP ÜYESİ';
+    final isSpotlight = day2.assignedRole == 'CENTER' ||
+        day2.assignedRole.startsWith('LEAD') ||
+        day2.assignedRole == 'ANA VOKAL' ||
+        day2.assignedRole == 'DANS LİDERİ';
     final potential = (first.stage * .50 +
             first.overall * .30 +
             day2.stage * .20 +

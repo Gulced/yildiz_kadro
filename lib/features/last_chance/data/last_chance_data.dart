@@ -19,20 +19,21 @@ const lastChanceResults = <int, LastChanceResult>{
       comment: 'Büyük bir patlama yapmadı ama hata da bırakmadı.'),
   13: LastChanceResult(
       contestantId: 13,
-      vocal: 91,
-      dance: 79,
-      stage: 88,
-      baseOverall: 86,
-      tag: 'SESİYLE TUTUNDU',
-      comment: 'Baskı arttığında en güçlü silahına döndü.'),
+      vocal: 74,
+      dance: 84,
+      stage: 86,
+      baseOverall: 82,
+      tag: 'BASKIDA DİMDİK',
+      comment: 'Maç disipliniyle temposunu korudu; ifadesi hâlâ kontrollüydü.'),
   1: LastChanceResult(
       contestantId: 1,
-      vocal: 83,
-      dance: 81,
-      stage: 85,
-      baseOverall: 83,
-      tag: 'DİRENİŞ',
-      comment: 'Teknik hâlâ kusursuz değil ama bu kez daha çok savaştı.'),
+      vocal: 92,
+      dance: 90,
+      stage: 94,
+      baseOverall: 92,
+      tag: 'YILDIZ REFLEKSİ',
+      comment:
+          'Baskı altında doğal yeteneğine döndü ve üç alanda da güçlü kaldı.'),
   9: LastChanceResult(
       contestantId: 9,
       vocal: 83,
@@ -49,8 +50,8 @@ const lastChanceSurvivalPriority = <int>[3, 13, 6, 1, 9];
 const farewellMessages = <int, String>{
   3: 'Ham elmas bu kez parlamaya zaman bulamadı.',
   6: 'Sıcaklığı yetti, ama yarışma daha fazlasını istedi.',
-  13: 'Güçlü sesi bu kez onu yarışmada tutmaya yetmedi.',
-  1: 'Doğal ışığı erkenden söndü.',
+  13: 'Saha disiplini güçlüydü; sahne bu kez daha fazla duygu istedi.',
+  1: 'Büyük yeteneği bu kez üzerindeki beklentiyi aşmaya yetmedi.',
   9: 'Kontrolü hiç bırakmadı; yarışma ise risk istedi.',
 };
 

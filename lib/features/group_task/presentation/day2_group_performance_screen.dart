@@ -48,6 +48,7 @@ class _Day2GroupPerformanceScreenState
   int? _selectedImmunityId;
   bool _submitting = false;
   final List<Timer> _timers = [];
+  bool _initializationScheduled = false;
 
   Contestant _contestant(int id) =>
       contestantSeedData.firstWhere((contestant) => contestant.id == id);
@@ -56,16 +57,33 @@ class _Day2GroupPerformanceScreenState
   void didChangeDependencies() {
     super.didChangeDependencies();
     final state = GameScope.of(context);
-    if (state.day2GroupPerformanceSnapshot == null) {
-      state.initializeDay2GroupPerformance(calculateDay2GroupPerformance(
-        teamAIds: state.day2TeamAIds,
-        teamBIds: state.day2TeamBIds,
-        captainAId: state.day2CaptainAId!,
-        captainBId: state.day2CaptainBId!,
-        evaluationResults: evaluation1Results,
-        rehearsalSetup: state.day2RehearsalSetup!,
-        rehearsalOutcome: state.day2RehearsalOutcome!,
-      ));
+    if (state.day2GroupPerformanceSnapshot == null &&
+        !_initializationScheduled) {
+      _initializationScheduled = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        final game = GameScope.of(context);
+        if (game.day2GroupPerformanceSnapshot != null) return;
+        final captainA = game.day2CaptainAId;
+        final captainB = game.day2CaptainBId;
+        final setup = game.day2RehearsalSetup;
+        final outcome = game.day2RehearsalOutcome;
+        if (captainA == null ||
+            captainB == null ||
+            setup == null ||
+            outcome == null) {
+          return;
+        }
+        game.initializeDay2GroupPerformance(calculateDay2GroupPerformance(
+          teamAIds: game.day2TeamAIds,
+          teamBIds: game.day2TeamBIds,
+          captainAId: captainA,
+          captainBId: captainB,
+          evaluationResults: evaluation1Results,
+          rehearsalSetup: setup,
+          rehearsalOutcome: outcome,
+        ));
+      });
     }
     if (state.day2GroupPerformanceCompleted) _phase = _Phase.jury;
   }
@@ -158,10 +176,12 @@ class _Day2GroupPerformanceScreenState
   Widget build(BuildContext context) => Scaffold(
         backgroundColor: AppColors.ink,
         body: SafeArea(
-          child: AnimatedSwitcher(
-            duration: const Duration(milliseconds: 240),
-            child: _buildPhase(context),
-          ),
+          child: GameScope.of(context).day2GroupPerformanceSnapshot == null
+              ? const Center(child: CircularProgressIndicator())
+              : AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 240),
+                  child: _buildPhase(context),
+                ),
         ),
       );
 
@@ -489,9 +509,10 @@ class _StarReveal extends StatelessWidget {
         GameScope.of(context).playerRadarContestantIds.contains(contestant.id);
     final microcopy = individual.assignedRole == 'CENTER'
         ? 'Center rolünü gerçekten sahiplendi.'
-        : individual.assignedRole == 'ANA VOKAL'
+        : individual.assignedRole.contains('VOKAL')
             ? 'En kritik anlarda sesiyle öne çıktı.'
-            : individual.assignedRole == 'DANS LİDERİ'
+            : individual.assignedRole.contains('DANCER') ||
+                    individual.assignedRole.contains('DANS')
                 ? 'Takımın temposunu yukarı taşıdı.'
                 : 'Spotlight rolü yoktu. Yine de gözler ona döndü.';
     return _Page(
@@ -925,7 +946,12 @@ class _PreTeamCard extends StatelessWidget {
         _PortraitRow(ids: ids, contestant: contestant),
         const SizedBox(height: AppSpacing.sm),
         Text(
-            'CENTER ${contestant(roles.centerId).displayName}  •  ANA VOKAL ${contestant(roles.mainVocalId).displayName}  •  DANS ${contestant(roles.danceLeadId).displayName}',
+            roles.roleSlots.isEmpty
+                ? 'CENTER ${contestant(roles.centerId).displayName}  •  ANA VOKAL ${contestant(roles.mainVocalId).displayName}  •  DANS ${contestant(roles.danceLeadId).displayName}'
+                : roles.roleSlots
+                    .map((entry) =>
+                        '${day2TeamRoleLabel(entry.slot.type)} ${contestant(entry.contestantId).displayName}')
+                    .join('  •  '),
             style: Theme.of(context).textTheme.bodySmall),
         const SizedBox(height: AppSpacing.sm),
         Text('PROVA ${rehearsal.score}${intervened ? '  ★ SENİN KARARIN' : ''}',

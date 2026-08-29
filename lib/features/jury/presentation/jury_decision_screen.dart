@@ -550,10 +550,15 @@ class _DecisionSummary extends StatelessWidget {
           const SizedBox(height: AppSpacing.lg),
           AppButton(
             label: 'SON ŞANS SAHNESİNE GEÇ',
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute<void>(
-                  builder: (_) => const LastChancePerformanceScreen()),
-            ),
+            onPressed: state.juryDecision1Completed &&
+                    state.lastChanceContestantIds.length == 3 &&
+                    state.producerSaveContestantId != null &&
+                    state.jurySaveContestantId != null
+                ? () => Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                          builder: (_) => const LastChancePerformanceScreen()),
+                    )
+                : null,
           ),
         ],
       ),

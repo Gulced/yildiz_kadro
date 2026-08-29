@@ -9,12 +9,14 @@ class RadarContestantCard extends StatelessWidget {
     required this.contestant,
     required this.isSelected,
     required this.onTap,
+    required this.onInfo,
     super.key,
   });
 
   final Contestant contestant;
   final bool isSelected;
   final VoidCallback onTap;
+  final VoidCallback onInfo;
 
   @override
   Widget build(BuildContext context) {
@@ -60,6 +62,22 @@ class RadarContestantCard extends StatelessWidget {
                         fit: StackFit.expand,
                         children: [
                           ContestantPortrait(contestant: contestant),
+                          Align(
+                            alignment: Alignment.topLeft,
+                            child: Padding(
+                              padding: const EdgeInsets.all(8),
+                              child: Material(
+                                color: AppColors.ink.withValues(alpha: .78),
+                                shape: const CircleBorder(),
+                                child: IconButton(
+                                  tooltip: 'Profili incele',
+                                  onPressed: onInfo,
+                                  icon: const Icon(Icons.visibility_outlined),
+                                  iconSize: 19,
+                                ),
+                              ),
+                            ),
+                          ),
                           Align(
                             alignment: Alignment.topRight,
                             child: Padding(

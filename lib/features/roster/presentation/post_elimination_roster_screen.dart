@@ -8,6 +8,7 @@ import 'package:yildiz_kadro/features/day2/presentation/day2_briefing_screen.dar
 import 'package:yildiz_kadro/features/evaluation/data/evaluation1_data.dart';
 import 'package:yildiz_kadro/features/game/application/game_scope.dart';
 import 'package:yildiz_kadro/features/last_chance/data/last_chance_data.dart';
+import 'package:yildiz_kadro/features/producer/presentation/producer_dashboard_screen.dart';
 import 'package:yildiz_kadro/shared/widgets/app_button.dart';
 import 'package:yildiz_kadro/shared/widgets/max_width_container.dart';
 
@@ -20,12 +21,34 @@ class PostEliminationRosterScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final state = GameScope.of(context);
+    if (!state.lastChance1Completed ||
+        state.eliminatedContestantIds.isEmpty ||
+        state.lastChanceCoachContestantId == null) {
+      return _MissingRosterState(
+        onExit: () {
+          final navigator = Navigator.of(context);
+          if (navigator.canPop()) {
+            navigator.pop();
+          } else {
+            navigator.pushReplacement(MaterialPageRoute<void>(
+              builder: (_) => const ProducerDashboardScreen(day: 1),
+            ));
+          }
+        },
+      );
+    }
     final eliminatedId = state.eliminatedContestantIds.last;
     final active = contestantSeedData
         .where((c) => !state.eliminatedContestantIds.contains(c.id))
         .toList();
     final eliminated = _contestant(eliminatedId);
-    final eliminatedScore = lastChanceResults[eliminatedId]!.finalScore(
+    final eliminatedResult = lastChanceResults[eliminatedId];
+    if (eliminatedResult == null) {
+      return _MissingRosterState(
+        onExit: () => Navigator.of(context).maybePop(),
+      );
+    }
+    final eliminatedScore = eliminatedResult.finalScore(
       coached: eliminatedId == state.lastChanceCoachContestantId,
     );
     return Scaffold(
@@ -121,6 +144,15 @@ class PostEliminationRosterScreen extends StatelessWidget {
                   Text('14 yarışmacı ilk kez birlikte çalışmak zorunda.',
                       style: Theme.of(context).textTheme.bodyLarge),
                   const SizedBox(height: AppSpacing.xl),
+                  OutlinedButton(
+                    onPressed: () => Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => const ProducerDashboardScreen(day: 2),
+                      ),
+                    ),
+                    child: const Text('YAPIMCI MASASI'),
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
                   AppButton(
                     label: '2. GÜNE GEÇ',
                     onPressed: () => Navigator.of(context).push(
@@ -137,6 +169,35 @@ class PostEliminationRosterScreen extends StatelessWidget {
       ),
     );
   }
+}
+
+class _MissingRosterState extends StatelessWidget {
+  const _MissingRosterState({required this.onExit});
+  final VoidCallback onExit;
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+        backgroundColor: AppColors.ink,
+        body: SafeArea(
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(AppSpacing.lg),
+              child: Column(mainAxisSize: MainAxisSize.min, children: [
+                Text('KADRO SONUCU HAZIR DEĞİL',
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.headlineLarge),
+                const SizedBox(height: AppSpacing.md),
+                const Text(
+                  'Eleme sonucu tamamlandıktan sonra kadro güncellenecek.',
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: AppSpacing.lg),
+                AppButton(label: 'GERİ DÖN', onPressed: onExit),
+              ]),
+            ),
+          ),
+        ),
+      );
 }
 
 class _ActiveCard extends StatelessWidget {

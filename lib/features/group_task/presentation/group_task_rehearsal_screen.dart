@@ -10,6 +10,8 @@ import 'package:yildiz_kadro/features/game/application/game_scope.dart';
 import 'package:yildiz_kadro/features/group_task/data/day2_rehearsal_engine.dart';
 import 'package:yildiz_kadro/features/group_task/domain/day2_rehearsal.dart';
 import 'package:yildiz_kadro/features/group_task/presentation/day2_group_performance_screen.dart';
+import 'package:yildiz_kadro/features/producer/presentation/story_event_dialog.dart';
+import 'package:yildiz_kadro/features/producer/presentation/widgets/performance_aftermath_panel.dart';
 import 'package:yildiz_kadro/shared/widgets/app_button.dart';
 import 'package:yildiz_kadro/shared/widgets/max_width_container.dart';
 
@@ -27,7 +29,9 @@ class _GroupTaskRehearsalScreenState extends State<GroupTaskRehearsalScreen> {
   _Phase _phase = _Phase.intro;
   String? _selectedInterventionTeamId;
   String? _selectedChoiceId;
+  final Map<String, String> _choiceByTeam = {};
   bool _submitting = false;
+  bool _storyEventScheduled = false;
 
   Contestant _contestant(int id) =>
       contestantSeedData.firstWhere((contestant) => contestant.id == id);
@@ -46,62 +50,35 @@ class _GroupTaskRehearsalScreenState extends State<GroupTaskRehearsalScreen> {
         evaluationResults: evaluation1Results,
       ));
     }
+    if (!_storyEventScheduled && !state.day2RehearsalCompleted) {
+      _storyEventScheduled = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) showStoryEventDialog(context, day: 2);
+      });
+    }
     if (state.day2RehearsalCompleted) _phase = _Phase.result;
     if (!state.day2RehearsalCompleted &&
         state.day2PlayerInterventionTeamId != null &&
         _phase.index < _Phase.choice.index) {
-      _selectedInterventionTeamId = state.day2PlayerInterventionTeamId;
-      _phase = _Phase.choice;
+      if (state.day2PlayerInterventionTeamId == 'BOTH') {
+        _phase = _Phase.crises;
+      } else {
+        _selectedInterventionTeamId = state.day2PlayerInterventionTeamId;
+        _phase = _Phase.choice;
+      }
     }
   }
 
   Future<void> _confirmInterventionTeam(String teamId) async {
     final state = GameScope.of(context);
-    final captainId =
-        teamId == 'A' ? state.day2CaptainAId! : state.day2CaptainBId!;
-    final confirmed = await showModalBottomSheet<bool>(
-      context: context,
-      backgroundColor: AppColors.inkSoft,
-      builder: (context) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.lg),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'TAKIM ${_contestant(captainId).displayName}’İN PROVASINA GİRİYORSUN',
-                style: Theme.of(context).textTheme.headlineSmall,
-              ),
-              const SizedBox(height: AppSpacing.md),
-              Text(
-                'Diğer takım sorununu kaptanıyla çözmek zorunda kalacak.',
-                style: Theme.of(context).textTheme.bodyLarge,
-              ),
-              const SizedBox(height: AppSpacing.lg),
-              Row(children: [
-                Expanded(
-                    child: TextButton(
-                        onPressed: () => Navigator.pop(context, false),
-                        child: const Text('GERİ DÖN'))),
-                Expanded(
-                    child: FilledButton(
-                        onPressed: () => Navigator.pop(context, true),
-                        child: const Text('PROVAYA GİR'))),
-              ]),
-            ],
-          ),
-        ),
-      ),
-    );
-    if (confirmed == true && mounted) {
-      GameScope.of(context).lockDay2PlayerInterventionTeam(teamId);
-      setState(() {
-        _selectedInterventionTeamId = teamId;
-        _selectedChoiceId = null;
-        _phase = _Phase.choice;
-      });
+    if (state.day2PlayerInterventionTeamId == null) {
+      state.lockDay2PlayerInterventionTeam('BOTH');
     }
+    setState(() {
+      _selectedInterventionTeamId = teamId;
+      _selectedChoiceId = null;
+      _phase = _Phase.choice;
+    });
   }
 
   Future<void> _confirmChoice() async {
@@ -146,17 +123,25 @@ class _GroupTaskRehearsalScreenState extends State<GroupTaskRehearsalScreen> {
       ),
     );
     if (confirmed == true && mounted) {
-      _submitting = true;
       final state = GameScope.of(context);
-      final outcome = resolveDay2Rehearsal(
-        setup: setup,
-        playerTeamId: _selectedInterventionTeamId!,
-        playerChoiceId: _selectedChoiceId!,
-        captainAId: state.day2CaptainAId!,
-        captainBId: state.day2CaptainBId!,
-      );
-      state.completeDay2Rehearsal(outcome);
-      setState(() => _phase = _Phase.result);
+      _choiceByTeam[_selectedInterventionTeamId!] = _selectedChoiceId!;
+      if (_choiceByTeam.length == 1) {
+        final nextTeam = _selectedInterventionTeamId == 'A' ? 'B' : 'A';
+        setState(() {
+          _selectedInterventionTeamId = nextTeam;
+          _selectedChoiceId = null;
+          _phase = _Phase.choice;
+        });
+      } else {
+        _submitting = true;
+        final outcome = resolveBothDay2Rehearsals(
+          setup: setup,
+          teamAChoiceId: _choiceByTeam['A']!,
+          teamBChoiceId: _choiceByTeam['B']!,
+        );
+        state.completeDay2Rehearsal(outcome);
+        setState(() => _phase = _Phase.result);
+      }
     }
   }
 
@@ -279,16 +264,18 @@ class _RolesIntro extends StatelessWidget {
         Text('SAHNEDE HERKESİN BİR YERİ VAR',
             style: Theme.of(context).textTheme.displayLarge),
         const SizedBox(height: AppSpacing.md),
-        Text('Her takım üç kritik rol belirleyecek.',
+        Text('Her üye performansta ayrı bir sorumluluk taşıyacak.',
             style: Theme.of(context).textTheme.bodyLarge),
         const SizedBox(height: AppSpacing.xl),
         const _RoleDescription('CENTER', 'Performansın görsel odağı.'),
         const _RoleDescription(
-            'ANA VOKAL', 'Şarkının en kritik vokal bölümlerini taşıyor.'),
-        const _RoleDescription('DANS LİDERİ',
-            'Koreografinin temposunu ve temizliğini belirliyor.'),
-        const _RoleDescription('GRUP ÜYESİ',
-            'Takımın bütünlüğünü ve toplam performansını taşıyor.'),
+            'LEAD VOKAL', 'Şarkının en güçlü vokal bölümlerini taşıyor.'),
+        const _RoleDescription(
+            'SUB VOKAL', 'Vokal hattını ve diğer bölümleri destekliyor.'),
+        const _RoleDescription(
+            'LEAD DANCER', 'Koreografinin zor anlarında öne çıkıyor.'),
+        const _RoleDescription(
+            'SUB DANCER', 'Dans formasyonunun bütünlüğünü destekliyor.'),
         const SizedBox(height: AppSpacing.xl),
         AppButton(label: 'ROLLERİ DAĞIT', onPressed: onNext),
       ]));
@@ -313,38 +300,45 @@ class _TeamRoles extends StatelessWidget {
             style: Theme.of(context).textTheme.displayLarge),
         Text('ROL DAĞILIMI', style: _pinkLabel(context)),
         const SizedBox(height: AppSpacing.lg),
-        _RoleHolder(
-            'CENTER', 'Kameranın merkezinde.', contestant(roles.centerId)),
-        _RoleHolder('ANA VOKAL', 'Şarkının en kritik anları onda.',
-            contestant(roles.mainVocalId)),
-        _RoleHolder('DANS LİDERİ', 'Koreografi onun temposuyla kurulacak.',
-            contestant(roles.danceLeadId)),
-        const SizedBox(height: AppSpacing.md),
-        Text('GRUP ÜYELERİ', style: _pinkLabel(context)),
-        const SizedBox(height: AppSpacing.sm),
-        Row(
-            children: roles.groupMemberIds
-                .map((id) => Expanded(
-                    child: Padding(
-                        padding: const EdgeInsets.all(3),
-                        child: Column(children: [
-                          AspectRatio(
-                              aspectRatio: .75,
-                              child: ContestantPortrait(
-                                  contestant: contestant(id))),
-                          const SizedBox(height: 4),
-                          Text(contestant(id).displayName,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: Theme.of(context).textTheme.labelMedium)
-                        ]))))
-                .toList()),
-        const SizedBox(height: AppSpacing.xs),
-        Text('Takımın bütünlüğünü taşıyor.',
-            style: Theme.of(context)
-                .textTheme
-                .bodySmall
-                ?.copyWith(fontStyle: FontStyle.italic)),
+        if (roles.roleSlots.isNotEmpty)
+          ...roles.roleSlots.map((entry) => _RoleHolder(
+              day2TeamRoleLabel(entry.slot.type),
+              day2TeamRoleDescription(entry.slot.type),
+              contestant(entry.contestantId)))
+        else ...[
+          _RoleHolder(
+              'CENTER', 'Kameranın merkezinde.', contestant(roles.centerId)),
+          _RoleHolder('ANA VOKAL', 'Şarkının en kritik anları onda.',
+              contestant(roles.mainVocalId)),
+          _RoleHolder('DANS LİDERİ', 'Koreografi onun temposuyla kurulacak.',
+              contestant(roles.danceLeadId)),
+          const SizedBox(height: AppSpacing.md),
+          Text('GRUP ÜYELERİ', style: _pinkLabel(context)),
+          const SizedBox(height: AppSpacing.sm),
+          Row(
+              children: roles.groupMemberIds
+                  .map((id) => Expanded(
+                      child: Padding(
+                          padding: const EdgeInsets.all(3),
+                          child: Column(children: [
+                            AspectRatio(
+                                aspectRatio: .75,
+                                child: ContestantPortrait(
+                                    contestant: contestant(id))),
+                            const SizedBox(height: 4),
+                            Text(contestant(id).displayName,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: Theme.of(context).textTheme.labelMedium)
+                          ]))))
+                  .toList()),
+          const SizedBox(height: AppSpacing.xs),
+          Text('Takımın bütünlüğünü taşıyor.',
+              style: Theme.of(context)
+                  .textTheme
+                  .bodySmall
+                  ?.copyWith(fontStyle: FontStyle.italic)),
+        ],
         const SizedBox(height: AppSpacing.xl),
         AppButton(label: 'DEVAM ET', onPressed: onNext),
       ]));
@@ -407,7 +401,7 @@ class _CrisisSelection extends StatelessWidget {
       Text('İKİ TAKIM. İKİ SORUN.',
           style: Theme.of(context).textTheme.displayLarge),
       const SizedBox(height: AppSpacing.md),
-      Text('Ama bu kez yalnızca bir prova odasına girebilirsin.',
+      Text('Bu kez iki prova odasına da sen gireceksin.',
           style: Theme.of(context).textTheme.bodyLarge),
       const SizedBox(height: AppSpacing.xl),
       LayoutBuilder(builder: (context, constraints) {
@@ -532,22 +526,16 @@ class _RehearsalResult extends StatelessWidget {
       _FinalMetricCard(
           captain: captainA,
           metrics: outcome.teamAFinalMetrics,
-          badge: outcome.playerInterventionTeamId == 'A'
-              ? '★ SEN MÜDAHALE ETTİN'
-              : 'KAPTAN ÇÖZDÜ',
-          narrative: outcome.playerInterventionTeamId == 'A'
-              ? outcome.playerChoice.narrative
-              : outcome.captainChoice.narrative),
+          badge: '★ SEN MÜDAHALE ETTİN',
+          narrative: (outcome.playerChoicesByTeam['A'] ?? outcome.playerChoice)
+              .narrative),
       const SizedBox(height: AppSpacing.md),
       _FinalMetricCard(
           captain: captainB,
           metrics: outcome.teamBFinalMetrics,
-          badge: outcome.playerInterventionTeamId == 'B'
-              ? '★ SEN MÜDAHALE ETTİN'
-              : 'KAPTAN ÇÖZDÜ',
-          narrative: outcome.playerInterventionTeamId == 'B'
-              ? outcome.playerChoice.narrative
-              : outcome.captainChoice.narrative),
+          badge: '★ SEN MÜDAHALE ETTİN',
+          narrative: (outcome.playerChoicesByTeam['B'] ?? outcome.captainChoice)
+              .narrative),
       const SizedBox(height: AppSpacing.xl),
       Text(
           scoreA == scoreB
@@ -577,6 +565,10 @@ class _RehearsalResult extends StatelessWidget {
             '${contestant(state.day2LastPickedContestantId!).name}, takım seçiminde son sıradaydı. Prova onu yeniden oyuna soktu.',
             style: Theme.of(context).textTheme.bodyLarge),
       ],
+      const PerformanceAftermathPanel(
+        stageId: 'day2_rehearsal',
+        limit: 4,
+      ),
       const SizedBox(height: AppSpacing.xl),
       AppButton(
           label: 'SAHNEYE ÇIK',
@@ -765,6 +757,10 @@ class _CrisisCard extends StatelessWidget {
       RehearsalCrisisType.lastPickPressure => (
           '${primary.name} provada fazla yükleniyor.',
           'Takım seçiminde en son seçilmesi onu motive etti ama hata yapmaktan korkmaya başladı.',
+        ),
+      RehearsalCrisisType.positiveDevelopment => (
+          crisis.headline,
+          crisis.description,
         ),
       RehearsalCrisisType.generic => (crisis.headline, crisis.description),
     };

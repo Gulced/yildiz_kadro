@@ -10,12 +10,13 @@ const juryComments = <int, ({String label, String comment})>{
     comment: 'Sıcakkanlılığın güçlü. Şimdi bunu performansa çevirmelisin.',
   ),
   13: (
-    label: 'JÜRİ: KONFOR ALANINDAN ÇIK',
-    comment: 'Sesin seni taşıyor ama sahnede daha cesur olmalısın.',
+    label: 'JÜRİ: KONTROLÜ BIRAK',
+    comment: 'Teknik olarak hazırsın; şimdi duygunu da sahneye taşımalısın.',
   ),
   1: (
-    label: 'JÜRİ: HAM AMA İLGİNÇ',
-    comment: 'Doğal bir çekimin var. Teknik tarafın aynı seviyede değil.',
+    label: 'JÜRİ: BEKLENTİ ÇOK YÜKSEK',
+    comment:
+        'Üç alanda da güçlüsün; kendi baskının performansını yönetmesine izin verme.',
   ),
   9: (
     label: 'JÜRİ: FAZLA KONTROLLÜ',

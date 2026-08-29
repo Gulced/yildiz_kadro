@@ -3,6 +3,9 @@ import 'package:yildiz_kadro/app/theme/app_colors.dart';
 import 'package:yildiz_kadro/app/theme/app_spacing.dart';
 import 'package:yildiz_kadro/core/responsive/breakpoints.dart';
 import 'package:yildiz_kadro/features/contestants/data/contestant_seed_data.dart';
+import 'package:yildiz_kadro/features/contestants/data/contestant_identity_profiles.dart';
+import 'package:yildiz_kadro/features/contestants/domain/contestant.dart';
+import 'package:yildiz_kadro/features/contestants/presentation/widgets/contestant_portrait.dart';
 import 'package:yildiz_kadro/features/first_impression/presentation/first_impression_transition_screen.dart';
 import 'package:yildiz_kadro/features/first_impression/presentation/widgets/radar_contestant_card.dart';
 import 'package:yildiz_kadro/features/game/application/game_scope.dart';
@@ -142,6 +145,7 @@ class _FirstImpressionScreenState extends State<FirstImpressionScreen> {
                               contestant.id,
                               contestant.displayName,
                             ),
+                            onInfo: () => _showPreview(contestant),
                           );
                         },
                         childCount: contestantSeedData.length,
@@ -156,6 +160,106 @@ class _FirstImpressionScreenState extends State<FirstImpressionScreen> {
       ),
     );
   }
+
+  void _showPreview(Contestant contestant) {
+    final state = GameScope.of(context);
+    final identity = identityFor(contestant);
+    final social = state.socialStateFor(contestant.id);
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: AppColors.inkSoft,
+      isScrollControlled: true,
+      useSafeArea: true,
+      builder: (context) => SingleChildScrollView(
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(4),
+                child: SizedBox(
+                  width: 112,
+                  height: 148,
+                  child: ContestantPortrait(contestant: contestant),
+                ),
+              ),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(contestant.displayName,
+                        style: Theme.of(context).textTheme.headlineLarge),
+                    Text(contestant.personalityTraits.join(' · ')),
+                    const SizedBox(height: AppSpacing.sm),
+                    Text(identity.hook,
+                        style: Theme.of(context).textTheme.bodySmall),
+                  ],
+                ),
+              ),
+            ]),
+            const SizedBox(height: AppSpacing.lg),
+            Text('İLK İZLENİM RADARI', style: _previewLabel(context)),
+            _PreviewMeter(label: 'VOKAL', value: contestant.vocal),
+            _PreviewMeter(label: 'DANS', value: contestant.dance),
+            _PreviewMeter(label: 'SAHNE', value: contestant.stage),
+            _PreviewMeter(label: 'MOTİVASYON', value: social.motivation),
+            _PreviewMeter(label: 'POPÜLERLİK', value: social.popularity),
+            const SizedBox(height: AppSpacing.lg),
+            Text('HEDEF', style: _previewLabel(context)),
+            Text(identity.goal),
+            const SizedBox(height: AppSpacing.md),
+            Text('GÜÇLÜ TARAF', style: _previewLabel(context)),
+            Text(identity.characterStrength),
+            const SizedBox(height: AppSpacing.md),
+            Text('DİKKAT', style: _previewLabel(context)),
+            Text(identity.sensitivity),
+            const SizedBox(height: AppSpacing.lg),
+            AppButton(
+              label: _selectedIds.contains(contestant.id)
+                  ? 'RADARDAN ÇIKAR'
+                  : 'RADARA AL  ★',
+              onPressed: () {
+                Navigator.pop(context);
+                _toggleContestant(contestant.id, contestant.displayName);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  TextStyle _previewLabel(BuildContext context) =>
+      Theme.of(context).textTheme.labelLarge!.copyWith(
+            color: AppColors.accentBright,
+            letterSpacing: 1.1,
+          );
+}
+
+class _PreviewMeter extends StatelessWidget {
+  const _PreviewMeter({required this.label, required this.value});
+  final String label;
+  final int value;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+        padding: const EdgeInsets.only(top: AppSpacing.sm),
+        child: Row(children: [
+          SizedBox(width: 100, child: Text(label)),
+          Expanded(
+            child: LinearProgressIndicator(
+              value: value / 100,
+              minHeight: 5,
+              color: AppColors.accentBright,
+              backgroundColor: AppColors.line,
+            ),
+          ),
+          const SizedBox(width: AppSpacing.sm),
+          SizedBox(width: 28, child: Text('$value')),
+        ]),
+      );
 }
 
 class _FirstImpressionHeader extends StatelessWidget {

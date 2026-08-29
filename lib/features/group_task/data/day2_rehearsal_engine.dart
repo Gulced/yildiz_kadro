@@ -10,12 +10,33 @@ Day2RehearsalSetup initializeDay2Rehearsal({
   required int captainBId,
   required int lastPickedContestantId,
   required Map<int, EvaluationResult> evaluationResults,
+  TeamRoleAssignments? teamARoles,
+  TeamRoleAssignments? teamBRoles,
 }) {
   if (teamAIds.length != 7 || teamBIds.length != 7) {
     throw ArgumentError('Prova için iki adet 7 kişilik takım gerekli.');
   }
-  final rolesA = assignTeamRoles(teamAIds, evaluationResults);
-  final rolesB = assignTeamRoles(teamBIds, evaluationResults);
+  final rolesA = teamARoles ?? assignTeamRoles(teamAIds, evaluationResults);
+  final rolesB = teamBRoles ?? assignTeamRoles(teamBIds, evaluationResults);
+  if (!_validPlayerRoles(teamAIds, rolesA) ||
+      !_validPlayerRoles(teamBIds, rolesB)) {
+    throw ArgumentError('Oyuncu rol dağılımı geçersiz.');
+  }
+  final crisisA = detectRehearsalCrisis(
+    teamId: 'A',
+    teamIds: teamAIds,
+    roles: rolesA,
+    lastPickedContestantId: lastPickedContestantId,
+    evaluationResults: evaluationResults,
+  );
+  final crisisB = detectRehearsalCrisis(
+    teamId: 'B',
+    teamIds: teamBIds,
+    roles: rolesB,
+    lastPickedContestantId: lastPickedContestantId,
+    evaluationResults: evaluationResults,
+    excludedTypes: {crisisA.type},
+  );
   return Day2RehearsalSetup(
     teamARoles: rolesA,
     teamBRoles: rolesB,
@@ -29,21 +50,25 @@ Day2RehearsalSetup initializeDay2Rehearsal({
       rolesB,
       evaluationResults,
     ),
-    teamACrisis: detectRehearsalCrisis(
-      teamId: 'A',
-      teamIds: teamAIds,
-      roles: rolesA,
-      lastPickedContestantId: lastPickedContestantId,
-      evaluationResults: evaluationResults,
-    ),
-    teamBCrisis: detectRehearsalCrisis(
-      teamId: 'B',
-      teamIds: teamBIds,
-      roles: rolesB,
-      lastPickedContestantId: lastPickedContestantId,
-      evaluationResults: evaluationResults,
-    ),
+    teamACrisis: crisisA,
+    teamBCrisis: crisisB,
   );
+}
+
+bool _validPlayerRoles(List<int> teamIds, TeamRoleAssignments roles) {
+  final specialists = {roles.centerId, roles.mainVocalId, roles.danceLeadId};
+  final detailedIds =
+      roles.roleSlots.map((entry) => entry.contestantId).toSet();
+  final detailedValid = roles.roleSlots.isEmpty ||
+      (roles.roleSlots.length == teamIds.length &&
+          detailedIds.length == teamIds.length &&
+          detailedIds.containsAll(teamIds));
+  return detailedValid &&
+      specialists.length == 3 &&
+      teamIds.toSet().containsAll(specialists) &&
+      roles.groupMemberIds.toSet().length == 4 &&
+      specialists.union(roles.groupMemberIds.toSet()).length == 7 &&
+      teamIds.toSet().containsAll(roles.groupMemberIds);
 }
 
 TeamRoleAssignments assignTeamRoles(
@@ -182,14 +207,16 @@ RehearsalCrisis detectRehearsalCrisis({
   required TeamRoleAssignments roles,
   required int lastPickedContestantId,
   required Map<int, EvaluationResult> evaluationResults,
+  Set<RehearsalCrisisType> excludedTypes = const {},
 }) {
   final centerCandidates = teamIds.where((id) => id != roles.centerId).toList()
     ..sort((a, b) => _centerScore(b, evaluationResults)
         .compareTo(_centerScore(a, evaluationResults)));
   final centerChallenger = centerCandidates.first;
-  if (_centerScore(roles.centerId, evaluationResults) -
-          _centerScore(centerChallenger, evaluationResults) <=
-      5) {
+  if (!excludedTypes.contains(RehearsalCrisisType.centerConflict) &&
+      _centerScore(roles.centerId, evaluationResults) -
+              _centerScore(centerChallenger, evaluationResults) <=
+          5) {
     return RehearsalCrisis(
       teamId: teamId,
       type: RehearsalCrisisType.centerConflict,
@@ -214,7 +241,8 @@ RehearsalCrisis detectRehearsalCrisis({
         groupTaskProfiles[id]!.secondaryRole == GroupRole.vocal,
     orElse: () => -1,
   );
-  if (vocalChallenger != -1) {
+  if (vocalChallenger != -1 &&
+      !excludedTypes.contains(RehearsalCrisisType.vocalConflict)) {
     return RehearsalCrisis(
       teamId: teamId,
       type: RehearsalCrisisType.vocalConflict,
@@ -239,7 +267,8 @@ RehearsalCrisis detectRehearsalCrisis({
       .toList()
     ..sort((a, b) =>
         evaluationResults[b]!.dance.compareTo(evaluationResults[a]!.dance));
-  if (danceCandidates.isNotEmpty) {
+  if (danceCandidates.isNotEmpty &&
+      !excludedTypes.contains(RehearsalCrisisType.danceConflict)) {
     return RehearsalCrisis(
       teamId: teamId,
       type: RehearsalCrisisType.danceConflict,
@@ -250,7 +279,8 @@ RehearsalCrisis detectRehearsalCrisis({
       description: 'Temiz koreografi ile sahnede özgürlük isteği çatışıyor.',
     );
   }
-  if (teamIds.contains(lastPickedContestantId)) {
+  if (teamIds.contains(lastPickedContestantId) &&
+      !excludedTypes.contains(RehearsalCrisisType.lastPickPressure)) {
     return RehearsalCrisis(
       teamId: teamId,
       type: RehearsalCrisisType.lastPickPressure,
@@ -258,6 +288,28 @@ RehearsalCrisis detectRehearsalCrisis({
       title: 'KENDİNİ KANITLAMA BASKISI',
       headline: 'Takımın son seçimi provada fazla yükleniyor.',
       description: 'Kendini göstermek isterken hata yapma korkusu büyüyor.',
+    );
+  }
+  final compatibility = calculateInitialRehearsalMetrics(
+    teamIds,
+    roles,
+    evaluationResults,
+  ).harmony;
+  if (!excludedTypes.contains(RehearsalCrisisType.positiveDevelopment) &&
+      (compatibility >= 78 ||
+          excludedTypes.contains(RehearsalCrisisType.generic))) {
+    final strongest = teamIds.toList()
+      ..sort((a, b) => evaluationResults[b]!
+          .overall
+          .compareTo(evaluationResults[a]!.overall));
+    return RehearsalCrisis(
+      teamId: teamId,
+      type: RehearsalCrisisType.positiveDevelopment,
+      primaryContestantId: strongest.first,
+      secondaryContestantId: strongest[1],
+      title: 'BEKLENMEDİK UYUM',
+      headline: 'İki farklı profil provada ortak bir ritim buldu.',
+      description: 'Takımın güçlü üyeleri birbirinin alanını açmaya başladı.',
     );
   }
   return RehearsalCrisis(
@@ -345,6 +397,24 @@ List<RehearsalChoice> choicesForCrisis(RehearsalCrisisType type) =>
               readinessModifier: -1,
               energyModifier: 5),
         ],
+      RehearsalCrisisType.positiveDevelopment => const [
+          RehearsalChoice(
+              id: 'protect_duo',
+              title: 'İKİLİYİ KORU',
+              description: 'Uyumlu anları performansın merkezinde tut.',
+              narrative: 'Beklenmedik ikili takımın güvenini yükseltti.',
+              harmonyModifier: 5,
+              readinessModifier: 2,
+              energyModifier: 2),
+          RehearsalChoice(
+              id: 'spread_energy',
+              title: 'ENERJİYİ TAKIMA YAY',
+              description: 'İkilinin yöntemini bütün formasyona taşı.',
+              narrative: 'Olumlu prova enerjisi bütün takıma yayıldı.',
+              harmonyModifier: 3,
+              readinessModifier: 4,
+              energyModifier: 1),
+        ],
       RehearsalCrisisType.generic => const [
           RehearsalChoice(
               id: 'keep_plan',
@@ -401,6 +471,29 @@ Day2RehearsalOutcome resolveDay2Rehearsal({
       teamBChoice,
       fullStrength: playerTeamId == 'B',
     ),
+  );
+}
+
+Day2RehearsalOutcome resolveBothDay2Rehearsals({
+  required Day2RehearsalSetup setup,
+  required String teamAChoiceId,
+  required String teamBChoiceId,
+}) {
+  final choiceA = choicesForCrisis(setup.teamACrisis.type)
+      .firstWhere((choice) => choice.id == teamAChoiceId);
+  final choiceB = choicesForCrisis(setup.teamBCrisis.type)
+      .firstWhere((choice) => choice.id == teamBChoiceId);
+  return Day2RehearsalOutcome(
+    playerInterventionTeamId: 'BOTH',
+    playerCrisisType: setup.teamACrisis.type,
+    playerChoice: choiceA,
+    captainResolutionTeamId: 'NONE',
+    captainChoice: choiceB,
+    teamAFinalMetrics:
+        _applyChoice(setup.teamAInitialMetrics, choiceA, fullStrength: true),
+    teamBFinalMetrics:
+        _applyChoice(setup.teamBInitialMetrics, choiceB, fullStrength: true),
+    playerChoicesByTeam: Map.unmodifiable({'A': choiceA, 'B': choiceB}),
   );
 }
 

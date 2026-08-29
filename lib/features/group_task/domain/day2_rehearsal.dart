@@ -3,8 +3,57 @@ enum RehearsalCrisisType {
   vocalConflict,
   danceConflict,
   lastPickPressure,
+  positiveDevelopment,
   generic,
 }
+
+enum Day2TeamRoleType { center, leadVocal, subVocal, leadDancer, subDancer }
+
+class Day2RoleSlot {
+  const Day2RoleSlot({required this.id, required this.type});
+  final String id;
+  final Day2TeamRoleType type;
+}
+
+List<Day2RoleSlot> getRolesForTeamSize(int teamSize) {
+  if (teamSize < 3) throw ArgumentError.value(teamSize, 'teamSize');
+  final slots = <Day2RoleSlot>[
+    const Day2RoleSlot(id: 'center', type: Day2TeamRoleType.center),
+    const Day2RoleSlot(id: 'lead_vocal', type: Day2TeamRoleType.leadVocal),
+    const Day2RoleSlot(id: 'lead_dancer', type: Day2TeamRoleType.leadDancer),
+  ];
+  var index = 1;
+  while (slots.length < teamSize) {
+    final type =
+        index.isOdd ? Day2TeamRoleType.subVocal : Day2TeamRoleType.subDancer;
+    slots.add(Day2RoleSlot(
+      id: '${type.name}_${(index + 1) ~/ 2}',
+      type: type,
+    ));
+    index++;
+  }
+  // Editorial order: vocal line together, dance line together.
+  slots.sort((a, b) => a.type.index.compareTo(b.type.index));
+  return List.unmodifiable(slots);
+}
+
+String day2TeamRoleLabel(Day2TeamRoleType role) => switch (role) {
+      Day2TeamRoleType.center => 'CENTER',
+      Day2TeamRoleType.leadVocal => 'LEAD VOKAL',
+      Day2TeamRoleType.subVocal => 'SUB VOKAL',
+      Day2TeamRoleType.leadDancer => 'LEAD DANCER',
+      Day2TeamRoleType.subDancer => 'SUB DANCER',
+    };
+
+String day2TeamRoleDescription(Day2TeamRoleType role) => switch (role) {
+      Day2TeamRoleType.center =>
+        'Sahne etkisi ve görünürlüğü yüksek üyeye uygun.',
+      Day2TeamRoleType.leadVocal => 'Takımın güçlü vokal bölümlerini taşır.',
+      Day2TeamRoleType.subVocal =>
+        'Vokal hattını ve diğer bölümleri destekler.',
+      Day2TeamRoleType.leadDancer => 'Zor koreografilerde öne çıkar.',
+      Day2TeamRoleType.subDancer => 'Dans formasyonunu ve lideri destekler.',
+    };
 
 class TeamRoleAssignments {
   const TeamRoleAssignments({
@@ -12,12 +61,30 @@ class TeamRoleAssignments {
     required this.mainVocalId,
     required this.danceLeadId,
     required this.groupMemberIds,
+    this.roleSlots = const [],
   });
 
   final int centerId;
   final int mainVocalId;
   final int danceLeadId;
   final List<int> groupMemberIds;
+  final List<({Day2RoleSlot slot, int contestantId})> roleSlots;
+
+  String roleLabelFor(int contestantId) {
+    final match =
+        roleSlots.where((entry) => entry.contestantId == contestantId);
+    if (match.isNotEmpty) return day2TeamRoleLabel(match.first.slot.type);
+    if (contestantId == centerId) return 'CENTER';
+    if (contestantId == mainVocalId) return 'LEAD VOKAL';
+    if (contestantId == danceLeadId) return 'LEAD DANCER';
+    return 'GRUP ÜYESİ';
+  }
+
+  Day2TeamRoleType? roleTypeFor(int contestantId) {
+    final match =
+        roleSlots.where((entry) => entry.contestantId == contestantId);
+    return match.isEmpty ? null : match.first.slot.type;
+  }
 }
 
 class RehearsalMetrics {
@@ -101,6 +168,7 @@ class Day2RehearsalOutcome {
     required this.captainChoice,
     required this.teamAFinalMetrics,
     required this.teamBFinalMetrics,
+    this.playerChoicesByTeam = const {},
   });
 
   final String playerInterventionTeamId;
@@ -110,4 +178,5 @@ class Day2RehearsalOutcome {
   final RehearsalChoice captainChoice;
   final RehearsalMetrics teamAFinalMetrics;
   final RehearsalMetrics teamBFinalMetrics;
+  final Map<String, RehearsalChoice> playerChoicesByTeam;
 }

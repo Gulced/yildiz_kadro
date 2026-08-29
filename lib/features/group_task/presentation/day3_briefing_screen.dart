@@ -25,6 +25,7 @@ class _Day3BriefingScreenState extends State<Day3BriefingScreen> {
   _Phase _phase = _Phase.intro;
   int _revealIndex = 0;
   final Map<int, Day3CreativeDirection> _directions = {};
+  bool _initializationScheduled = false;
   Contestant _contestant(int id) =>
       contestantSeedData.firstWhere((c) => c.id == id);
   List<int> _activeIds(BuildContext context) {
@@ -39,17 +40,23 @@ class _Day3BriefingScreenState extends State<Day3BriefingScreen> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     final state = GameScope.of(context);
-    if (state.day3IdentityAllocation == null) {
-      final ids = _activeIds(context);
-      state.initializeDay3Identity(allocateDay3Concepts(
+    if (state.day3IdentityAllocation == null && !_initializationScheduled) {
+      _initializationScheduled = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        final game = GameScope.of(context);
+        final day2 = game.day2GroupPerformanceSnapshot;
+        if (game.day3IdentityAllocation != null || day2 == null) return;
+        final ids = _activeIds(context);
+        game.initializeDay3Identity(allocateDay3Concepts(
           activeContestantIds: ids,
-          evaluationResults: state.evaluation1Results,
+          evaluationResults: game.evaluation1Results,
           day2Scores: {
             for (final id in ids)
-              id: state.day2GroupPerformanceSnapshot!.individualResults[id]
-                      ?.rawOverall ??
-                  0
-          }));
+              id: day2.individualResults[id]?.rawOverall ?? 0
+          },
+        ));
+      });
     }
     if (state.day3IdentitySetupCompleted) {
       _directions.addAll(
@@ -129,18 +136,20 @@ class _Day3BriefingScreenState extends State<Day3BriefingScreen> {
     return Scaffold(
         backgroundColor: AppColors.ink,
         body: SafeArea(
-            child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 220),
-                child: switch (_phase) {
-                  _Phase.intro => _intro(ids),
-                  _Phase.task => _task(),
-                  _Phase.reveal => _reveal(ids),
-                  _Phase.worlds => _worlds(ids),
-                  _Phase.director => _director(),
-                  _Phase.select => _select(ids),
-                  _Phase.plan => _plan(),
-                  _Phase.ready => _ready(ids)
-                })));
+            child: GameScope.of(context).day3IdentityAllocation == null
+                ? const Center(child: CircularProgressIndicator())
+                : AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 220),
+                    child: switch (_phase) {
+                      _Phase.intro => _intro(ids),
+                      _Phase.task => _task(),
+                      _Phase.reveal => _reveal(ids),
+                      _Phase.worlds => _worlds(ids),
+                      _Phase.director => _director(),
+                      _Phase.select => _select(ids),
+                      _Phase.plan => _plan(),
+                      _Phase.ready => _ready(ids)
+                    })));
   }
 
   Widget _intro(List<int> ids) => _Page(

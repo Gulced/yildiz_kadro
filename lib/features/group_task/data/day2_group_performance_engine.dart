@@ -152,16 +152,44 @@ IndividualGroupPerformanceResult _calculateIndividual({
   var stage = evaluationResult.stage * .75 +
       metrics.energy * .15 +
       metrics.harmony * .10;
-  var role = 'GRUP ÜYESİ';
+  var role = roles.roleLabelFor(id);
   if (id == roles.centerId) {
     stage += 2;
-    role = 'CENTER';
+    role = roles.roleLabelFor(id);
   } else if (id == roles.mainVocalId) {
     vocal += 2;
-    role = 'ANA VOKAL';
+    role = roles.roleLabelFor(id);
   } else if (id == roles.danceLeadId) {
     dance += 2;
-    role = 'DANS LİDERİ';
+    role = roles.roleLabelFor(id);
+  }
+  final assignedType = roles.roleTypeFor(id);
+  final roleStat = switch (assignedType) {
+    Day2TeamRoleType.center => evaluationResult.stage,
+    Day2TeamRoleType.leadVocal ||
+    Day2TeamRoleType.subVocal =>
+      evaluationResult.vocal,
+    Day2TeamRoleType.leadDancer ||
+    Day2TeamRoleType.subDancer =>
+      evaluationResult.dance,
+    null => evaluationResult.overall,
+  };
+  final roleFit = roleStat >= 88
+      ? 2
+      : roleStat < 76
+          ? -3
+          : 0;
+  switch (assignedType) {
+    case Day2TeamRoleType.center:
+      stage += roleFit;
+    case Day2TeamRoleType.leadVocal:
+    case Day2TeamRoleType.subVocal:
+      vocal += roleFit;
+    case Day2TeamRoleType.leadDancer:
+    case Day2TeamRoleType.subDancer:
+      dance += roleFit;
+    case null:
+      break;
   }
   final bonus = _decisionBonus(
     contestantId: id,
@@ -237,6 +265,11 @@ IndividualGroupPerformanceResult _calculateIndividual({
       }
       if (contestantId == primary && choiceId == 'star_moment') {
         bonus = (0, 0, 4);
+      }
+      break;
+    case RehearsalCrisisType.positiveDevelopment:
+      if (contestantId == primary || contestantId == challenger) {
+        bonus = (1, 1, 2);
       }
       break;
     case RehearsalCrisisType.generic:
