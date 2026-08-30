@@ -27,7 +27,7 @@ class _ProducerDashboardScreenState extends State<ProducerDashboardScreen> {
     'KULİS',
     'GÜNDEM',
     'JÜRİ',
-    'SEZON'
+    'SEZON',
   ];
 
   @override
@@ -37,41 +37,43 @@ class _ProducerDashboardScreenState extends State<ProducerDashboardScreen> {
       backgroundColor: AppColors.ink,
       appBar: AppBar(title: const Text('YAPIMCI MASASI')),
       body: SafeArea(
-        child: Column(children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(
-              AppSpacing.md,
-              AppSpacing.sm,
-              AppSpacing.md,
-              AppSpacing.sm,
-            ),
-            child: SizedBox(
-              width: double.infinity,
-              child: FilledButton.icon(
-                onPressed: Navigator.of(context).canPop()
-                    ? () => Navigator.of(context).pop()
-                    : null,
-                icon: const Icon(Icons.arrow_back_rounded),
-                label: const Text('KALDIĞIN YERDEN DEVAM ET'),
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.md,
+                AppSpacing.sm,
+                AppSpacing.md,
+                AppSpacing.sm,
+              ),
+              child: SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  onPressed: Navigator.of(context).canPop()
+                      ? () => Navigator.of(context).pop()
+                      : null,
+                  icon: const Icon(Icons.arrow_back_rounded),
+                  label: const Text('KALDIĞIN YERDEN DEVAM ET'),
+                ),
               ),
             ),
-          ),
-          SizedBox(
-            height: 48,
-            child: ListView.separated(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-              scrollDirection: Axis.horizontal,
-              itemCount: labels.length,
-              separatorBuilder: (_, _) => const SizedBox(width: 6),
-              itemBuilder: (_, tab) => ChoiceChip(
-                label: Text(labels[tab]),
-                selected: index == tab,
-                onSelected: (_) => _selectTab(state, tab),
+            SizedBox(
+              height: 48,
+              child: ListView.separated(
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+                scrollDirection: Axis.horizontal,
+                itemCount: labels.length,
+                separatorBuilder: (_, _) => const SizedBox(width: 6),
+                itemBuilder: (_, tab) => ChoiceChip(
+                  label: Text(labels[tab]),
+                  selected: index == tab,
+                  onSelected: (_) => _selectTab(state, tab),
+                ),
               ),
             ),
-          ),
-          Expanded(child: _content(state)),
-        ]),
+            Expanded(child: _content(state)),
+          ],
+        ),
       ),
     );
   }
@@ -86,7 +88,7 @@ class _ProducerDashboardScreenState extends State<ProducerDashboardScreen> {
       };
 
   void _selectTab(GameState state, int tab) {
-    if (tab == 2) state.ensureStoryEvent(widget.day);
+    if (tab == 2) state.prepareStoryEvent(widget.day);
     if (!mounted || index == tab) return;
     setState(() => index = tab);
   }
@@ -97,43 +99,63 @@ class _ProducerDashboardScreenState extends State<ProducerDashboardScreen> {
       );
 
   Widget _contestants(GameState state) {
-    final active = contestantSeedData
-        .where((member) => !state.eliminatedContestantIds.contains(member.id));
-    return _scroll(active.map((member) {
-      final social = state.socialStateFor(member.id);
-      return ListTile(
-        contentPadding: const EdgeInsets.symmetric(vertical: 4),
-        leading: ClipOval(
-          child: SizedBox(
+    final active = contestantSeedData.where(
+      (member) => !state.eliminatedContestantIds.contains(member.id),
+    );
+    return _scroll(
+      active.map((member) {
+        final social = state.socialStateFor(member.id);
+        return ListTile(
+          contentPadding: const EdgeInsets.symmetric(vertical: 4),
+          leading: ClipOval(
+            child: SizedBox(
               width: 52,
               height: 52,
-              child: ContestantPortrait(contestant: member)),
-        ),
-        title: Text(member.displayName),
-        subtitle: Text(
-            '${social.currentForm}  •  ${_followers(social.followers)} TAKİPÇİ'),
-        trailing: const Icon(Icons.chevron_right_rounded),
-        onTap: () => _showDossier(state, member),
-      );
-    }).toList());
+              child: ContestantPortrait(contestant: member),
+            ),
+          ),
+          title: Text(member.displayName),
+          subtitle: Text(
+            '${social.currentForm}  •  ${_followers(social.followers)} TAKİPÇİ',
+          ),
+          trailing: const Icon(Icons.chevron_right_rounded),
+          onTap: () => _showDossier(state, member),
+        );
+      }).toList(),
+    );
   }
 
   Widget _teams(GameState state) {
     if (!state.day2TeamFormationCompleted) {
       return _scroll([
-        const _Panel('TAKIMLAR HENÜZ KİLİTLENMEDİ',
-            'Takım kurma ekranındaki seçimlerin burada salt okunur görünecek.')
+        const _Panel(
+          'TAKIMLAR HENÜZ KİLİTLENMEDİ',
+          'Takım kurma ekranındaki seçimlerin burada salt okunur görünecek.',
+        ),
       ]);
     }
     return _scroll([
-      _teamPanel('A TAKIMI', state.day2CaptainAId!, state.day2TeamAIds,
-          state.day2RehearsalSetup?.teamARoles),
-      _teamPanel('B TAKIMI', state.day2CaptainBId!, state.day2TeamBIds,
-          state.day2RehearsalSetup?.teamBRoles),
+      _teamPanel(
+        'A TAKIMI',
+        state.day2CaptainAId!,
+        state.day2TeamAIds,
+        state.day2RehearsalSetup?.teamARoles,
+      ),
+      _teamPanel(
+        'B TAKIMI',
+        state.day2CaptainBId!,
+        state.day2TeamBIds,
+        state.day2RehearsalSetup?.teamBRoles,
+      ),
     ]);
   }
 
-  Widget _teamPanel(String title, int captain, List<int> ids, dynamic roles) =>
+  Widget _teamPanel(
+    String title,
+    int captain,
+    List<int> ids,
+    dynamic roles,
+  ) =>
       _Panel(
         '$title  •  KAPTAN ${_name(captain)}',
         '${ids.map(_name).join(' • ')}${roles == null ? '' : '\nCENTER ${_name(roles.centerId)}  •  ANA VOKAL ${_name(roles.mainVocalId)}  •  DANS LİDERİ ${_name(roles.danceLeadId)}'}',
@@ -151,61 +173,70 @@ class _ProducerDashboardScreenState extends State<ProducerDashboardScreen> {
     }
     final choice = record.choiceId == null
         ? null
-        : record.event.choices
-            .firstWhere((value) => value.id == record.choiceId);
+        : record.event.choices.firstWhere(
+            (value) => value.id == record.choiceId,
+          );
     return _scroll([
       Text(_category(record.event.category), style: _accent()),
       const SizedBox(height: AppSpacing.md),
-      _Panel(record.event.title,
-          '${record.event.contestantIds.map(_name).join(' & ')}\n${record.event.body}'),
+      _Panel(
+        record.event.title,
+        '${record.event.contestantIds.map(_name).join(' & ')}\n${record.event.body}',
+      ),
       _Panel('NEDEN?', record.event.why),
       if (record.event.confessional != null)
         _Panel('KULİS RÖPORTAJI', record.event.confessional!),
       if (choice == null)
-        ...record.event.choices.map((option) => Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  border: Border.all(color: AppColors.line),
-                  color: AppColors.inkSoft,
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(AppSpacing.md),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Text(option.label,
-                          style: Theme.of(context).textTheme.titleMedium),
-                      const SizedBox(height: AppSpacing.sm),
-                      Text('BEKLENEN ETKİ', style: _accent()),
-                      ...state
-                          .previewStoryChoice(record.event, option)
-                          .entries
-                          .map((entry) => Text(
-                              '${_name(entry.key)}  ${_effectSummary(entry.value)}')),
-                      const SizedBox(height: AppSpacing.md),
-                      OutlinedButton(
-                        onPressed: () => state.resolveStoryEvent(
-                            day: widget.day, choiceId: option.id),
-                        child: const Text('BU KARARI UYGULA'),
+        ...record.event.choices.map(
+          (option) => Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                border: Border.all(color: AppColors.line),
+                color: AppColors.inkSoft,
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(AppSpacing.md),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      option.label,
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    OutlinedButton(
+                      onPressed: () => state.resolveStoryEvent(
+                        day: widget.day,
+                        choiceId: option.id,
                       ),
-                    ],
-                  ),
+                      child: const Text('BU KARARI UYGULA'),
+                    ),
+                  ],
                 ),
               ),
-            ))
+            ),
+          ),
+        )
       else
         _Panel(
-            'KARAR UYGULANDI', '${choice.feedback}\n${_resultSummary(record)}'),
+          'KARAR UYGULANDI',
+          '${choice.feedback}\n${_resultSummary(record)}',
+        ),
       const SizedBox(height: AppSpacing.xl),
       Text('GEÇMİŞ', style: _accent()),
       ...state.eventHistory.reversed
           .where((event) => event.choiceId != null && event.day != widget.day)
-          .map((event) => ListTile(
+          .map(
+            (event) => ListTile(
               title: Text('${event.day}. GÜN • ${event.event.title}'),
-              subtitle: Text(event.event.choices
-                  .firstWhere((choice) => choice.id == event.choiceId)
-                  .feedback))),
+              subtitle: Text(
+                event.event.choices
+                    .firstWhere((choice) => choice.id == event.choiceId)
+                    .feedback,
+              ),
+            ),
+          ),
     ]);
   }
 
@@ -217,22 +248,20 @@ class _ProducerDashboardScreenState extends State<ProducerDashboardScreen> {
         StoryEventCategory.relationship => 'İLİŞKİ OLAYI',
       };
 
-  String _effectSummary(Map<String, int> effects) => effects.entries
-      .where((entry) => entry.value != 0)
-      .map((entry) =>
-          '${_metric(entry.key)} ${entry.value > 0 ? '+' : ''}${entry.value}')
-      .join('  •  ');
-
   String _resultSummary(StoryEventRecord record) {
     final lines = <String>[];
     for (final id in record.event.contestantIds) {
       final before = record.before[id] ?? const {};
       final after = record.after[id] ?? const {};
       final changes = after.entries
-          .where((entry) =>
-              before[entry.key] != null && before[entry.key] != entry.value)
-          .map((entry) =>
-              '${_metric(entry.key)} ${before[entry.key]} → ${entry.value}')
+          .where(
+            (entry) =>
+                before[entry.key] != null && before[entry.key] != entry.value,
+          )
+          .map(
+            (entry) =>
+                '${_metric(entry.key)} ${before[entry.key]} → ${entry.value}',
+          )
           .join('  •  ');
       if (changes.isNotEmpty) lines.add('${_name(id)}\n$changes');
     }
@@ -265,8 +294,10 @@ class _ProducerDashboardScreenState extends State<ProducerDashboardScreen> {
     return _scroll([
       _Panel('FAN FAVORİSİ', _name(top((value) => value.popularity))),
       _Panel('EN ÇOK KONUŞULAN', _name(top((value) => value.buzz))),
-      _Panel('EN HIZLI BÜYÜYEN',
-          _name(top((value) => value.weeklyFollowerGrowth))),
+      _Panel(
+        'EN HIZLI BÜYÜYEN',
+        _name(top((value) => value.weeklyFollowerGrowth)),
+      ),
       _Panel('EN GENİŞ KİTLE', _name(top((value) => value.followers))),
     ]);
   }
@@ -279,18 +310,26 @@ class _ProducerDashboardScreenState extends State<ProducerDashboardScreen> {
     final vocal = [...active]..sort((a, b) => b.vocal.compareTo(a.vocal));
     final dance = [...active]..sort((a, b) => b.dance.compareTo(a.dance));
     return _scroll([
-      const _Panel('HOCALARA SOR',
-          'Görüşleri bilgi verir; puan bonusu sağlamaz ve son karar her zaman senindir.'),
-      _Panel('VOKAL HOCASI',
-          '${vocal.first.displayName} canlı vokalde en güvenli isim. ${vocal[1].displayName} gelişim takibinde.'),
-      _Panel('DANS HOCASI',
-          '${dance.first.displayName} koreografiyi en hızlı taşıyor. ${dance[1].displayName} sahne görünürlüğünde güçlü.'),
+      const _Panel(
+        'HOCALARA SOR',
+        'Görüşleri bilgi verir; puan bonusu sağlamaz ve son karar her zaman senindir.',
+      ),
+      _Panel(
+        'VOKAL HOCASI',
+        '${vocal.first.displayName} canlı vokalde en güvenli isim. ${vocal[1].displayName} gelişim takibinde.',
+      ),
+      _Panel(
+        'DANS HOCASI',
+        '${dance.first.displayName} koreografiyi en hızlı taşıyor. ${dance[1].displayName} sahne görünürlüğünde güçlü.',
+      ),
       ...active.take(5).map((member) {
         final social = state.socialStateFor(member.id);
         return ListTile(
-            title: Text(member.displayName),
-            subtitle: Text(
-                'Vokal görüşü ${social.vocalCoachImpression}  •  Dans görüşü ${social.danceCoachImpression}\nHazırlık ${social.preparation}  •  Profesyonellik ${social.professionalism}'));
+          title: Text(member.displayName),
+          subtitle: Text(
+            'Vokal görüşü ${social.vocalCoachImpression}  •  Dans görüşü ${social.danceCoachImpression}\nHazırlık ${social.preparation}  •  Profesyonellik ${social.professionalism}',
+          ),
+        );
       }),
     ]);
   }
@@ -299,26 +338,35 @@ class _ProducerDashboardScreenState extends State<ProducerDashboardScreen> {
         _Panel(
             'İLK RADAR', state.playerRadarContestantIds.map(_name).join(' • ')),
         if (state.day2CaptainAId != null)
-          _Panel('KAPTAN SEÇİMİ',
-              '${_name(state.day2CaptainAId!)} • ${_name(state.day2CaptainBId!)}'),
+          _Panel(
+            'KAPTAN SEÇİMİ',
+            '${_name(state.day2CaptainAId!)} • ${_name(state.day2CaptainBId!)}',
+          ),
         _Panel(
-            'VEDALAR',
-            state.eliminatedContestantIds.isEmpty
-                ? 'Henüz yok.'
-                : state.eliminatedContestantIds.map(_name).join(' • ')),
-        _Panel('HİKÂYE KARARLARI',
-            '${state.eventHistory.where((event) => event.choiceId != null).length} karar kilitlendi.'),
+          'VEDALAR',
+          state.eliminatedContestantIds.isEmpty
+              ? 'Henüz yok.'
+              : state.eliminatedContestantIds.map(_name).join(' • '),
+        ),
+        _Panel(
+          'HİKÂYE KARARLARI',
+          '${state.eventHistory.where((event) => event.choiceId != null).length} karar kilitlendi.',
+        ),
       ]);
 
   void _showDossier(GameState state, Contestant member) {
     final social = state.socialStateFor(member.id);
     final identity = identityFor(member);
     final relations = contestantSeedData
-        .where((other) =>
-            other.id != member.id &&
-            !state.eliminatedContestantIds.contains(other.id))
-        .map((other) =>
-            '${other.displayName}: ${relationshipLabel(state.relationshipBetween(member.id, other.id))}')
+        .where(
+          (other) =>
+              other.id != member.id &&
+              !state.eliminatedContestantIds.contains(other.id),
+        )
+        .map(
+          (other) =>
+              '${other.displayName}: ${relationshipLabel(state.relationshipBetween(member.id, other.id))}',
+        )
         .take(4)
         .join('\n');
     showModalBottomSheet<void>(
@@ -328,39 +376,52 @@ class _ProducerDashboardScreenState extends State<ProducerDashboardScreen> {
       builder: (context) => SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(AppSpacing.lg),
-          child:
-              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            SizedBox(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(
                 height: 260,
                 width: double.infinity,
-                child: ContestantPortrait(contestant: member)),
-            const SizedBox(height: AppSpacing.md),
-            Text('${member.displayName} — ${member.age}',
-                style: Theme.of(context).textTheme.headlineLarge),
-            Text(identity.hook, style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(height: AppSpacing.md),
-            Text('HEDEF', style: _accent()),
-            Text(identity.goal),
-            const SizedBox(height: AppSpacing.sm),
-            Text('GÜÇLÜ YANI', style: _accent()),
-            Text(identity.characterStrength),
-            const SizedBox(height: AppSpacing.sm),
-            Text('DİKKAT', style: _accent()),
-            Text(identity.sensitivity),
-            const SizedBox(height: AppSpacing.md),
-            Text(
-                'VOKAL ${member.vocal}  •  DANS ${member.dance}  •  SAHNE ${member.stage}'),
-            const SizedBox(height: AppSpacing.md),
-            Text(
-                'MOTİVASYON ${social.motivation}  •  POPÜLARİTE ${social.popularity}\nGELİŞİM ${social.experienceXp} XP  •  SEVİYE ${social.level}\nBUZZ ${social.buzz}  •  ${_followers(social.followers)} TAKİPÇİ\nBU HAFTA +${_followers(social.weeklyFollowerGrowth)}  •  FORM ${social.currentForm}'),
-            const SizedBox(height: AppSpacing.md),
-            Text('İLİŞKİLER', style: _accent()),
-            Text(relations),
-            const SizedBox(height: AppSpacing.md),
-            Text('TAKİPÇİ GEÇMİŞİ', style: _accent()),
-            ...social.followerHistory.map((snapshot) => Text(
-                '${snapshot.day == 0 ? 'BAŞLANGIÇ' : '${snapshot.day}. GÜN'}  ${_followers(snapshot.count)}  •  ${snapshot.reason}')),
-          ]),
+                child: ContestantPortrait(contestant: member),
+              ),
+              const SizedBox(height: AppSpacing.md),
+              Text(
+                '${member.displayName} — ${member.age}',
+                style: Theme.of(context).textTheme.headlineLarge,
+              ),
+              Text(
+                identity.hook,
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              const SizedBox(height: AppSpacing.md),
+              Text('HEDEF', style: _accent()),
+              Text(identity.goal),
+              const SizedBox(height: AppSpacing.sm),
+              Text('GÜÇLÜ YANI', style: _accent()),
+              Text(identity.characterStrength),
+              const SizedBox(height: AppSpacing.sm),
+              Text('DİKKAT', style: _accent()),
+              Text(identity.sensitivity),
+              const SizedBox(height: AppSpacing.md),
+              Text(
+                'VOKAL ${member.vocal}  •  DANS ${member.dance}  •  SAHNE ${member.stage}',
+              ),
+              const SizedBox(height: AppSpacing.md),
+              Text(
+                'MOTİVASYON ${social.motivation}  •  POPÜLARİTE ${social.popularity}\nGELİŞİM ${social.experienceXp} XP  •  SEVİYE ${social.level}\nBUZZ ${social.buzz}  •  ${_followers(social.followers)} TAKİPÇİ\nBU HAFTA +${_followers(social.weeklyFollowerGrowth)}  •  FORM ${social.currentForm}',
+              ),
+              const SizedBox(height: AppSpacing.md),
+              Text('İLİŞKİLER', style: _accent()),
+              Text(relations),
+              const SizedBox(height: AppSpacing.md),
+              Text('TAKİPÇİ GEÇMİŞİ', style: _accent()),
+              ...social.followerHistory.map(
+                (snapshot) => Text(
+                  '${snapshot.day == 0 ? 'BAŞLANGIÇ' : '${snapshot.day}. GÜN'}  ${_followers(snapshot.count)}  •  ${snapshot.reason}',
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -387,12 +448,16 @@ class _Panel extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: AppSpacing.md),
         padding: const EdgeInsets.all(AppSpacing.lg),
         decoration: BoxDecoration(
-            color: AppColors.inkSoft,
-            border: Border.all(color: AppColors.line)),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(title, style: Theme.of(context).textTheme.titleLarge),
-          const SizedBox(height: 6),
-          Text(body)
-        ]),
+          color: AppColors.inkSoft,
+          border: Border.all(color: AppColors.line),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(title, style: Theme.of(context).textTheme.titleLarge),
+            const SizedBox(height: 6),
+            Text(body),
+          ],
+        ),
       );
 }

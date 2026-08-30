@@ -29,6 +29,7 @@ import 'package:yildiz_kadro/features/postgame/presentation/season_complete_hub_
 import 'package:yildiz_kadro/features/producer/data/story_event_engine.dart';
 import 'package:yildiz_kadro/features/producer/domain/story_event.dart';
 import 'package:yildiz_kadro/features/producer/presentation/producer_dashboard_screen.dart';
+import 'package:yildiz_kadro/features/producer/presentation/story_event_dialog.dart';
 import 'package:yildiz_kadro/features/roster/presentation/post_elimination_roster_screen.dart';
 import 'package:yildiz_kadro/shared/widgets/game_home_button.dart';
 import 'package:yildiz_kadro/shared/widgets/global_gameplay_shell.dart';
@@ -42,9 +43,11 @@ void main() {
     expect(find.text('YILDIZ\nKADRO'), findsOneWidget);
     expect(find.text('15 yarışmacı.\n5 kişilik\nbir grup.'), findsOneWidget);
     expect(
-        find.text(
-            'Takımları kur, kararlarını ver ve final kadrosunu sen oluştur.'),
-        findsOneWidget);
+      find.text(
+        'Takımları kur, kararlarını ver ve final kadrosunu sen oluştur.',
+      ),
+      findsOneWidget,
+    );
     expect(find.text('SEZONA BAŞLA'), findsOneWidget);
     expect(find.text('NASIL OYNANIR?'), findsOneWidget);
     expect(find.text('GÜLCE'), findsOneWidget);
@@ -52,8 +55,9 @@ void main() {
     expect(find.text('YAPIMCI MODU'), findsOneWidget);
   });
 
-  testWidgets('global home opens dashboard and resumes first evaluation',
-      (WidgetTester tester) async {
+  testWidgets('global home opens dashboard and resumes first evaluation', (
+    WidgetTester tester,
+  ) async {
     final state = GameState(seasonSeed: 7)
       ..savePlayerRadar(const [1, 2, 3, 4, 5]);
     final navigatorKey = GlobalKey<NavigatorState>();
@@ -78,9 +82,9 @@ void main() {
         ),
       ),
     );
-    navigatorKey.currentState!.push(MaterialPageRoute<void>(
-      builder: (_) => const FirstEvaluationScreen(),
-    ));
+    navigatorKey.currentState!.push(
+      MaterialPageRoute<void>(builder: (_) => const FirstEvaluationScreen()),
+    );
     await tester.pumpAndSettle();
 
     expect(tester.takeException(), isNull);
@@ -109,8 +113,9 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('backstage prepares one event outside the build phase',
-      (WidgetTester tester) async {
+  testWidgets('backstage prepares one event outside the build phase', (
+    WidgetTester tester,
+  ) async {
     final state = GameState(seasonSeed: 19)
       ..savePlayerRadar(const [1, 2, 3, 4, 5]);
     addTearDown(state.dispose);
@@ -178,9 +183,7 @@ void main() {
       isTrue,
     );
     expect(
-      contestantSeedData.every(
-        (contestant) => contestant.riskTitle.isNotEmpty,
-      ),
+      contestantSeedData.every((contestant) => contestant.riskTitle.isNotEmpty),
       isTrue,
     );
     expect(
@@ -223,7 +226,9 @@ void main() {
     expect(zeynepEla.city, 'Sakarya');
     expect(zeynepEla.occupationOrEducation, 'Profesyonel voleybolcu');
     expect(
-        zeynepEla.portraitAsset, 'assets/contestants/zeynep_ela/neutral.png');
+      zeynepEla.portraitAsset,
+      'assets/contestants/zeynep_ela/neutral.png',
+    );
     expect(zeynepEla.initialMotivation, 92);
     expect(gulce.initialMotivation, 86);
     expect(gulce.city, 'Ankara');
@@ -234,12 +239,18 @@ void main() {
       [lara.vocal, lara.dance, lara.stage, lara.popularity, lara.potential],
       [76, 74, 71, 63, 76],
     );
-    expect(lara.personalityTraits,
-        ['Koruyucu', 'Sabırlı', 'Sıcakkanlı', 'Gerçekçi']);
+    expect(lara.personalityTraits, [
+      'Koruyucu',
+      'Sabırlı',
+      'Sıcakkanlı',
+      'Gerçekçi',
+    ]);
     expect(lara.specialTraitTitle, 'Kriz Yöneticisi');
     expect(lara.riskTitle, 'Kendini Geri Plana Atıyor');
     expect(
-        gulceTalent, greaterThan(otherTalent.reduce((a, b) => a > b ? a : b)));
+      gulceTalent,
+      greaterThan(otherTalent.reduce((a, b) => a > b ? a : b)),
+    );
   });
 
   testWidgets('season action opens the casting dashboard', (
@@ -276,7 +287,9 @@ void main() {
 
     expect(find.byType(ContestantDetailBackButton), findsOneWidget);
     await tester.drag(
-        find.byType(SingleChildScrollView), const Offset(0, -700));
+      find.byType(SingleChildScrollView),
+      const Offset(0, -700),
+    );
     await tester.pump();
     expect(find.byType(ContestantDetailBackButton), findsOneWidget);
     await tester.tap(find.byType(ContestantDetailBackButton));
@@ -284,8 +297,9 @@ void main() {
     expect(find.text('YARIŞMACILAR'), findsOneWidget);
   });
 
-  testWidgets('root contestant detail back safely opens contestant dashboard',
-      (WidgetTester tester) async {
+  testWidgets('root contestant detail back safely opens contestant dashboard', (
+    WidgetTester tester,
+  ) async {
     await tester.pumpWidget(
       MaterialApp(
         home: ContestantDetailScreen(contestant: contestantSeedData.first),
@@ -314,10 +328,7 @@ void main() {
     );
 
     expect(tester.takeException(), isNull);
-    await tester.scrollUntilVisible(
-      find.text('YAPIMCI MODU'),
-      200,
-    );
+    await tester.scrollUntilVisible(find.text('YAPIMCI MODU'), 200);
 
     expect(tester.takeException(), isNull);
     expect(find.text('YAPIMCI MODU'), findsOneWidget);
@@ -381,10 +392,7 @@ void main() {
     gameState.savePlayerRadar([1, 2, 3, 4, 5]);
 
     expect(gameState.playerRadarContestantIds, [1, 2, 3, 4, 5]);
-    expect(
-      () => gameState.savePlayerRadar([1, 2, 3]),
-      throwsArgumentError,
-    );
+    expect(() => gameState.savePlayerRadar([1, 2, 3]), throwsArgumentError);
   });
 
   testWidgets('casting action opens the first impression screen', (
@@ -423,22 +431,25 @@ void main() {
     expect(gameState.evaluation1Results, hasLength(15));
   });
 
-  test('performance aftermath records follower popularity motivation and xp',
-      () {
-    final state = GameState(seasonSeed: 30);
-    final before = state.socialStateFor(1);
-    state.completeEvaluation1(evaluation1Results);
-    final aftermath = state.performanceAftermath('evaluation_1')!;
-    final change =
-        aftermath.changes.firstWhere((value) => value.contestantId == 1);
+  test(
+    'performance aftermath records follower popularity motivation and xp',
+    () {
+      final state = GameState(seasonSeed: 30);
+      final before = state.socialStateFor(1);
+      state.completeEvaluation1(evaluation1Results);
+      final aftermath = state.performanceAftermath('evaluation_1')!;
+      final change = aftermath.changes.firstWhere(
+        (value) => value.contestantId == 1,
+      );
 
-    expect(aftermath.changes, hasLength(15));
-    expect(change.before.followers, before.followers);
-    expect(change.followerDelta, greaterThan(0));
-    expect(change.xpDelta, greaterThan(0));
-    expect(change.after.popularity, inInclusiveRange(0, 100));
-    expect(change.after.motivation, inInclusiveRange(0, 100));
-  });
+      expect(aftermath.changes, hasLength(15));
+      expect(change.before.followers, before.followers);
+      expect(change.followerDelta, greaterThan(0));
+      expect(change.xpDelta, greaterThan(0));
+      expect(change.after.popularity, inInclusiveRange(0, 100));
+      expect(change.after.motivation, inInclusiveRange(0, 100));
+    },
+  );
 
   test('jury decision stores producer, jury and last chance ids once', () {
     final gameState = GameState();
@@ -495,8 +506,9 @@ void main() {
     expect(gameState.lastChance1Completed, isTrue);
   });
 
-  testWidgets('first farewell CTA advances from final two to farewell',
-      (tester) async {
+  testWidgets('first farewell CTA advances from final two to farewell', (
+    tester,
+  ) async {
     final gameState = GameState();
     gameState.savePlayerRadar([1, 2, 3, 4, 5]);
     gameState.completeJuryDecision1(
@@ -538,8 +550,9 @@ void main() {
     expect(gameState.eliminatedContestantIds, hasLength(1));
   });
 
-  testWidgets('captain confirmation fits a short screen with scaled text',
-      (tester) async {
+  testWidgets('captain confirmation fits a short screen with scaled text', (
+    tester,
+  ) async {
     tester.view.physicalSize = const Size(320, 480);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
@@ -600,7 +613,9 @@ void main() {
     expect(draft.teamAIds, repeated.teamAIds);
     expect(draft.teamBIds, repeated.teamBIds);
     expect(
-        draft.lastPickedContestantId, draft.events.last.selectedContestantId);
+      draft.lastPickedContestantId,
+      draft.events.last.selectedContestantId,
+    );
   });
 
   test('game state locks the generated day 2 formation', () {
@@ -697,13 +712,13 @@ void main() {
         fullComposition.compatibility,
         fullComposition.risk,
         fullComposition.strengths,
-        fullComposition.concerns
+        fullComposition.concerns,
       ),
       isNot((
         captainOnly.compatibility,
         captainOnly.risk,
         captainOnly.strengths,
-        captainOnly.concerns
+        captainOnly.concerns,
       )),
     );
   });
@@ -781,10 +796,10 @@ void main() {
     expect(performance.individualResults, hasLength(14));
     expect(performance.top3SafeIds, hasLength(3));
     expect(performance.initialRiskIds, hasLength(4));
-    expect(
-      {...performance.top3SafeIds, ...performance.initialRiskIds},
-      hasLength(7),
-    );
+    expect({
+      ...performance.top3SafeIds,
+      ...performance.initialRiskIds,
+    }, hasLength(7));
     expect(
       performance.top3SafeIds.toSet().intersection(
             performance.initialRiskIds.toSet(),
@@ -896,72 +911,76 @@ void main() {
     expect(jury.rankingIds, repeated.rankingIds);
   });
 
-  test('day 2 duel decisions create deterministic differentiated modifiers',
-      () {
-    final draft = generateDay2Teams(
-      activeContestantIds: List.generate(14, (index) => index + 1),
-      captainAId: 4,
-      captainBId: 7,
-      evaluationResults: evaluation1Results,
-    );
-    final setup = initializeDay2Rehearsal(
-      teamAIds: draft.teamAIds,
-      teamBIds: draft.teamBIds,
-      captainAId: draft.captainAId,
-      captainBId: draft.captainBId,
-      lastPickedContestantId: draft.lastPickedContestantId,
-      evaluationResults: evaluation1Results,
-    );
-    final rehearsal = resolveDay2Rehearsal(
-      setup: setup,
-      playerTeamId: 'A',
-      playerChoiceId: choicesForCrisis(setup.teamACrisis.type).first.id,
-      captainAId: draft.captainAId,
-      captainBId: draft.captainBId,
-    );
-    final group = calculateDay2GroupPerformance(
-      teamAIds: draft.teamAIds,
-      teamBIds: draft.teamBIds,
-      captainAId: draft.captainAId,
-      captainBId: draft.captainBId,
-      evaluationResults: evaluation1Results,
-      rehearsalSetup: setup,
-      rehearsalOutcome: rehearsal,
-    );
-    final jury = calculateDay2JuryResult(
-      juryRiskIds: group.initialRiskIds.take(3).toList(),
-      firstEvaluationResults: evaluation1Results,
-      lastChanceResults: const {},
-      coachedContestantId: null,
-      groupPerformance: group,
-    );
-    final clean = calculateDay2DuelResult(
-      contestantIds: jury.duelContestantIds,
-      concept: Day2DuelConcept.vocal,
-      approach: Day2DuelApproach.clean,
-      coaching: Day2DuelCoaching.technique,
-      firstResults: evaluation1Results,
-      groupPerformance: group,
-      jury: jury,
-    );
-    final star = calculateDay2DuelResult(
-      contestantIds: jury.duelContestantIds,
-      concept: Day2DuelConcept.stage,
-      approach: Day2DuelApproach.starMoment,
-      coaching: Day2DuelCoaching.showYourself,
-      firstResults: evaluation1Results,
-      groupPerformance: group,
-      jury: jury,
-    );
+  test(
+    'day 2 duel decisions create deterministic differentiated modifiers',
+    () {
+      final draft = generateDay2Teams(
+        activeContestantIds: List.generate(14, (index) => index + 1),
+        captainAId: 4,
+        captainBId: 7,
+        evaluationResults: evaluation1Results,
+      );
+      final setup = initializeDay2Rehearsal(
+        teamAIds: draft.teamAIds,
+        teamBIds: draft.teamBIds,
+        captainAId: draft.captainAId,
+        captainBId: draft.captainBId,
+        lastPickedContestantId: draft.lastPickedContestantId,
+        evaluationResults: evaluation1Results,
+      );
+      final rehearsal = resolveDay2Rehearsal(
+        setup: setup,
+        playerTeamId: 'A',
+        playerChoiceId: choicesForCrisis(setup.teamACrisis.type).first.id,
+        captainAId: draft.captainAId,
+        captainBId: draft.captainBId,
+      );
+      final group = calculateDay2GroupPerformance(
+        teamAIds: draft.teamAIds,
+        teamBIds: draft.teamBIds,
+        captainAId: draft.captainAId,
+        captainBId: draft.captainBId,
+        evaluationResults: evaluation1Results,
+        rehearsalSetup: setup,
+        rehearsalOutcome: rehearsal,
+      );
+      final jury = calculateDay2JuryResult(
+        juryRiskIds: group.initialRiskIds.take(3).toList(),
+        firstEvaluationResults: evaluation1Results,
+        lastChanceResults: const {},
+        coachedContestantId: null,
+        groupPerformance: group,
+      );
+      final clean = calculateDay2DuelResult(
+        contestantIds: jury.duelContestantIds,
+        concept: Day2DuelConcept.vocal,
+        approach: Day2DuelApproach.clean,
+        coaching: Day2DuelCoaching.technique,
+        firstResults: evaluation1Results,
+        groupPerformance: group,
+        jury: jury,
+      );
+      final star = calculateDay2DuelResult(
+        contestantIds: jury.duelContestantIds,
+        concept: Day2DuelConcept.stage,
+        approach: Day2DuelApproach.starMoment,
+        coaching: Day2DuelCoaching.showYourself,
+        firstResults: evaluation1Results,
+        groupPerformance: group,
+        jury: jury,
+      );
 
-    expect(clean.results, hasLength(2));
-    expect(clean.winnerContestantId, isNot(clean.eliminatedContestantId));
-    expect(clean.performanceOrderIds, hasLength(2));
-    expect(
-      clean.results.values.map((result) => result.totalModifier),
-      isNot(equals(star.results.values.map((result) => result.totalModifier))),
-    );
-  });
+      expect(clean.results, hasLength(2));
+      expect(clean.winnerContestantId, isNot(clean.eliminatedContestantId));
+      expect(clean.performanceOrderIds, hasLength(2));
+      expect(
+        clean.results.values.map((result) => result.totalModifier),
+        isNot(
+          equals(star.results.values.map((result) => result.totalModifier)),
+        ),
+      );
+    },
+  );
 
   testWidgets('duel result CTA opens the stored winner screen', (tester) async {
     final state = GameState();
@@ -981,8 +1000,10 @@ void main() {
       },
       eliminatedContestantId: 9,
     );
-    final active =
-        List.generate(15, (index) => index + 1).where((id) => id != 9).toList();
+    final active = List.generate(
+      15,
+      (index) => index + 1,
+    ).where((id) => id != 9).toList();
     final draft = generateDay2Teams(
       activeContestantIds: active,
       captainAId: 4,
@@ -1030,10 +1051,12 @@ void main() {
     );
     state.completeDay2JuryTable(jury);
 
-    await tester.pumpWidget(GameScope(
-      gameState: state,
-      child: const MaterialApp(home: Day2DuelScreen()),
-    ));
+    await tester.pumpWidget(
+      GameScope(
+        gameState: state,
+        child: const MaterialApp(home: Day2DuelScreen()),
+      ),
+    );
 
     Future<void> tapText(String text) async {
       final finder = find.text(text);
@@ -1179,8 +1202,78 @@ void main() {
         ),
     };
 
-    expect(variants.values.map((value) => value.toString()).toSet().length,
-        greaterThan(1));
+    expect(
+      variants.values.map((value) => value.toString()).toSet().length,
+      greaterThan(1),
+    );
+  });
+
+  test('story event pool is broad and season frequency stays controlled', () {
+    expect(storyEventTemplateCount, greaterThanOrEqualTo(20));
+
+    for (final seed in [1, 7, 42, 101, 202]) {
+      final state = GameState(seasonSeed: seed);
+      final records = [
+        for (var day = 1; day <= 6; day++) state.prepareStoryEvent(day),
+      ].whereType<StoryEventRecord>().toList();
+      final templateIds =
+          records.map((record) => record.event.id.split('_d').first).toSet();
+
+      expect(records.length, inInclusiveRange(4, 6));
+      expect(templateIds.length, records.length);
+      expect(
+        records.every((record) => record.event.choices.length <= 3),
+        isTrue,
+      );
+      expect(records.every((record) => record.event.cooldownDays >= 2), isTrue);
+      state.dispose();
+    }
+  });
+
+  testWidgets('story modal hides effects until the producer decides', (
+    tester,
+  ) async {
+    final state = GameState(seasonSeed: 7);
+    state.ensureStoryEvent(2);
+    addTearDown(state.dispose);
+
+    await tester.pumpWidget(
+      GameScope(
+        gameState: state,
+        child: MaterialApp(
+          home: Builder(
+            builder: (context) {
+              return TextButton(
+                onPressed: () => showStoryEventDialog(context, day: 2),
+                child: const Text('OLAYI AÇ'),
+              );
+            },
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('OLAYI AÇ'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('BEKLENEN ETKİ'), findsNothing);
+    final record = state.storyEventForDay(2)!;
+    await tester.tap(find.text(record.event.choices.first.label));
+    await tester.pump();
+    await tester.ensureVisible(find.text('KARARI UYGULA'));
+    await tester.tap(find.text('KARARI UYGULA'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('KARAR UYGULANDI'), findsOneWidget);
+    expect(find.text('DEVAM ET'), findsOneWidget);
+    expect(
+      find.byWidgetPredicate(
+        (widget) =>
+            widget is Icon &&
+            (widget.icon == Icons.arrow_upward_rounded ||
+                widget.icon == Icons.arrow_downward_rounded),
+      ),
+      findsWidgets,
+    );
   });
 
   test('automatic group tags preserve List<String> at runtime', () {
@@ -1208,35 +1301,43 @@ void main() {
     expect(() => tags[1]!.add('NEW'), throwsUnsupportedError);
   });
 
-  testWidgets('incomplete last chance routes show a safe recovery state',
-      (tester) async {
+  testWidgets('incomplete last chance routes show a safe recovery state', (
+    tester,
+  ) async {
     final state = GameState(seasonSeed: 11);
     addTearDown(state.dispose);
 
-    await tester.pumpWidget(GameScope(
-      gameState: state,
-      child: const MaterialApp(home: LastChancePerformanceScreen()),
-    ));
+    await tester.pumpWidget(
+      GameScope(
+        gameState: state,
+        child: const MaterialApp(home: LastChancePerformanceScreen()),
+      ),
+    );
     expect(tester.takeException(), isNull);
     expect(find.text('SON ŞANS HENÜZ HAZIR DEĞİL'), findsOneWidget);
 
-    await tester.pumpWidget(GameScope(
-      gameState: state,
-      child: const MaterialApp(home: PostEliminationRosterScreen()),
-    ));
+    await tester.pumpWidget(
+      GameScope(
+        gameState: state,
+        child: const MaterialApp(home: PostEliminationRosterScreen()),
+      ),
+    );
     expect(tester.takeException(), isNull);
     expect(find.text('KADRO SONUCU HAZIR DEĞİL'), findsOneWidget);
   });
 
-  testWidgets('incomplete season hub does not throw during build',
-      (tester) async {
+  testWidgets('incomplete season hub does not throw during build', (
+    tester,
+  ) async {
     final state = GameState(seasonSeed: 12);
     addTearDown(state.dispose);
 
-    await tester.pumpWidget(GameScope(
-      gameState: state,
-      child: const MaterialApp(home: SeasonCompleteHubScreen()),
-    ));
+    await tester.pumpWidget(
+      GameScope(
+        gameState: state,
+        child: const MaterialApp(home: SeasonCompleteHubScreen()),
+      ),
+    );
 
     expect(tester.takeException(), isNull);
     expect(find.text('SEZON HENÜZ TAMAMLANMADI'), findsOneWidget);

@@ -32,6 +32,8 @@ class GameState extends ChangeNotifier {
   Map<int, Map<int, int>> _contestantRelationships = const {};
   List<StoryEventRecord> _eventHistory = const [];
   final Set<String> _seenEventFamilies = {};
+  final Map<String, int> _storyDecisionFlags = {};
+  final Set<int> _storyEventSkippedDays = {};
   List<int> _playerRadarContestantIds = const [];
   bool _evaluation1Completed = false;
   Map<int, EvaluationResult> _evaluation1Results = const {};
@@ -155,7 +157,8 @@ class GameState extends ChangeNotifier {
   bool get day3IdentitySetupCompleted => _day3IdentitySetupCompleted;
   Day3IconResultSnapshot? get day3IconResultSnapshot => _day3IconResultSnapshot;
   List<int> get day3FinalCutContestantIds => List.unmodifiable(
-      _day3IconResultSnapshot?.finalCutContestantIds ?? const <int>[]);
+        _day3IconResultSnapshot?.finalCutContestantIds ?? const <int>[],
+      );
   Day3FinalCutResultSnapshot? get day3FinalCutResultSnapshot =>
       _day3FinalCutResultSnapshot;
   bool get day3Completed => _day3Completed;
@@ -172,7 +175,8 @@ class GameState extends ChangeNotifier {
   Day6DebutDirection? get day6DebutDirection => _day6DebutDirection;
   Day6ResultSnapshot? get day6ResultSnapshot => _day6ResultSnapshot;
   List<int> get recommendedFinalLineupIds => List.unmodifiable(
-      _day6ResultSnapshot?.recommendedLineupIds ?? const <int>[]);
+        _day6ResultSnapshot?.recommendedLineupIds ?? const <int>[],
+      );
   List<int> get playerFinalLineupIds =>
       List.unmodifiable(_playerFinalLineupIds);
   List<int> get finalistsOutsideDebutLineupIds =>
@@ -236,6 +240,12 @@ class GameState extends ChangeNotifier {
           .toSet(),
       socialStates: _contestantSocialStates,
       relationships: _contestantRelationships,
+      recentContestantIds: _eventHistory.reversed
+          .take(2)
+          .expand((record) => record.event.contestantIds)
+          .toSet()
+          .toList(),
+      decisionFlags: Map.unmodifiable(_storyDecisionFlags),
     );
     final record = StoryEventRecord(day: day, event: event);
     _eventHistory = List.unmodifiable([..._eventHistory, record]);
@@ -244,13 +254,40 @@ class GameState extends ChangeNotifier {
     return record;
   }
 
+  StoryEventRecord? prepareStoryEvent(int day) {
+    final existing = storyEventForDay(day);
+    if (existing != null) return existing;
+    if (_storyEventSkippedDays.contains(day)) return null;
+    if (!_storyEventScheduled(day)) {
+      _storyEventSkippedDays.add(day);
+      return null;
+    }
+    return ensureStoryEvent(day);
+  }
+
+  bool _storyEventScheduled(int day) {
+    if (day < 1 || day > 6) return true;
+    final targetCount = 4 + _seasonSeed.abs() % 3;
+    final rankedDays = List<int>.generate(6, (index) => index + 1)
+      ..sort((a, b) {
+        final aScore = (_seasonSeed * 31 + a * 7919).abs() % 10007;
+        final bScore = (_seasonSeed * 31 + b * 7919).abs() % 10007;
+        return aScore.compareTo(bScore);
+      });
+    return rankedDays.take(targetCount).contains(day);
+  }
+
   void resolveStoryEvent({required int day, required String choiceId}) {
     final index = _eventHistory.indexWhere((record) => record.day == day);
     if (index < 0) throw StateError('Önce hikâye olayı oluşturulmalı.');
     final record = _eventHistory[index];
     if (record.choiceId != null) return;
-    final choice =
-        record.event.choices.firstWhere((value) => value.id == choiceId);
+    final choice = record.event.choices.firstWhere(
+      (value) => value.id == choiceId,
+    );
+    for (final flag in choice.followUpFlags) {
+      _storyDecisionFlags[flag] = (_storyDecisionFlags[flag] ?? 0) + 1;
+    }
     final before = {
       for (final id in record.event.contestantIds)
         id: _storyMetricSnapshot(_contestantSocialStates[id]!),
@@ -274,7 +311,7 @@ class GameState extends ChangeNotifier {
           day: day,
           reason: record.event.title,
           experienceXp: 12,
-        )
+        ),
       });
     }
     if (record.event.contestantIds.length == 2) {
@@ -282,8 +319,11 @@ class GameState extends ChangeNotifier {
         choice: choice,
         contestantId: record.event.contestantIds.first,
       );
-      _changeRelationship(record.event.contestantIds[0],
-          record.event.contestantIds[1], firstEffects['relationship'] ?? 0);
+      _changeRelationship(
+        record.event.contestantIds[0],
+        record.event.contestantIds[1],
+        firstEffects['relationship'] ?? 0,
+      );
     }
     final records = [..._eventHistory];
     final after = {
@@ -316,17 +356,23 @@ class GameState extends ChangeNotifier {
       };
 
   void _changeRelationship(int first, int second, int delta) {
-    final next = _contestantRelationships
-        .map((id, values) => MapEntry(id, Map<int, int>.from(values)));
+    final next = _contestantRelationships.map(
+      (id, values) => MapEntry(id, Map<int, int>.from(values)),
+    );
     next[first]![second] = ((next[first]![second] ?? 50) + delta).clamp(0, 100);
     next[second]![first] = next[first]![second]!;
-    _contestantRelationships = Map<int, Map<int, int>>.unmodifiable(next
-        .map((id, values) => MapEntry(id, Map<int, int>.unmodifiable(values))));
+    _contestantRelationships = Map<int, Map<int, int>>.unmodifiable(
+      next.map(
+        (id, values) => MapEntry(id, Map<int, int>.unmodifiable(values)),
+      ),
+    );
   }
 
   void _resetLivingSeason() {
     _eventHistory = const [];
     _seenEventFamilies.clear();
+    _storyDecisionFlags.clear();
+    _storyEventSkippedDays.clear();
     _contestantSocialStates = Map.unmodifiable({
       for (final contestant in contestantSeedData)
         contestant.id: ContestantSocialState(
@@ -342,9 +388,10 @@ class GameState extends ChangeNotifier {
           danceCoachImpression: contestant.dance,
           followerHistory: [
             FollowerSnapshot(
-                day: 0,
-                count: 12000 + contestant.popularity * 1250,
-                reason: 'Sezon başlangıcı')
+              day: 0,
+              count: 12000 + contestant.popularity * 1250,
+              reason: 'Sezon başlangıcı',
+            ),
           ],
         ),
     });
@@ -352,7 +399,7 @@ class GameState extends ChangeNotifier {
       for (final contestant in contestantSeedData)
         contestant.id: Map<int, int>.unmodifiable({
           for (final other in contestantSeedData)
-            if (other.id != contestant.id) other.id: 50
+            if (other.id != contestant.id) other.id: 50,
         }),
     });
   }
@@ -361,7 +408,10 @@ class GameState extends ChangeNotifier {
     final ids = contestantIds.toSet().toList(growable: false);
     if (ids.length != 5) {
       throw ArgumentError.value(
-          ids, 'contestantIds', 'Tam olarak 5 kişi seçilmeli.');
+        ids,
+        'contestantIds',
+        'Tam olarak 5 kişi seçilmeli.',
+      );
     }
     _playerRadarContestantIds = ids;
     notifyListeners();
@@ -375,8 +425,9 @@ class GameState extends ChangeNotifier {
     _evaluation1Completed = true;
     _applyPerformanceImpact(
       stageId: 'evaluation_1',
-      scores:
-          results.map((id, result) => MapEntry(id, result.overall.toDouble())),
+      scores: results.map(
+        (id, result) => MapEntry(id, result.overall.toDouble()),
+      ),
       reason: 'İlk sahne testi izleyicinin dikkatini değiştirdi.',
       xpBase: 30,
     );
@@ -389,8 +440,9 @@ class GameState extends ChangeNotifier {
     required Iterable<int> lastChanceContestantIds,
   }) {
     if (_juryDecision1Completed) return;
-    final lastChanceIds =
-        lastChanceContestantIds.toSet().toList(growable: false);
+    final lastChanceIds = lastChanceContestantIds.toSet().toList(
+          growable: false,
+        );
     if (lastChanceIds.length != 3 ||
         lastChanceIds.contains(producerSaveContestantId) ||
         lastChanceIds.contains(jurySaveContestantId)) {
@@ -528,9 +580,7 @@ class GameState extends ChangeNotifier {
     notifyListeners();
   }
 
-  void initializeDay2GroupPerformance(
-    Day2GroupPerformanceSnapshot snapshot,
-  ) {
+  void initializeDay2GroupPerformance(Day2GroupPerformanceSnapshot snapshot) {
     if (_day2GroupPerformanceSnapshot != null) return;
     if (!_day2RehearsalCompleted) {
       throw StateError('Prova tamamlanmadan grup performansı başlatılamaz.');
@@ -538,8 +588,9 @@ class GameState extends ChangeNotifier {
     _day2GroupPerformanceSnapshot = snapshot;
     _applyPerformanceImpact(
       stageId: 'day2_group_stage',
-      scores: snapshot.individualResults
-          .map((id, result) => MapEntry(id, result.overall.toDouble())),
+      scores: snapshot.individualResults.map(
+        (id, result) => MapEntry(id, result.overall.toDouble()),
+      ),
       reason: 'Grup sahnesindeki görünürlük fan ilgisine yansıdı.',
       xpBase: 45,
     );
@@ -610,8 +661,9 @@ class GameState extends ChangeNotifier {
     _day2DuelResultSnapshot = snapshot;
     _applyPerformanceImpact(
       stageId: 'day2_duel',
-      scores: snapshot.results
-          .map((id, result) => MapEntry(id, result.finalScore.toDouble())),
+      scores: snapshot.results.map(
+        (id, result) => MapEntry(id, result.finalScore.toDouble()),
+      ),
       reason: 'Bire bir düello izleyici ilgisini keskin biçimde değiştirdi.',
       xpBase: 55,
     );
@@ -669,12 +721,14 @@ class GameState extends ChangeNotifier {
         ..._contestantSocialStates,
         entry.key: after,
       });
-      changes.add(PerformanceChange(
-        contestantId: entry.key,
-        before: before,
-        after: after,
-        reason: _impactReason(score, reason),
-      ));
+      changes.add(
+        PerformanceChange(
+          contestantId: entry.key,
+          before: before,
+          after: after,
+          reason: _impactReason(score, reason),
+        ),
+      );
     }
     _performanceAftermath[stageId] = PerformanceAftermath(
       stageId: stageId,
@@ -702,9 +756,10 @@ class GameState extends ChangeNotifier {
 
   void initializeDay3Identity(Day3IdentityAllocation allocation) {
     if (_day3IdentityAllocation != null) return;
-    final activeIds = List.generate(15, (index) => index + 1)
-        .where((id) => !_eliminatedContestantIds.contains(id))
-        .toSet();
+    final activeIds = List.generate(
+      15,
+      (index) => index + 1,
+    ).where((id) => !_eliminatedContestantIds.contains(id)).toSet();
     final concepts = allocation.conceptByContestantId;
     final valid = _day2Completed &&
         activeIds.length == 13 &&
@@ -728,8 +783,9 @@ class GameState extends ChangeNotifier {
         directed.length == 3 &&
         snapshot.stylingSupportContestantIds.toSet().containsAll(directed) &&
         snapshot.stylingSupportContestantIds.length == 3 &&
-        directed
-            .every(_day3IdentityAllocation!.conceptByContestantId.containsKey);
+        directed.every(
+          _day3IdentityAllocation!.conceptByContestantId.containsKey,
+        );
     if (!valid) throw StateError('Day 3 yaratıcı planı geçersiz.');
     _day3IdentitySetupSnapshot = snapshot;
     _day3IdentitySetupCompleted = true;
@@ -738,9 +794,10 @@ class GameState extends ChangeNotifier {
 
   void completeDay3IconTest(Day3IconResultSnapshot snapshot) {
     if (_day3IconResultSnapshot != null) return;
-    final active = List.generate(15, (i) => i + 1)
-        .where((id) => !_eliminatedContestantIds.contains(id))
-        .toSet();
+    final active = List.generate(
+      15,
+      (i) => i + 1,
+    ).where((id) => !_eliminatedContestantIds.contains(id)).toSet();
     final valid = _day3IdentitySetupCompleted &&
         snapshot.results.length == 13 &&
         snapshot.results.keys.toSet().containsAll(active) &&
@@ -748,9 +805,9 @@ class GameState extends ChangeNotifier {
         snapshot.jurySavedIds.toSet().length == 2 &&
         snapshot.finalCutContestantIds.toSet().length == 2 &&
         snapshot.bottom4Ids.toSet().containsAll(snapshot.jurySavedIds) &&
-        snapshot.bottom4Ids
-            .toSet()
-            .containsAll(snapshot.finalCutContestantIds) &&
+        snapshot.bottom4Ids.toSet().containsAll(
+              snapshot.finalCutContestantIds,
+            ) &&
         snapshot.jurySavedIds
             .toSet()
             .intersection(snapshot.finalCutContestantIds.toSet())
@@ -807,11 +864,15 @@ class GameState extends ChangeNotifier {
     final eliminated = snapshot.eliminatedIds.toSet();
     final valid = _day4MentorRoom == snapshot.mentorRoom &&
         eliminated.length == 3 &&
-        Day4Room.values.every((r) =>
-            snapshot.allocation.members(r).contains(snapshot.winnerByRoom[r]) &&
-            snapshot.allocation
-                .members(r)
-                .contains(snapshot.eliminatedByRoom[r])) &&
+        Day4Room.values.every(
+          (r) =>
+              snapshot.allocation
+                  .members(r)
+                  .contains(snapshot.winnerByRoom[r]) &&
+              snapshot.allocation
+                  .members(r)
+                  .contains(snapshot.eliminatedByRoom[r]),
+        ) &&
         !eliminated.any(_eliminatedContestantIds.contains);
     if (!valid) throw StateError('Day 4 sonucu geçersiz.');
     _day4ResultSnapshot = snapshot;
@@ -882,8 +943,9 @@ class GameState extends ChangeNotifier {
         roles.containsAll(ids);
     if (!valid) throw StateError('Final kadro geçersiz.');
     _playerFinalLineupIds = List.unmodifiable(contestantIds);
-    _finalistsOutsideDebutLineupIds =
-        List.unmodifiable(day5FinalistIds.where((id) => !ids.contains(id)));
+    _finalistsOutsideDebutLineupIds = List.unmodifiable(
+      day5FinalistIds.where((id) => !ids.contains(id)),
+    );
     _finalLineupBalance = balance;
     _suggestedFinalRoles = Map.unmodifiable(suggestedRoles);
     _day6FinalLineupConfirmed = true;
@@ -924,12 +986,17 @@ class GameState extends ChangeNotifier {
         _finalMemberPositions.length != 5 ||
         _finalLeaderId == null) {
       throw ArgumentError.value(
-          value, 'value', 'Grup adı veya final verisi geçersiz.');
+        value,
+        'value',
+        'Grup adı veya final verisi geçersiz.',
+      );
     }
     _groupName = name;
     final lineup = _playerFinalLineupIds;
-    final mostPopular = lineup.reduce((a, b) =>
-        socialStateFor(a).popularity >= socialStateFor(b).popularity ? a : b);
+    final mostPopular = lineup.reduce(
+      (a, b) =>
+          socialStateFor(a).popularity >= socialStateFor(b).popularity ? a : b,
+    );
     final balance = _finalLineupBalance!;
     final overall = (balance.vocal +
             balance.dance +
@@ -937,15 +1004,17 @@ class GameState extends ChangeNotifier {
             balance.camera +
             balance.harmony) ~/
         5;
-    _groupArchive.add(GroupArchiveEntry(
-      groupName: name,
-      memberIds: List.unmodifiable(lineup),
-      positions: Map.unmodifiable(_finalMemberPositions),
-      leaderId: _finalLeaderId!,
-      overallScore: overall,
-      mostPopularMemberId: mostPopular,
-      completedAt: DateTime.now(),
-    ));
+    _groupArchive.add(
+      GroupArchiveEntry(
+        groupName: name,
+        memberIds: List.unmodifiable(lineup),
+        positions: Map.unmodifiable(_finalMemberPositions),
+        leaderId: _finalLeaderId!,
+        overallScore: overall,
+        mostPopularMemberId: mostPopular,
+        completedAt: DateTime.now(),
+      ),
+    );
     _seasonCompleted = true;
     notifyListeners();
   }

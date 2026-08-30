@@ -1,19 +1,27 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:yildiz_kadro/app/theme/app_colors.dart';
 import 'package:yildiz_kadro/app/theme/app_spacing.dart';
 import 'package:yildiz_kadro/features/contestants/data/contestant_seed_data.dart';
 import 'package:yildiz_kadro/features/contestants/presentation/widgets/contestant_portrait.dart';
 import 'package:yildiz_kadro/features/game/application/game_scope.dart';
+import 'package:yildiz_kadro/features/game/application/game_state.dart';
 import 'package:yildiz_kadro/features/producer/domain/story_event.dart';
 
 Future<void> showStoryEventDialog(BuildContext context, {required int day}) {
   final state = GameScope.of(context);
-  final record = state.ensureStoryEvent(day);
+  final record = state.prepareStoryEvent(day);
+  if (record == null) return Future.value();
   if (record.choiceId != null) return Future.value();
   return showDialog<void>(
     context: context,
     barrierDismissible: false,
-    builder: (_) => _StoryEventDialog(day: day, event: record.event),
+    barrierColor: Colors.black.withValues(alpha: 0.68),
+    builder: (_) => BackdropFilter(
+      filter: ImageFilter.blur(sigmaX: 3, sigmaY: 3),
+      child: _StoryEventDialog(day: day, event: record.event),
+    ),
   );
 }
 
@@ -53,26 +61,32 @@ class _StoryEventDialogState extends State<_StoryEventDialog> {
             children: [
               Text(_category(widget.event.category), style: _overline(context)),
               const SizedBox(height: AppSpacing.sm),
-              Text(widget.event.title,
-                  style: Theme.of(context).textTheme.headlineLarge),
+              Text(
+                widget.event.title,
+                style: Theme.of(context).textTheme.headlineLarge,
+              ),
               const SizedBox(height: AppSpacing.md),
               Wrap(
                 spacing: AppSpacing.sm,
                 runSpacing: AppSpacing.sm,
                 children: widget.event.contestantIds.map((id) {
-                  final contestant =
-                      contestantSeedData.firstWhere((value) => value.id == id);
-                  return Row(mainAxisSize: MainAxisSize.min, children: [
-                    ClipOval(
-                      child: SizedBox(
-                        width: 44,
-                        height: 44,
-                        child: ContestantPortrait(contestant: contestant),
+                  final contestant = contestantSeedData.firstWhere(
+                    (value) => value.id == id,
+                  );
+                  return Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      ClipOval(
+                        child: SizedBox(
+                          width: 44,
+                          height: 44,
+                          child: ContestantPortrait(contestant: contestant),
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: AppSpacing.xs),
-                    Text(contestant.displayName),
-                  ]);
+                      const SizedBox(width: AppSpacing.xs),
+                      Text(contestant.displayName),
+                    ],
+                  );
                 }).toList(),
               ),
               const SizedBox(height: AppSpacing.md),
@@ -82,11 +96,13 @@ class _StoryEventDialogState extends State<_StoryEventDialog> {
               Text(widget.event.why),
               if (widget.event.confessional != null) ...[
                 const SizedBox(height: AppSpacing.md),
-                Text(widget.event.confessional!,
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          fontStyle: FontStyle.italic,
-                          color: AppColors.paperMuted,
-                        )),
+                Text(
+                  widget.event.confessional!,
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        fontStyle: FontStyle.italic,
+                        color: AppColors.paperMuted,
+                      ),
+                ),
               ],
               const SizedBox(height: AppSpacing.lg),
               if (!resolved)
@@ -109,14 +125,10 @@ class _StoryEventDialogState extends State<_StoryEventDialog> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(option.label),
-                            const SizedBox(height: AppSpacing.xs),
-                            Text('BEKLENEN ETKİ', style: _overline(context)),
-                            ...state
-                                .previewStoryChoice(widget.event, option)
-                                .entries
-                                .map((entry) => Text(
-                                    '${name(entry.key)}  ${_effects(entry.value)}')),
+                            Text(
+                              option.label,
+                              style: Theme.of(context).textTheme.titleMedium,
+                            ),
                           ],
                         ),
                       ),
@@ -125,7 +137,38 @@ class _StoryEventDialogState extends State<_StoryEventDialog> {
                 }),
               if (resolved && choice != null) ...[
                 Text('KARAR UYGULANDI', style: _overline(context)),
-                Text(choice.feedback),
+                const SizedBox(height: AppSpacing.sm),
+                Text(
+                  choice.feedback,
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+                const SizedBox(height: AppSpacing.md),
+                ..._resultChanges(state).map(
+                  (change) => Padding(
+                    padding: const EdgeInsets.only(bottom: AppSpacing.xs),
+                    child: Row(
+                      children: [
+                        Icon(
+                          change.delta > 0
+                              ? Icons.arrow_upward_rounded
+                              : Icons.arrow_downward_rounded,
+                          size: 18,
+                          color: change.delta > 0
+                              ? Colors.greenAccent
+                              : AppColors.accentBright,
+                        ),
+                        const SizedBox(width: AppSpacing.xs),
+                        Expanded(
+                          child: Text('${change.name} • ${change.metric}'),
+                        ),
+                        Text(
+                          '${change.delta > 0 ? '+' : ''}${_displayValue(change.metricKey, change.delta)}',
+                          style: Theme.of(context).textTheme.labelLarge,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               ],
               const SizedBox(height: AppSpacing.md),
               FilledButton(
@@ -149,6 +192,35 @@ class _StoryEventDialogState extends State<_StoryEventDialog> {
     );
   }
 
+  List<({String name, String metric, String metricKey, int delta})>
+      _resultChanges(GameState state) {
+    final record = state.storyEventForDay(widget.day);
+    if (record == null || record.choiceId == null) return const [];
+    final changes =
+        <({String name, String metric, String metricKey, int delta})>[];
+    for (final id in record.event.contestantIds) {
+      final before = record.before[id] ?? const <String, int>{};
+      final after = record.after[id] ?? const <String, int>{};
+      for (final entry in after.entries) {
+        final previous = before[entry.key];
+        if (previous == null || previous == entry.value) continue;
+        changes.add((
+          name: name(id),
+          metric: _metric(entry.key),
+          metricKey: entry.key,
+          delta: entry.value - previous,
+        ));
+      }
+    }
+    return changes;
+  }
+
+  String _displayValue(String key, int value) {
+    if (key != 'followers') return '$value';
+    final sign = value < 0 ? '-' : '';
+    return '$sign${(value.abs() / 1000).toStringAsFixed(value.abs() < 10000 ? 1 : 0)}K';
+  }
+
   String _category(StoryEventCategory value) => switch (value) {
         StoryEventCategory.crisis => 'KRİZ',
         StoryEventCategory.positive => 'OLUMLU GELİŞME',
@@ -162,14 +234,8 @@ class _StoryEventDialogState extends State<_StoryEventDialog> {
       .labelLarge!
       .copyWith(color: AppColors.accentBright);
 
-  String _effects(Map<String, int> values) => values.entries
-      .where((entry) => entry.value != 0)
-      .map((entry) =>
-          '${_metric(entry.key)} ${entry.value > 0 ? '+' : ''}${entry.value}')
-      .join(' • ');
-
   String _metric(String key) => switch (key) {
-        'morale' => 'Motivasyon',
+        'morale' || 'motivation' => 'Motivasyon',
         'popularity' => 'Popülerlik',
         'buzz' => 'Buzz',
         'followers' => 'Takipçi',
