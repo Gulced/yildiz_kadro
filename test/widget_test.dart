@@ -13,6 +13,7 @@ import 'package:yildiz_kadro/features/day2/presentation/day2_briefing_screen.dar
 import 'package:yildiz_kadro/features/day2/data/day2_team_compatibility.dart';
 import 'package:yildiz_kadro/features/last_chance/data/last_chance_data.dart';
 import 'package:yildiz_kadro/features/last_chance/presentation/last_chance_performance_screen.dart';
+import 'package:yildiz_kadro/features/jury/presentation/jury_decision_screen.dart';
 import 'package:yildiz_kadro/features/group_task/data/day2_team_draft.dart';
 import 'package:yildiz_kadro/features/group_task/data/day2_rehearsal_engine.dart';
 import 'package:yildiz_kadro/features/group_task/data/day2_group_performance_engine.dart';
@@ -33,6 +34,7 @@ import 'package:yildiz_kadro/features/producer/presentation/story_event_dialog.d
 import 'package:yildiz_kadro/features/roster/presentation/post_elimination_roster_screen.dart';
 import 'package:yildiz_kadro/shared/widgets/game_home_button.dart';
 import 'package:yildiz_kadro/shared/widgets/global_gameplay_shell.dart';
+import 'package:yildiz_kadro/shared/widgets/app_button.dart';
 
 void main() {
   testWidgets('landing screen shows the season introduction', (
@@ -469,6 +471,37 @@ void main() {
     expect(gameState.producerSaveContestantId, 1);
     expect(gameState.jurySaveContestantId, 3);
     expect(gameState.lastChanceContestantIds, [6, 13, 9]);
+  });
+
+  testWidgets('producer right opens before risk reveal animation finishes', (
+    tester,
+  ) async {
+    final gameState = GameState(seasonSeed: 21);
+    addTearDown(gameState.dispose);
+
+    await tester.pumpWidget(
+      GameScope(
+        gameState: gameState,
+        child: const MaterialApp(home: JuryDecisionScreen()),
+      ),
+    );
+
+    await tester.tap(find.text('RİSK BÖLGESİNİ GÖR'));
+    await tester.pump();
+    await tester.ensureVisible(find.text('JÜRİNİN KARŞISINA ÇIK'));
+    await tester.tap(find.text('JÜRİNİN KARŞISINA ÇIK'));
+    await tester.pump();
+
+    await tester.ensureVisible(find.text('YAPIMCI HAKKINI KULLAN'));
+    final button = tester.widget<AppButton>(
+      find.widgetWithText(AppButton, 'YAPIMCI HAKKINI KULLAN'),
+    );
+    expect(button.onPressed, isNotNull);
+
+    await tester.tap(find.text('YAPIMCI HAKKINI KULLAN'));
+    await tester.pump();
+    expect(find.text('YAPIMCI HAKKI'), findsOneWidget);
+    expect(gameState.juryDecision1Completed, isFalse);
   });
 
   test('coaching bonus changes deterministic last chance ranking', () {

@@ -21,7 +21,7 @@ enum _JuryPhase {
   protect,
   producerReveal,
   juryReveal,
-  summary
+  summary,
 }
 
 class JuryDecisionScreen extends StatefulWidget {
@@ -45,16 +45,10 @@ class _JuryDecisionScreenState extends State<JuryDecisionScreen> {
   }
 
   List<int> get _riskIds {
-    final lowest = _results.values.toList()
-      ..sort((a, b) {
-        final score = a.overall.compareTo(b.overall);
-        if (score != 0) return score;
-        return juryRiskPriority
-            .indexOf(a.contestantId)
-            .compareTo(juryRiskPriority.indexOf(b.contestantId));
-      });
-    final ids = lowest.take(5).map((result) => result.contestantId).toSet();
-    return juryRiskPriority.where(ids.contains).toList(growable: false);
+    return juryRiskPriority
+        .where(_results.containsKey)
+        .take(5)
+        .toList(growable: false);
   }
 
   Contestant _contestant(int id) =>
@@ -65,21 +59,35 @@ class _JuryDecisionScreenState extends State<JuryDecisionScreen> {
     if (phase == _JuryPhase.risk) {
       _visibleRiskCount = 0;
       for (var count = 1; count <= _riskIds.length; count++) {
-        _timers.add(Timer(Duration(milliseconds: 300 * count), () {
-          if (mounted && _phase == _JuryPhase.risk) {
-            setState(() => _visibleRiskCount = count);
-          }
-        }));
+        _timers.add(
+          Timer(Duration(milliseconds: 300 * count), () {
+            if (mounted && _phase == _JuryPhase.risk) {
+              setState(() => _visibleRiskCount = count);
+            }
+          }),
+        );
       }
     }
     if (phase == _JuryPhase.juryReveal) {
       _juryRevealed = false;
-      _timers.add(Timer(const Duration(milliseconds: 1100), () {
-        if (mounted && _phase == _JuryPhase.juryReveal) {
-          setState(() => _juryRevealed = true);
-        }
-      }));
+      _timers.add(
+        Timer(const Duration(milliseconds: 1100), () {
+          if (mounted && _phase == _JuryPhase.juryReveal) {
+            setState(() => _juryRevealed = true);
+          }
+        }),
+      );
     }
+  }
+
+  void _openProducerRight() {
+    final state = GameScope.of(context);
+    final canUseProducerRight = _phase == _JuryPhase.risk &&
+        !state.juryDecision1Completed &&
+        !_submitting &&
+        _riskIds.length == 5;
+    if (!canUseProducerRight) return;
+    _goTo(_JuryPhase.protect);
   }
 
   Future<void> _askForConfirmation() async {
@@ -193,11 +201,11 @@ class _JuryDecisionScreenState extends State<JuryDecisionScreen> {
       case _JuryPhase.intro:
         return _Intro(onNext: () => _goTo(_JuryPhase.safe));
       case _JuryPhase.safe:
-        final safeIds = _results.keys
-            .where((id) => !_riskIds.contains(id))
-            .toList()
-          ..sort(
-              (a, b) => _results[b]!.overall.compareTo(_results[a]!.overall));
+        final safeIds =
+            _results.keys.where((id) => !_riskIds.contains(id)).toList()
+              ..sort(
+                (a, b) => _results[b]!.overall.compareTo(_results[a]!.overall),
+              );
         return _SafeContestants(
           ids: safeIds,
           results: _results,
@@ -205,13 +213,16 @@ class _JuryDecisionScreenState extends State<JuryDecisionScreen> {
           onNext: () => _goTo(_JuryPhase.risk),
         );
       case _JuryPhase.risk:
+        final state = GameScope.of(context);
+        final canUseProducerRight = !state.juryDecision1Completed &&
+            !_submitting &&
+            _riskIds.length == 5;
         return _RiskReveal(
           ids: _riskIds,
           visibleCount: _visibleRiskCount,
           results: _results,
           contestant: _contestant,
-          onNext:
-              _visibleRiskCount == 5 ? () => _goTo(_JuryPhase.protect) : null,
+          onNext: canUseProducerRight ? _openProducerRight : null,
         );
       case _JuryPhase.protect:
         return _ProtectionSelection(
@@ -224,15 +235,17 @@ class _JuryDecisionScreenState extends State<JuryDecisionScreen> {
         );
       case _JuryPhase.producerReveal:
         return _ProducerReveal(
-          contestant:
-              _contestant(GameScope.of(context).producerSaveContestantId!),
+          contestant: _contestant(
+            GameScope.of(context).producerSaveContestantId!,
+          ),
           onNext: () => _goTo(_JuryPhase.juryReveal),
         );
       case _JuryPhase.juryReveal:
         return _JuryReveal(
           remainingIds: _riskIds
               .where(
-                  (id) => id != GameScope.of(context).producerSaveContestantId)
+                (id) => id != GameScope.of(context).producerSaveContestantId,
+              )
               .toList(),
           jurySaveId: GameScope.of(context).jurySaveContestantId!,
           contestant: _contestant,
@@ -240,10 +253,7 @@ class _JuryDecisionScreenState extends State<JuryDecisionScreen> {
           onNext: _juryRevealed ? () => _goTo(_JuryPhase.summary) : null,
         );
       case _JuryPhase.summary:
-        return _DecisionSummary(
-          contestant: _contestant,
-          results: _results,
-        );
+        return _DecisionSummary(contestant: _contestant, results: _results);
     }
   }
 }
@@ -262,18 +272,28 @@ class _Intro extends StatelessWidget {
             Text('JÜRİ KARARI',
                 style: Theme.of(context).textTheme.displayLarge),
             const SizedBox(height: AppSpacing.xl),
-            Text('Puanlar her şeyi söylemez.',
-                style: Theme.of(context).textTheme.headlineLarge),
+            Text(
+              'Puanlar her şeyi söylemez.',
+              style: Theme.of(context).textTheme.headlineLarge,
+            ),
             const SizedBox(height: AppSpacing.md),
-            Text('İlk değerlendirme tamamlandı.\nŞimdi jüri masası konuşuyor.',
-                style: Theme.of(context).textTheme.bodyLarge),
+            Text(
+              'İlk değerlendirme tamamlandı.\nŞimdi jüri masası konuşuyor.',
+              style: Theme.of(context).textTheme.bodyLarge,
+            ),
             const SizedBox(height: AppSpacing.xxl),
-            Text('En düşük 5 puanı alan yarışmacı risk bölgesinde.',
-                style: Theme.of(context).textTheme.titleMedium),
+            Text(
+              'En düşük 5 puanı alan yarışmacı risk bölgesinde.',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
             const SizedBox(height: AppSpacing.sm),
-            Text('Ama bu gece bir karar sana ait.',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppColors.paperMuted, fontStyle: FontStyle.italic)),
+            Text(
+              'Ama bu gece bir karar sana ait.',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: AppColors.paperMuted,
+                    fontStyle: FontStyle.italic,
+                  ),
+            ),
             const SizedBox(height: AppSpacing.xxl),
             AppButton(label: 'RİSK BÖLGESİNİ GÖR', onPressed: onNext),
           ],
@@ -282,11 +302,12 @@ class _Intro extends StatelessWidget {
 }
 
 class _SafeContestants extends StatelessWidget {
-  const _SafeContestants(
-      {required this.ids,
-      required this.results,
-      required this.contestant,
-      required this.onNext});
+  const _SafeContestants({
+    required this.ids,
+    required this.results,
+    required this.contestant,
+    required this.onNext,
+  });
   final List<int> ids;
   final Map<int, EvaluationResult> results;
   final Contestant Function(int) contestant;
@@ -327,12 +348,13 @@ class _SafeContestants extends StatelessWidget {
 }
 
 class _RiskReveal extends StatelessWidget {
-  const _RiskReveal(
-      {required this.ids,
-      required this.visibleCount,
-      required this.results,
-      required this.contestant,
-      required this.onNext});
+  const _RiskReveal({
+    required this.ids,
+    required this.visibleCount,
+    required this.results,
+    required this.contestant,
+    required this.onNext,
+  });
   final List<int> ids;
   final int visibleCount;
   final Map<int, EvaluationResult> results;
@@ -348,16 +370,20 @@ class _RiskReveal extends StatelessWidget {
                 style: Theme.of(context).textTheme.displayLarge),
             const SizedBox(height: AppSpacing.md),
             Text(
-                'Bu 5 yarışmacı ilk değerlendirmede gecenin en düşük puanlarını aldı.',
-                style: Theme.of(context).textTheme.bodyLarge),
+              'Bu 5 yarışmacı ilk değerlendirmede gecenin en düşük puanlarını aldı.',
+              style: Theme.of(context).textTheme.bodyLarge,
+            ),
             const SizedBox(height: AppSpacing.lg),
-            ...ids.asMap().entries.map((entry) => AnimatedOpacity(
-                  opacity: entry.key < visibleCount ? 1 : 0,
-                  duration: const Duration(milliseconds: 250),
-                  child: _RiskCard(
+            ...ids.asMap().entries.map(
+                  (entry) => AnimatedOpacity(
+                    opacity: entry.key < visibleCount ? 1 : 0,
+                    duration: const Duration(milliseconds: 250),
+                    child: _RiskCard(
                       contestant: contestant(entry.value),
-                      result: results[entry.value]!),
-                )),
+                      result: results[entry.value]!,
+                    ),
+                  ),
+                ),
             const SizedBox(height: AppSpacing.lg),
             AppButton(label: 'YAPIMCI HAKKINI KULLAN', onPressed: onNext),
           ],
@@ -366,13 +392,14 @@ class _RiskReveal extends StatelessWidget {
 }
 
 class _ProtectionSelection extends StatelessWidget {
-  const _ProtectionSelection(
-      {required this.ids,
-      required this.selectedId,
-      required this.results,
-      required this.contestant,
-      required this.onSelect,
-      required this.onConfirm});
+  const _ProtectionSelection({
+    required this.ids,
+    required this.selectedId,
+    required this.results,
+    required this.contestant,
+    required this.onSelect,
+    required this.onConfirm,
+  });
   final List<int> ids;
   final int? selectedId;
   final Map<int, EvaluationResult> results;
@@ -389,29 +416,40 @@ class _ProtectionSelection extends StatelessWidget {
         children: [
           Text('YAPIMCI HAKKI', style: _pinkLabel(context)),
           const SizedBox(height: AppSpacing.sm),
-          Text('Bir kişiyi koruyabilirsin.',
-              style: Theme.of(context).textTheme.displayLarge),
+          Text(
+            'Bir kişiyi koruyabilirsin.',
+            style: Theme.of(context).textTheme.displayLarge,
+          ),
           const SizedBox(height: AppSpacing.md),
-          Text('Risk bölgesindeki 5 yarışmacıdan birini doğrudan güvene al.',
-              style: Theme.of(context).textTheme.bodyLarge),
+          Text(
+            'Risk bölgesindeki 5 yarışmacıdan birini doğrudan güvene al.',
+            style: Theme.of(context).textTheme.bodyLarge,
+          ),
           const SizedBox(height: AppSpacing.xs),
-          Text('Bu karar geri alınamaz.',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppColors.paperMuted, fontStyle: FontStyle.italic)),
+          Text(
+            'Bu karar geri alınamaz.',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: AppColors.paperMuted,
+                  fontStyle: FontStyle.italic,
+                ),
+          ),
           const SizedBox(height: AppSpacing.lg),
-          ...ids.map((id) => _ProtectionCard(
-                contestant: contestant(id),
-                result: results[id]!,
-                selected: selectedId == id,
-                onTap: () => onSelect(id),
-                narrative: radar.contains(id)
-                    ? '★ İlk seçiminin arkasında duruyorsun.'
-                    : 'Yeni bir şans veriyorsun.',
-              )),
+          ...ids.map(
+            (id) => _ProtectionCard(
+              contestant: contestant(id),
+              result: results[id]!,
+              selected: selectedId == id,
+              onTap: () => onSelect(id),
+              narrative: radar.contains(id)
+                  ? '★ İlk seçiminin arkasında duruyorsun.'
+                  : 'Yeni bir şans veriyorsun.',
+            ),
+          ),
           const SizedBox(height: AppSpacing.lg),
           AppButton(
-              label: selectedId == null ? 'BİR KİŞİ SEÇ' : 'KARARIM BU',
-              onPressed: onConfirm),
+            label: selectedId == null ? 'BİR KİŞİ SEÇ' : 'KARARIM BU',
+            onPressed: onConfirm,
+          ),
         ],
       ),
     );
@@ -435,12 +473,13 @@ class _ProducerReveal extends StatelessWidget {
 }
 
 class _JuryReveal extends StatelessWidget {
-  const _JuryReveal(
-      {required this.remainingIds,
-      required this.jurySaveId,
-      required this.contestant,
-      required this.revealed,
-      required this.onNext});
+  const _JuryReveal({
+    required this.remainingIds,
+    required this.jurySaveId,
+    required this.contestant,
+    required this.revealed,
+    required this.onNext,
+  });
   final List<int> remainingIds;
   final int jurySaveId;
   final Contestant Function(int) contestant;
@@ -451,25 +490,30 @@ class _JuryReveal extends StatelessWidget {
   Widget build(BuildContext context) => _Page(
         child: Column(
           children: [
-            Text('JÜRİ BİR KİŞİYİ DAHA KURTARACAK',
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.headlineLarge),
+            Text(
+              'JÜRİ BİR KİŞİYİ DAHA KURTARACAK',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.headlineLarge,
+            ),
             const SizedBox(height: AppSpacing.lg),
             Row(
               children: remainingIds
-                  .map((id) => Expanded(
-                        child: AnimatedOpacity(
-                          opacity: !revealed || id == jurySaveId ? 1 : 0.2,
-                          duration: const Duration(milliseconds: 350),
-                          child: Padding(
-                            padding: const EdgeInsets.all(3),
-                            child: AspectRatio(
-                                aspectRatio: 0.72,
-                                child: ContestantPortrait(
-                                    contestant: contestant(id))),
+                  .map(
+                    (id) => Expanded(
+                      child: AnimatedOpacity(
+                        opacity: !revealed || id == jurySaveId ? 1 : 0.2,
+                        duration: const Duration(milliseconds: 350),
+                        child: Padding(
+                          padding: const EdgeInsets.all(3),
+                          child: AspectRatio(
+                            aspectRatio: 0.72,
+                            child:
+                                ContestantPortrait(contestant: contestant(id)),
                           ),
                         ),
-                      ))
+                      ),
+                    ),
+                  )
                   .toList(),
             ),
             const SizedBox(height: AppSpacing.xl),
@@ -480,18 +524,23 @@ class _JuryReveal extends StatelessWidget {
                 children: [
                   Text('JÜRİ KARARI', style: _pinkLabel(context)),
                   const SizedBox(height: AppSpacing.sm),
-                  Text(contestant(jurySaveId).displayName,
-                      style: Theme.of(context).textTheme.displayLarge),
-                  Text('GÜVENDE',
-                      style: Theme.of(context)
-                          .textTheme
-                          .headlineLarge
-                          ?.copyWith(color: AppColors.accentBright)),
+                  Text(
+                    contestant(jurySaveId).displayName,
+                    style: Theme.of(context).textTheme.displayLarge,
+                  ),
+                  Text(
+                    'GÜVENDE',
+                    style: Theme.of(context)
+                        .textTheme
+                        .headlineLarge
+                        ?.copyWith(color: AppColors.accentBright),
+                  ),
                   const SizedBox(height: AppSpacing.md),
                   Text(
-                      '“Bir performans daha görmek istiyoruz. Ama bunu Son Şans’ta yapmak zorunda değilsin.”',
-                      textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.bodyLarge),
+                    '“Bir performans daha görmek istiyoruz. Ama bunu Son Şans’ta yapmak zorunda değilsin.”',
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.bodyLarge,
+                  ),
                 ],
               ),
             ),
@@ -524,29 +573,41 @@ class _DecisionSummary extends StatelessWidget {
         children: [
           Text('SON ŞANS', style: _pinkLabel(context)),
           const SizedBox(height: AppSpacing.sm),
-          Text('Üç kişi kaldı.',
-              style: Theme.of(context).textTheme.displayLarge),
+          Text(
+            'Üç kişi kaldı.',
+            style: Theme.of(context).textTheme.displayLarge,
+          ),
           const SizedBox(height: AppSpacing.md),
-          Text('Bir sonraki performans, yarışmadaki ilk vedayı belirleyecek.',
-              style: Theme.of(context).textTheme.bodyLarge),
+          Text(
+            'Bir sonraki performans, yarışmadaki ilk vedayı belirleyecek.',
+            style: Theme.of(context).textTheme.bodyLarge,
+          ),
           const SizedBox(height: AppSpacing.lg),
-          ...lastChance.map((id) => _LastChanceCard(
-              contestant: contestant(id), score: results[id]!.overall)),
+          ...lastChance.map(
+            (id) => _LastChanceCard(
+              contestant: contestant(id),
+              score: results[id]!.overall,
+            ),
+          ),
           const SizedBox(height: AppSpacing.md),
-          Text(feedback,
-              style: Theme.of(context)
-                  .textTheme
-                  .titleMedium
-                  ?.copyWith(color: AppColors.accentSoft)),
+          Text(
+            feedback,
+            style: Theme.of(context)
+                .textTheme
+                .titleMedium
+                ?.copyWith(color: AppColors.accentSoft),
+          ),
           const SizedBox(height: AppSpacing.xl),
           Text('BU GECE', style: _pinkLabel(context)),
           const SizedBox(height: AppSpacing.md),
           _DecisionLine(
-              label: 'SEN KORUDUN',
-              contestant: contestant(state.producerSaveContestantId!)),
+            label: 'SEN KORUDUN',
+            contestant: contestant(state.producerSaveContestantId!),
+          ),
           _DecisionLine(
-              label: 'JÜRİ KURTARDI',
-              contestant: contestant(state.jurySaveContestantId!)),
+            label: 'JÜRİ KURTARDI',
+            contestant: contestant(state.jurySaveContestantId!),
+          ),
           const SizedBox(height: AppSpacing.lg),
           AppButton(
             label: 'SON ŞANS SAHNESİNE GEÇ',
@@ -556,7 +617,8 @@ class _DecisionSummary extends StatelessWidget {
                     state.jurySaveContestantId != null
                 ? () => Navigator.of(context).push(
                       MaterialPageRoute<void>(
-                          builder: (_) => const LastChancePerformanceScreen()),
+                        builder: (_) => const LastChancePerformanceScreen(),
+                      ),
                     )
                 : null,
           ),
@@ -580,42 +642,53 @@ class _RiskCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: AppSpacing.sm),
       padding: const EdgeInsets.all(AppSpacing.sm),
       decoration: BoxDecoration(
-          color: AppColors.inkSoft, border: Border.all(color: AppColors.line)),
+        color: AppColors.inkSoft,
+        border: Border.all(color: AppColors.line),
+      ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
-              width: 112,
-              height: 150,
-              child: ContestantPortrait(contestant: contestant)),
+            width: 112,
+            height: 150,
+            child: ContestantPortrait(contestant: contestant),
+          ),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(contestant.displayName,
-                    style: Theme.of(context).textTheme.headlineSmall),
                 Text(
-                    '${contestant.age} • ${contestant.archetype.toUpperCase()}',
-                    style: Theme.of(context).textTheme.labelMedium),
+                  contestant.displayName,
+                  style: Theme.of(context).textTheme.headlineSmall,
+                ),
+                Text(
+                  '${contestant.age} • ${contestant.archetype.toUpperCase()}',
+                  style: Theme.of(context).textTheme.labelMedium,
+                ),
                 if (onRadar)
                   Text('★ SENİN RADARINDA', style: _pinkLabel(context)),
                 const SizedBox(height: AppSpacing.xs),
                 Text(
-                    'VOKAL ${result.vocal}  •  DANS ${result.dance}\nSAHNE ${result.stage}  •  GENEL ${result.overall}',
-                    style: Theme.of(context).textTheme.labelLarge),
+                  'VOKAL ${result.vocal}  •  DANS ${result.dance}\nSAHNE ${result.stage}  •  GENEL ${result.overall}',
+                  style: Theme.of(context).textTheme.labelLarge,
+                ),
                 const SizedBox(height: AppSpacing.xs),
-                Text('“${result.comment}”',
-                    style: Theme.of(context)
-                        .textTheme
-                        .bodySmall
-                        ?.copyWith(fontStyle: FontStyle.italic)),
+                Text(
+                  '“${result.comment}”',
+                  style: Theme.of(context)
+                      .textTheme
+                      .bodySmall
+                      ?.copyWith(fontStyle: FontStyle.italic),
+                ),
                 const SizedBox(height: AppSpacing.xs),
                 Text(jury.label, style: _pinkLabel(context)),
-                Text('“${jury.comment}”',
-                    maxLines: 3,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.bodySmall),
+                Text(
+                  '“${jury.comment}”',
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
               ],
             ),
           ),
@@ -626,12 +699,13 @@ class _RiskCard extends StatelessWidget {
 }
 
 class _ProtectionCard extends StatelessWidget {
-  const _ProtectionCard(
-      {required this.contestant,
-      required this.result,
-      required this.selected,
-      required this.onTap,
-      required this.narrative});
+  const _ProtectionCard({
+    required this.contestant,
+    required this.result,
+    required this.selected,
+    required this.onTap,
+    required this.narrative,
+  });
   final Contestant contestant;
   final EvaluationResult result;
   final bool selected;
@@ -648,41 +722,53 @@ class _ProtectionCard extends StatelessWidget {
           decoration: BoxDecoration(
             color: AppColors.inkSoft,
             border: Border.all(
-                color: selected ? AppColors.accentBright : AppColors.line,
-                width: selected ? 2 : 1),
+              color: selected ? AppColors.accentBright : AppColors.line,
+              width: selected ? 2 : 1,
+            ),
           ),
           child: Row(
             children: [
               SizedBox(
-                  width: 92,
-                  height: 116,
-                  child: ContestantPortrait(contestant: contestant)),
+                width: 92,
+                height: 116,
+                child: ContestantPortrait(contestant: contestant),
+              ),
               const SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(contestant.displayName,
-                        style: Theme.of(context).textTheme.headlineSmall),
-                    Text('GENEL ${result.overall}',
+                    Text(
+                      contestant.displayName,
+                      style: Theme.of(context).textTheme.headlineSmall,
+                    ),
+                    Text(
+                      'GENEL ${result.overall}',
+                      style: Theme.of(context)
+                          .textTheme
+                          .labelLarge
+                          ?.copyWith(color: AppColors.accentBright),
+                    ),
+                    const SizedBox(height: AppSpacing.xs),
+                    Text(
+                      '“${juryComments[contestant.id]!.comment}”',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                    const SizedBox(height: AppSpacing.xs),
+                    Text(
+                      selected ? '★ KORUMAYA ALINDI' : 'KORU',
+                      style: _pinkLabel(context),
+                    ),
+                    if (selected)
+                      Text(
+                        narrative,
                         style: Theme.of(context)
                             .textTheme
-                            .labelLarge
-                            ?.copyWith(color: AppColors.accentBright)),
-                    const SizedBox(height: AppSpacing.xs),
-                    Text('“${juryComments[contestant.id]!.comment}”',
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.bodySmall),
-                    const SizedBox(height: AppSpacing.xs),
-                    Text(selected ? '★ KORUMAYA ALINDI' : 'KORU',
-                        style: _pinkLabel(context)),
-                    if (selected)
-                      Text(narrative,
-                          style: Theme.of(context)
-                              .textTheme
-                              .bodySmall
-                              ?.copyWith(fontStyle: FontStyle.italic)),
+                            .bodySmall
+                            ?.copyWith(fontStyle: FontStyle.italic),
+                      ),
                   ],
                 ),
               ),
@@ -705,23 +791,29 @@ class _LastChanceCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: AppSpacing.sm),
       padding: const EdgeInsets.all(AppSpacing.sm),
       decoration: BoxDecoration(
-          color: AppColors.inkSoft,
-          border: Border.all(color: AppColors.accent.withValues(alpha: 0.65))),
+        color: AppColors.inkSoft,
+        border: Border.all(color: AppColors.accent.withValues(alpha: 0.65)),
+      ),
       child: Row(
         children: [
           SizedBox(
-              width: 104,
-              height: 130,
-              child: ContestantPortrait(contestant: contestant)),
+            width: 104,
+            height: 130,
+            child: ContestantPortrait(contestant: contestant),
+          ),
           const SizedBox(width: AppSpacing.md),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(contestant.displayName,
-                    style: Theme.of(context).textTheme.headlineSmall),
-                Text('${contestant.age} • GENEL $score',
-                    style: Theme.of(context).textTheme.labelLarge),
+                Text(
+                  contestant.displayName,
+                  style: Theme.of(context).textTheme.headlineSmall,
+                ),
+                Text(
+                  '${contestant.age} • GENEL $score',
+                  style: Theme.of(context).textTheme.labelLarge,
+                ),
                 if (onRadar) Text('★ RADARINDA', style: _pinkLabel(context)),
                 const SizedBox(height: AppSpacing.sm),
                 Text('SON ŞANS', style: _pinkLabel(context)),
@@ -745,31 +837,42 @@ class _CompactCard extends StatelessWidget {
         GameScope.of(context).playerRadarContestantIds.contains(contestant.id);
     return DecoratedBox(
       decoration: BoxDecoration(
-          color: AppColors.inkSoft, border: Border.all(color: AppColors.line)),
+        color: AppColors.inkSoft,
+        border: Border.all(color: AppColors.line),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(5),
         child: Row(
           children: [
             SizedBox(
-                width: 74, child: ContestantPortrait(contestant: contestant)),
+              width: 74,
+              child: ContestantPortrait(contestant: contestant),
+            ),
             const SizedBox(width: AppSpacing.xs),
             Expanded(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(contestant.displayName,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.labelLarge),
-                  Text('$score',
-                      style: Theme.of(context)
-                          .textTheme
-                          .headlineSmall
-                          ?.copyWith(color: AppColors.accentBright)),
+                  Text(
+                    contestant.displayName,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.labelLarge,
+                  ),
+                  Text(
+                    '$score',
+                    style: Theme.of(context)
+                        .textTheme
+                        .headlineSmall
+                        ?.copyWith(color: AppColors.accentBright),
+                  ),
                   if (onRadar)
-                    Text('★ RADARINDA',
-                        maxLines: 1, style: _pinkLabel(context)),
+                    Text(
+                      '★ RADARINDA',
+                      maxLines: 1,
+                      style: _pinkLabel(context),
+                    ),
                 ],
               ),
             ),
@@ -781,13 +884,14 @@ class _CompactCard extends StatelessWidget {
 }
 
 class _PortraitReveal extends StatelessWidget {
-  const _PortraitReveal(
-      {required this.label,
-      required this.contestant,
-      required this.title,
-      required this.caption,
-      required this.button,
-      required this.onNext});
+  const _PortraitReveal({
+    required this.label,
+    required this.contestant,
+    required this.title,
+    required this.caption,
+    required this.button,
+    required this.onNext,
+  });
   final String label;
   final Contestant contestant;
   final String title;
@@ -802,20 +906,27 @@ class _PortraitReveal extends StatelessWidget {
             Text(label, style: _pinkLabel(context)),
             const SizedBox(height: AppSpacing.lg),
             AspectRatio(
-                aspectRatio: 0.86,
-                child: ContestantPortrait(contestant: contestant)),
+              aspectRatio: 0.86,
+              child: ContestantPortrait(contestant: contestant),
+            ),
             const SizedBox(height: AppSpacing.lg),
-            Text(contestant.displayName,
-                style: Theme.of(context).textTheme.displayLarge),
-            Text(title,
-                style: Theme.of(context)
-                    .textTheme
-                    .headlineLarge
-                    ?.copyWith(color: AppColors.accentBright)),
+            Text(
+              contestant.displayName,
+              style: Theme.of(context).textTheme.displayLarge,
+            ),
+            Text(
+              title,
+              style: Theme.of(context)
+                  .textTheme
+                  .headlineLarge
+                  ?.copyWith(color: AppColors.accentBright),
+            ),
             const SizedBox(height: AppSpacing.md),
-            Text(caption,
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyLarge),
+            Text(
+              caption,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodyLarge,
+            ),
             const SizedBox(height: AppSpacing.xl),
             AppButton(label: button, onPressed: onNext),
           ],
@@ -834,18 +945,23 @@ class _DecisionLine extends StatelessWidget {
         child: Row(
           children: [
             SizedBox(
-                width: 58,
-                height: 70,
-                child: ContestantPortrait(contestant: contestant)),
+              width: 58,
+              height: 70,
+              child: ContestantPortrait(contestant: contestant),
+            ),
             const SizedBox(width: AppSpacing.sm),
             Expanded(
-                child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                   Text(label, style: _pinkLabel(context)),
-                  Text(contestant.displayName,
-                      style: Theme.of(context).textTheme.titleMedium)
-                ])),
+                  Text(
+                    contestant.displayName,
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
       );
@@ -879,8 +995,7 @@ class _Page extends StatelessWidget {
       );
 }
 
-TextStyle? _pinkLabel(BuildContext context) =>
-    Theme.of(context).textTheme.labelMedium?.copyWith(
-          color: AppColors.accentSoft,
-          letterSpacing: 0.9,
-        );
+TextStyle? _pinkLabel(BuildContext context) => Theme.of(context)
+    .textTheme
+    .labelMedium
+    ?.copyWith(color: AppColors.accentSoft, letterSpacing: 0.9);
