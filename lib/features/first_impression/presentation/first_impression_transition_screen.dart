@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:yildiz_kadro/app/theme/app_colors.dart';
 import 'package:yildiz_kadro/app/theme/app_spacing.dart';
 import 'package:yildiz_kadro/features/evaluation/presentation/first_evaluation_screen.dart';
+import 'package:yildiz_kadro/l10n/l10n.dart';
 import 'package:yildiz_kadro/shared/widgets/max_width_container.dart';
 
 class FirstImpressionTransitionScreen extends StatefulWidget {
@@ -57,26 +58,25 @@ class _FirstImpressionTransitionScreenState
                   ),
                   const SizedBox(height: AppSpacing.lg),
                   Text(
-                    'İlk izlenimler tamam.',
+                    context.l10n.firstImpressionsComplete,
                     textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                          fontSize: 42,
-                        ),
+                    style: Theme.of(context).textTheme.displayLarge
+                        ?.copyWith(fontSize: 42),
                   ),
                   const SizedBox(height: AppSpacing.md),
                   Text(
-                    'Ama sahne ışıkları yandığında her şey değişebilir.',
+                    context.l10n.stageLightsChangeEverything,
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.bodyLarge,
                   ),
                   const SizedBox(height: AppSpacing.lg),
                   Text(
-                    'İLK DEĞERLENDİRME BAŞLIYOR.',
+                    context.l10n.firstEvaluationStarting.toUpperCase(),
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                          color: AppColors.accentSoft,
-                          letterSpacing: 1.2,
-                        ),
+                      color: AppColors.accentSoft,
+                      letterSpacing: 1.2,
+                    ),
                   ),
                 ],
               ),

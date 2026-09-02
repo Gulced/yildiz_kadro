@@ -6,6 +6,7 @@ import 'package:yildiz_kadro/features/contestants/data/contestant_seed_data.dart
 import 'package:yildiz_kadro/features/contestants/presentation/contestant_detail_screen.dart';
 import 'package:yildiz_kadro/features/contestants/presentation/widgets/contestant_card.dart';
 import 'package:yildiz_kadro/features/first_impression/presentation/first_impression_screen.dart';
+import 'package:yildiz_kadro/l10n/l10n.dart';
 import 'package:yildiz_kadro/shared/widgets/app_button.dart';
 
 class ContestantDashboardScreen extends StatelessWidget {
@@ -22,9 +23,7 @@ class ContestantDashboardScreen extends StatelessWidget {
 
   void _showNextStep(BuildContext context) {
     Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (_) => const FirstImpressionScreen(),
-      ),
+      MaterialPageRoute<void>(builder: (_) => const FirstImpressionScreen()),
     );
   }
 
@@ -63,7 +62,8 @@ class ContestantDashboardScreen extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
               sliver: SliverLayoutBuilder(
                 builder: (context, constraints) {
-                  final sideSpace = (constraints.crossAxisExtent -
+                  final sideSpace =
+                      (constraints.crossAxisExtent -
                               AppBreakpoints.maxContentWidth)
                           .clamp(0.0, double.infinity) /
                       2;
@@ -100,7 +100,7 @@ class ContestantDashboardScreen extends StatelessWidget {
                       AppSpacing.xxl,
                     ),
                     child: AppButton(
-                      label: '15 YARIŞMACIYI GÖRDÜM',
+                      label: context.l10n.seenAllContestants,
                       onPressed: () => _showNextStep(context),
                     ),
                   ),
@@ -126,28 +126,26 @@ class _DashboardHeader extends StatelessWidget {
       children: [
         IconButton(
           onPressed: onBack,
-          tooltip: 'Geri',
+          tooltip: context.l10n.back,
           icon: const Icon(Icons.arrow_back_rounded),
         ),
         const SizedBox(height: AppSpacing.md),
         Text(
-          'CASTING • SEZON 01',
-          style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                color: AppColors.accentSoft,
-              ),
+          context.l10n.castingSeason,
+          style: Theme.of(context).textTheme.labelMedium
+              ?.copyWith(color: AppColors.accentSoft),
         ),
         const SizedBox(height: AppSpacing.sm),
         Text(
-          'YARIŞMACILAR',
-          style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                fontSize: 48,
-              ),
+          context.l10n.contestants,
+          style: Theme.of(context).textTheme.displayLarge
+              ?.copyWith(fontSize: 48),
         ),
         const SizedBox(height: AppSpacing.md),
         ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 620),
           child: Text(
-            '15 yarışmacıyı tanı. Final kadronu şimdiden düşünmeye başla.',
+            context.l10n.meetAllContestants,
             style: Theme.of(context).textTheme.bodyLarge,
           ),
         ),

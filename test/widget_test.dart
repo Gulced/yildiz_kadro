@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:yildiz_kadro/app/app.dart';
+import 'package:yildiz_kadro/app/localization/locale_controller.dart';
 import 'package:yildiz_kadro/app/navigation/game_navigation_observer.dart';
 import 'package:yildiz_kadro/features/contestants/data/contestant_seed_data.dart';
 import 'package:yildiz_kadro/features/contestants/presentation/contestant_detail_screen.dart';
@@ -37,6 +39,9 @@ import 'package:yildiz_kadro/shared/widgets/global_gameplay_shell.dart';
 import 'package:yildiz_kadro/shared/widgets/app_button.dart';
 
 void main() {
+  final binding = TestWidgetsFlutterBinding.ensureInitialized();
+  binding.platformDispatcher.localesTestValue = const [Locale('tr')];
+
   testWidgets('landing screen shows the season introduction', (
     WidgetTester tester,
   ) async {
@@ -55,6 +60,30 @@ void main() {
     expect(find.text('GÜLCE'), findsOneWidget);
     expect(find.text('Final sahnesi  ★'), findsOneWidget);
     expect(find.text('YAPIMCI MODU'), findsOneWidget);
+  });
+
+  testWidgets('language selector switches and persists the locale', (
+    tester,
+  ) async {
+    SharedPreferences.setMockInitialValues({'selectedLanguage': 'tr'});
+    final preferences = await SharedPreferences.getInstance();
+    final controller = LocaleController.withPreferences(preferences);
+    await controller.restore();
+    addTearDown(controller.dispose);
+
+    await tester.pumpWidget(YildizKadroApp(localeController: controller));
+    expect(find.text('SEZONA BAŞLA'), findsOneWidget);
+
+    await tester.tap(find.text('EN'));
+    await tester.pumpAndSettle();
+    expect(find.text('START THE SEASON'), findsOneWidget);
+    expect(find.text('15 contestants.\nOne group of five.'), findsOneWidget);
+    expect(preferences.getString('selectedLanguage'), 'en');
+
+    await tester.tap(find.text('TR'));
+    await tester.pumpAndSettle();
+    expect(find.text('SEZONA BAŞLA'), findsOneWidget);
+    expect(preferences.getString('selectedLanguage'), 'tr');
   });
 
   testWidgets('global home opens dashboard and resumes first evaluation', (

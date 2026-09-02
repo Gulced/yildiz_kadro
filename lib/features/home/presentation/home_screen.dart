@@ -11,6 +11,8 @@ import 'package:yildiz_kadro/features/home/presentation/widgets/show_background.
 import 'package:yildiz_kadro/features/home/presentation/widgets/show_wordmark.dart';
 import 'package:yildiz_kadro/shared/widgets/app_button.dart';
 import 'package:yildiz_kadro/shared/widgets/max_width_container.dart';
+import 'package:yildiz_kadro/l10n/l10n.dart';
+import 'package:yildiz_kadro/shared/widgets/language_selector.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -40,9 +42,8 @@ class HomeScreen extends StatelessWidget {
                         vertical: AppSpacing.xl,
                       ),
                       child: ResponsiveLayout(
-                        compact: (_) => _PhoneLanding(
-                          onStart: () => _openCasting(context),
-                        ),
+                        compact: (_) =>
+                            _PhoneLanding(onStart: () => _openCasting(context)),
                         medium: (_) => _PhoneLanding(
                           onStart: () => _openCasting(context),
                           spacious: true,
@@ -75,6 +76,11 @@ class _PhoneLanding extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        const Align(
+          alignment: Alignment.centerRight,
+          child: LanguageSelector(),
+        ),
+        const SizedBox(height: AppSpacing.md),
         const ShowWordmark(),
         SizedBox(height: sectionGap),
         _HeroContent(onStart: onStart),
@@ -102,6 +108,11 @@ class _TabletLanding extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        const Align(
+          alignment: Alignment.centerRight,
+          child: LanguageSelector(),
+        ),
+        const SizedBox(height: AppSpacing.md),
         const ShowWordmark(),
         const SizedBox(height: AppSpacing.xxl),
         Row(
@@ -127,42 +138,26 @@ class _HeroContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
-    final usesLargeText = MediaQuery.textScalerOf(context).scale(1) >= 1.5;
-    final contestantLabel = usesLargeText ? 'yarış\u00ADmacı.' : 'yarışmacı.';
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         const SeasonMark(),
         const SizedBox(height: AppSpacing.lg),
-        Text.rich(
-          TextSpan(
-            children: [
-              TextSpan(text: '15 $contestantLabel\n'),
-              const TextSpan(
-                text: '5 kişilik\nbir grup.',
-                style: TextStyle(color: AppColors.accentBright),
-              ),
-            ],
-          ),
-          style: textTheme.displayLarge,
-        ),
+        Text(context.l10n.contestantsAndGroup, style: textTheme.displayLarge),
         const SizedBox(height: AppSpacing.lg),
         ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 520),
-          child: Text(
-            'Takımları kur, kararlarını ver ve final kadrosunu sen oluştur.',
-            style: textTheme.bodyLarge,
-          ),
+          child: Text(context.l10n.landingSupport, style: textTheme.bodyLarge),
         ),
         const SizedBox(height: AppSpacing.xl),
-        AppButton(label: 'SEZONA BAŞLA', onPressed: onStart),
+        AppButton(
+          label: context.l10n.startSeason.toUpperCase(),
+          onPressed: onStart,
+        ),
         const SizedBox(height: AppSpacing.md),
         Align(
           alignment: Alignment.centerLeft,
-          child: _HowToPlayButton(
-            onPressed: () => _showHowToPlay(context),
-          ),
+          child: _HowToPlayButton(onPressed: () => _showHowToPlay(context)),
         ),
       ],
     );
@@ -182,46 +177,41 @@ class _HeroContent extends StatelessWidget {
           controller: controller,
           padding: const EdgeInsets.all(AppSpacing.lg),
           children: [
-            Text('NASIL OYNANIR?',
-                style: Theme.of(context).textTheme.displayMedium),
+            Text(
+              context.l10n.howToPlay.toUpperCase(),
+              style: Theme.of(context).textTheme.displayMedium,
+            ),
             const SizedBox(height: AppSpacing.sm),
-            const Text(
-              'Sen bir yarışmacı değil, sezonun yapımcısısın. Kararların sahneyi ve ilişkileri değiştirir.',
-            ),
+            Text(context.l10n.howToIntro),
             const SizedBox(height: AppSpacing.xl),
-            const _HowToStep(
+            _HowToStep(
               number: '01',
-              title: 'YARIŞMACILARI TANI',
-              body:
-                  '15 adayın yeteneklerini, hedeflerini ve karakterlerini keşfet.',
+              title: context.l10n.meetContestants,
+              body: context.l10n.meetContestantsBody,
             ),
-            const _HowToStep(
+            _HowToStep(
               number: '02',
-              title: 'KARAR VER',
-              body:
-                  'Radarını kur, jüri kararlarına müdahale et ve riskleri yönet.',
+              title: context.l10n.makeDecisions,
+              body: context.l10n.makeDecisionsBody,
             ),
-            const _HowToStep(
+            _HowToStep(
               number: '03',
-              title: 'TAKIMLARI KUR',
-              body:
-                  'Kaptan, rol ve konsept seçimleriyle sahne uyumunu şekillendir.',
+              title: context.l10n.buildTeams,
+              body: context.l10n.buildTeamsBody,
             ),
-            const _HowToStep(
+            _HowToStep(
               number: '04',
-              title: 'SONUÇLARI YAŞA',
-              body:
-                  'Her tercih performansları, ilişkileri ve izleyici ilgisini etkiler.',
+              title: context.l10n.liveResults,
+              body: context.l10n.liveResultsBody,
             ),
-            const _HowToStep(
+            _HowToStep(
               number: '05',
-              title: 'KADRONU ÇIKAR',
-              body:
-                  'Finalde beş üyeyi, pozisyonları, lideri ve grup adını sen belirle.',
+              title: context.l10n.formLineup,
+              body: context.l10n.formLineupBody,
             ),
             const SizedBox(height: AppSpacing.lg),
             AppButton(
-              label: 'ANLADIM',
+              label: context.l10n.understood,
               onPressed: () => Navigator.pop(context),
             ),
           ],
@@ -244,34 +234,34 @@ class _HowToStep extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        margin: const EdgeInsets.only(bottom: AppSpacing.sm),
-        padding: const EdgeInsets.all(AppSpacing.md),
-        decoration: BoxDecoration(
-          border: Border.all(color: AppColors.line),
-          color: AppColors.ink,
+    margin: const EdgeInsets.only(bottom: AppSpacing.sm),
+    padding: const EdgeInsets.all(AppSpacing.md),
+    decoration: BoxDecoration(
+      border: Border.all(color: AppColors.line),
+      color: AppColors.ink,
+    ),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          number,
+          style: Theme.of(context).textTheme.labelLarge
+              ?.copyWith(color: AppColors.accentBright),
         ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(number,
-                style: Theme.of(context)
-                    .textTheme
-                    .labelLarge
-                    ?.copyWith(color: AppColors.accentBright)),
-            const SizedBox(width: AppSpacing.md),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(title, style: Theme.of(context).textTheme.titleMedium),
-                  const SizedBox(height: AppSpacing.xs),
-                  Text(body),
-                ],
-              ),
-            ),
-          ],
+        const SizedBox(width: AppSpacing.md),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(title, style: Theme.of(context).textTheme.titleMedium),
+              const SizedBox(height: AppSpacing.xs),
+              Text(body),
+            ],
+          ),
         ),
-      );
+      ],
+    ),
+  );
 }
 
 class _HowToPlayButton extends StatelessWidget {
@@ -284,7 +274,7 @@ class _HowToPlayButton extends StatelessWidget {
     return OutlinedButton.icon(
       onPressed: onPressed,
       icon: const Icon(Icons.menu_book_outlined, size: 19),
-      label: const Text('NASIL OYNANIR?'),
+      label: Text(context.l10n.howToPlay.toUpperCase()),
       style: OutlinedButton.styleFrom(
         foregroundColor: AppColors.paper,
         minimumSize: const Size(0, 50),

@@ -9,6 +9,7 @@ import 'package:yildiz_kadro/features/contestants/presentation/widgets/contestan
 import 'package:yildiz_kadro/features/first_impression/presentation/first_impression_transition_screen.dart';
 import 'package:yildiz_kadro/features/first_impression/presentation/widgets/radar_contestant_card.dart';
 import 'package:yildiz_kadro/features/game/application/game_scope.dart';
+import 'package:yildiz_kadro/l10n/l10n.dart';
 import 'package:yildiz_kadro/shared/widgets/app_button.dart';
 
 class FirstImpressionScreen extends StatefulWidget {
@@ -22,17 +23,26 @@ class _FirstImpressionScreenState extends State<FirstImpressionScreen> {
   static const _maximumSelection = 5;
   final Set<int> _selectedIds = {};
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final state = GameScope.of(context);
+    if (_selectedIds.isEmpty && state.playerRadarContestantIds.isNotEmpty) {
+      _selectedIds.addAll(state.playerRadarContestantIds);
+    }
+  }
+
   void _toggleContestant(int id, String name) {
     if (_selectedIds.contains(id)) {
       setState(() => _selectedIds.remove(id));
       return;
     }
     if (_selectedIds.length == _maximumSelection) {
-      _showFeedback('Radarında sadece 5 kişi olabilir.');
+      _showFeedback(context.l10n.radarLimit);
       return;
     }
     setState(() => _selectedIds.add(id));
-    _showFeedback('$name radarına girdi ★');
+    _showFeedback(context.l10n.enteredRadar(name));
   }
 
   void _showFeedback(String message) {
@@ -48,7 +58,7 @@ class _FirstImpressionScreenState extends State<FirstImpressionScreen> {
 
   void _confirmRadar() {
     GameScope.of(context).savePlayerRadar(_selectedIds);
-    Navigator.of(context).push(
+    Navigator.of(context).pushReplacement(
       MaterialPageRoute<void>(
         builder: (_) => const FirstImpressionTransitionScreen(),
       ),
@@ -82,7 +92,9 @@ class _FirstImpressionScreenState extends State<FirstImpressionScreen> {
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 560),
               child: AppButton(
-                label: selectionComplete ? 'RADARIM HAZIR' : '5 KİŞİ SEÇ',
+                label: selectionComplete
+                    ? context.l10n.radarReady
+                    : context.l10n.selectFive,
                 onPressed: selectionComplete ? _confirmRadar : null,
               ),
             ),
@@ -123,8 +135,11 @@ class _FirstImpressionScreenState extends State<FirstImpressionScreen> {
               ),
               sliver: SliverLayoutBuilder(
                 builder: (context, constraints) {
-                  final sideSpace = (constraints.crossAxisExtent - 760)
-                          .clamp(0.0, double.infinity) /
+                  final sideSpace =
+                      (constraints.crossAxisExtent - 760).clamp(
+                        0.0,
+                        double.infinity,
+                      ) /
                       2;
                   return SliverPadding(
                     padding: EdgeInsets.symmetric(horizontal: sideSpace),
@@ -135,21 +150,18 @@ class _FirstImpressionScreenState extends State<FirstImpressionScreen> {
                         crossAxisSpacing: AppSpacing.sm,
                         mainAxisSpacing: AppSpacing.sm,
                       ),
-                      delegate: SliverChildBuilderDelegate(
-                        (context, index) {
-                          final contestant = contestantSeedData[index];
-                          return RadarContestantCard(
-                            contestant: contestant,
-                            isSelected: _selectedIds.contains(contestant.id),
-                            onTap: () => _toggleContestant(
-                              contestant.id,
-                              contestant.displayName,
-                            ),
-                            onInfo: () => _showPreview(contestant),
-                          );
-                        },
-                        childCount: contestantSeedData.length,
-                      ),
+                      delegate: SliverChildBuilderDelegate((context, index) {
+                        final contestant = contestantSeedData[index];
+                        return RadarContestantCard(
+                          contestant: contestant,
+                          isSelected: _selectedIds.contains(contestant.id),
+                          onTap: () => _toggleContestant(
+                            contestant.id,
+                            contestant.displayName,
+                          ),
+                          onInfo: () => _showPreview(contestant),
+                        );
+                      }, childCount: contestantSeedData.length),
                     ),
                   );
                 },
@@ -175,51 +187,67 @@ class _FirstImpressionScreenState extends State<FirstImpressionScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(4),
-                child: SizedBox(
-                  width: 112,
-                  height: 148,
-                  child: ContestantPortrait(contestant: contestant),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(4),
+                  child: SizedBox(
+                    width: 112,
+                    height: 148,
+                    child: ContestantPortrait(contestant: contestant),
+                  ),
                 ),
-              ),
-              const SizedBox(width: AppSpacing.md),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(contestant.displayName,
-                        style: Theme.of(context).textTheme.headlineLarge),
-                    Text(contestant.personalityTraits.join(' · ')),
-                    const SizedBox(height: AppSpacing.sm),
-                    Text(identity.hook,
-                        style: Theme.of(context).textTheme.bodySmall),
-                  ],
+                const SizedBox(width: AppSpacing.md),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        contestant.displayName,
+                        style: Theme.of(context).textTheme.headlineLarge,
+                      ),
+                      Text(contestant.personalityTraits.join(' · ')),
+                      const SizedBox(height: AppSpacing.sm),
+                      Text(
+                        identity.hook,
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ]),
+              ],
+            ),
             const SizedBox(height: AppSpacing.lg),
-            Text('İLK İZLENİM RADARI', style: _previewLabel(context)),
-            _PreviewMeter(label: 'VOKAL', value: contestant.vocal),
-            _PreviewMeter(label: 'DANS', value: contestant.dance),
-            _PreviewMeter(label: 'SAHNE', value: contestant.stage),
-            _PreviewMeter(label: 'MOTİVASYON', value: social.motivation),
-            _PreviewMeter(label: 'POPÜLERLİK', value: social.popularity),
+            Text(
+              context.l10n.firstImpressionRadar,
+              style: _previewLabel(context),
+            ),
+            _PreviewMeter(label: context.l10n.vocal, value: contestant.vocal),
+            _PreviewMeter(label: context.l10n.dance, value: contestant.dance),
+            _PreviewMeter(label: context.l10n.stage, value: contestant.stage),
+            _PreviewMeter(
+              label: context.l10n.motivation.toUpperCase(),
+              value: social.motivation,
+            ),
+            _PreviewMeter(
+              label: context.l10n.popularity.toUpperCase(),
+              value: social.popularity,
+            ),
             const SizedBox(height: AppSpacing.lg),
-            Text('HEDEF', style: _previewLabel(context)),
+            Text(context.l10n.goal, style: _previewLabel(context)),
             Text(identity.goal),
             const SizedBox(height: AppSpacing.md),
-            Text('GÜÇLÜ TARAF', style: _previewLabel(context)),
+            Text(context.l10n.strength, style: _previewLabel(context)),
             Text(identity.characterStrength),
             const SizedBox(height: AppSpacing.md),
-            Text('DİKKAT', style: _previewLabel(context)),
+            Text(context.l10n.attention, style: _previewLabel(context)),
             Text(identity.sensitivity),
             const SizedBox(height: AppSpacing.lg),
             AppButton(
               label: _selectedIds.contains(contestant.id)
-                  ? 'RADARDAN ÇIKAR'
-                  : 'RADARA AL  ★',
+                  ? context.l10n.removeFromRadar
+                  : context.l10n.addToRadar,
               onPressed: () {
                 Navigator.pop(context);
                 _toggleContestant(contestant.id, contestant.displayName);
@@ -232,10 +260,8 @@ class _FirstImpressionScreenState extends State<FirstImpressionScreen> {
   }
 
   TextStyle _previewLabel(BuildContext context) =>
-      Theme.of(context).textTheme.labelLarge!.copyWith(
-            color: AppColors.accentBright,
-            letterSpacing: 1.1,
-          );
+      Theme.of(context).textTheme.labelLarge!
+          .copyWith(color: AppColors.accentBright, letterSpacing: 1.1);
 }
 
 class _PreviewMeter extends StatelessWidget {
@@ -245,21 +271,23 @@ class _PreviewMeter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.only(top: AppSpacing.sm),
-        child: Row(children: [
-          SizedBox(width: 100, child: Text(label)),
-          Expanded(
-            child: LinearProgressIndicator(
-              value: value / 100,
-              minHeight: 5,
-              color: AppColors.accentBright,
-              backgroundColor: AppColors.line,
-            ),
+    padding: const EdgeInsets.only(top: AppSpacing.sm),
+    child: Row(
+      children: [
+        SizedBox(width: 100, child: Text(label)),
+        Expanded(
+          child: LinearProgressIndicator(
+            value: value / 100,
+            minHeight: 5,
+            color: AppColors.accentBright,
+            backgroundColor: AppColors.line,
           ),
-          const SizedBox(width: AppSpacing.sm),
-          SizedBox(width: 28, child: Text('$value')),
-        ]),
-      );
+        ),
+        const SizedBox(width: AppSpacing.sm),
+        SizedBox(width: 28, child: Text('$value')),
+      ],
+    ),
+  );
 }
 
 class _FirstImpressionHeader extends StatelessWidget {
@@ -278,50 +306,46 @@ class _FirstImpressionHeader extends StatelessWidget {
       children: [
         IconButton(
           onPressed: onBack,
-          tooltip: 'Geri',
+          tooltip: context.l10n.back,
           icon: const Icon(Icons.arrow_back_rounded),
         ),
         const SizedBox(height: AppSpacing.md),
         Text(
-          '1. GÜN',
-          style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                color: AppColors.accentSoft,
-                letterSpacing: 1.4,
-              ),
+          context.l10n.dayLabel(1),
+          style: Theme.of(context).textTheme.labelMedium
+              ?.copyWith(color: AppColors.accentSoft, letterSpacing: 1.4),
         ),
         const SizedBox(height: AppSpacing.sm),
         Text(
-          'İlk izlenimin kimden yana?',
-          style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                fontSize: 43,
-                height: 0.98,
-              ),
+          context.l10n.firstImpressionTitle,
+          style: Theme.of(context).textTheme.displayLarge
+              ?.copyWith(fontSize: 43, height: 0.98),
         ),
         const SizedBox(height: AppSpacing.md),
         Text(
-          '15 yarışmacıyla tanıştın.\nŞimdilik sadece dikkatini çeken 5 kişiyi seç.',
+          context.l10n.firstImpressionBody,
           style: Theme.of(context).textTheme.bodyLarge,
         ),
         const SizedBox(height: AppSpacing.sm),
         Text(
-          'Bu bir eleme değil. Fikrini daha sonra değiştirebilirsin.',
+          context.l10n.firstImpressionNote,
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: AppColors.paperMuted,
-                fontStyle: FontStyle.italic,
-              ),
+            color: AppColors.paperMuted,
+            fontStyle: FontStyle.italic,
+          ),
         ),
         const SizedBox(height: AppSpacing.lg),
         AnimatedSwitcher(
           duration: const Duration(milliseconds: 160),
           child: Text(
-            '$selectedCount / 5 RADARDA',
+            context.l10n.radarCount(selectedCount),
             key: ValueKey(selectedCount),
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  color: selectedCount == 5
-                      ? AppColors.accentBright
-                      : AppColors.paper,
-                  letterSpacing: 1,
-                ),
+              color: selectedCount == 5
+                  ? AppColors.accentBright
+                  : AppColors.paper,
+              letterSpacing: 1,
+            ),
           ),
         ),
       ],
