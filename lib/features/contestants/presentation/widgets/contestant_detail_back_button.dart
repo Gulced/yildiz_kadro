@@ -1,25 +1,22 @@
+import 'package:yildiz_kadro/l10n/l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:yildiz_kadro/app/theme/app_colors.dart';
 
 class ContestantDetailBackButton extends StatelessWidget {
-  const ContestantDetailBackButton({
-    required this.onPressed,
-    super.key,
-  });
+  const ContestantDetailBackButton({required this.onPressed, super.key});
 
   final VoidCallback onPressed;
 
   @override
   Widget build(BuildContext context) => Semantics(
-        label: 'Yarışmacılara dön',
+        label:
+            isAppEnglish(context) ? 'Back to contestants' : 'Yarışmacılara dön',
         button: true,
         child: DecoratedBox(
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: AppColors.ink.withValues(alpha: .82),
-            border: Border.all(
-              color: AppColors.accent.withValues(alpha: .72),
-            ),
+            border: Border.all(color: AppColors.accent.withValues(alpha: .72)),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: .38),

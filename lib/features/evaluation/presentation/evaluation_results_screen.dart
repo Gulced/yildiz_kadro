@@ -9,14 +9,30 @@ import 'package:yildiz_kadro/features/evaluation/data/evaluation1_data.dart';
 import 'package:yildiz_kadro/features/evaluation/domain/evaluation_result.dart';
 import 'package:yildiz_kadro/features/game/application/game_scope.dart';
 import 'package:yildiz_kadro/features/jury/presentation/jury_decision_screen.dart';
+import 'package:yildiz_kadro/features/producer/presentation/story_event_dialog.dart';
 import 'package:yildiz_kadro/features/producer/presentation/widgets/performance_aftermath_panel.dart';
 import 'package:yildiz_kadro/shared/widgets/app_button.dart';
+import 'package:yildiz_kadro/l10n/l10n.dart';
 
-class EvaluationResultsScreen extends StatelessWidget {
+class EvaluationResultsScreen extends StatefulWidget {
   const EvaluationResultsScreen({super.key});
 
+  @override
+  State<EvaluationResultsScreen> createState() =>
+      _EvaluationResultsScreenState();
+}
+
+class _EvaluationResultsScreenState extends State<EvaluationResultsScreen> {
   Contestant _contestant(int id) =>
       contestantSeedData.firstWhere((contestant) => contestant.id == id);
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) showStoryEventDialog(context, day: 1);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -33,6 +49,7 @@ class EvaluationResultsScreen extends StatelessWidget {
       ..sort((a, b) => b.overall.compareTo(a.overall));
     final radarResults = radarIds.map((id) => results[id]!).toList()
       ..sort((a, b) => a.overall.compareTo(b.overall));
+    final isEn = isAppEnglish(context);
     final radarAverage = radarResults.isEmpty
         ? 0.0
         : radarResults.fold<int>(0, (sum, result) => sum + result.overall) /
@@ -60,7 +77,7 @@ class EvaluationResultsScreen extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          '1. GÜN • SAHNE TESTİ',
+                          context.l10n.stageTest,
                           style:
                               Theme.of(context).textTheme.labelMedium?.copyWith(
                                     color: AppColors.accentSoft,
@@ -69,22 +86,23 @@ class EvaluationResultsScreen extends StatelessWidget {
                         ),
                         const SizedBox(height: AppSpacing.sm),
                         Text(
-                          'İLK DEĞERLENDİRME\nTAMAMLANDI',
+                          context.l10n.evalCompleteTitle,
                           style: Theme.of(context).textTheme.displayLarge,
                         ),
                         const SizedBox(height: AppSpacing.md),
                         Text(
-                          'İlk sahne bazı beklentileri doğruladı.\nBazılarını ise tamamen değiştirdi.',
+                          context.l10n.evalCompleteDesc,
                           style: Theme.of(context).textTheme.bodyLarge,
                         ),
                         const SizedBox(height: AppSpacing.xxl),
-                        const _SectionLabel('GECENİN İLK 5’İ'),
+                        _SectionLabel(context.l10n.topFiveTonight),
                         const SizedBox(height: AppSpacing.md),
                         ...topFive.take(5).toList().asMap().entries.map(
                               (entry) => _LeaderboardRow(
                                 rank: entry.key + 1,
-                                contestant:
-                                    _contestant(entry.value.contestantId),
+                                contestant: _contestant(
+                                  entry.value.contestantId,
+                                ),
                                 score: entry.value.overall,
                               ),
                             ),
@@ -93,19 +111,26 @@ class EvaluationResultsScreen extends StatelessWidget {
                           builder: (context, constraints) {
                             final cards = [
                               _ResultSpotlight(
-                                label: 'RADAR DIŞI SÜRPRİZ',
+                                label: context.l10n.outsideRadarSurprise,
                                 contestant: _contestant(
-                                    outsideRadar.first.contestantId),
+                                  outsideRadar.first.contestantId,
+                                ),
                                 result: outsideRadar.first,
-                                caption: 'İlk seçiminde onu pas geçmiştin.',
+                                caption: isEn
+                                    ? 'You passed on her during first impressions.'
+                                    : 'İlk seçiminde onu pas geçmiştin.',
                               ),
                               _ResultSpotlight(
-                                label: 'RADARDA SORU İŞARETİ',
+                                label: isEn
+                                    ? 'DOUBT ON RADAR'
+                                    : 'RADARDA SORU İŞARETİ',
                                 contestant: _contestant(
-                                    radarResults.first.contestantId),
+                                  radarResults.first.contestantId,
+                                ),
                                 result: radarResults.first,
-                                caption:
-                                    'İlk izlenimin güçlüydü. İlk performansı o kadar değil.',
+                                caption: isEn
+                                    ? 'Strong first impression. First stage not as much.'
+                                    : 'İlk izlenimin güçlüydü. İlk performansı o kadar değil.',
                               ),
                             ];
                             if (constraints.maxWidth < AppBreakpoints.compact) {
@@ -128,16 +153,14 @@ class EvaluationResultsScreen extends StatelessWidget {
                           },
                         ),
                         const SizedBox(height: AppSpacing.xxl),
-                        const _SectionLabel('SENİN RADARIN'),
+                        _SectionLabel(isEn ? 'YOUR RADAR' : 'SENİN RADARIN'),
                         const SizedBox(height: AppSpacing.sm),
                         Text(
-                          'Radar ortalaman: ${radarAverage.toStringAsFixed(1)}',
+                          '${isEn ? "Radar average" : "Radar ortalaman"}: ${radarAverage.toStringAsFixed(1)}',
                           style: Theme.of(context)
                               .textTheme
                               .headlineSmall
-                              ?.copyWith(
-                                color: AppColors.accentBright,
-                              ),
+                              ?.copyWith(color: AppColors.accentBright),
                         ),
                         const SizedBox(height: AppSpacing.md),
                         SizedBox(
@@ -167,7 +190,8 @@ class EvaluationResultsScreen extends StatelessWidget {
                         ConstrainedBox(
                           constraints: const BoxConstraints(maxWidth: 560),
                           child: AppButton(
-                            label: 'JÜRİ MASASINA GEÇ',
+                            label:
+                                isEn ? 'GO TO JURY ROOM' : 'JÜRİ MASASINA GEÇ',
                             onPressed: () => Navigator.of(context).push(
                               MaterialPageRoute<void>(
                                 builder: (_) => const JuryDecisionScreen(),
@@ -197,17 +221,20 @@ class _SectionLabel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       label,
-      style: Theme.of(context).textTheme.labelLarge?.copyWith(
-            color: AppColors.paperMuted,
-            letterSpacing: 1.4,
-          ),
+      style: Theme.of(context)
+          .textTheme
+          .labelLarge
+          ?.copyWith(color: AppColors.paperMuted, letterSpacing: 1.4),
     );
   }
 }
 
 class _LeaderboardRow extends StatelessWidget {
-  const _LeaderboardRow(
-      {required this.rank, required this.contestant, required this.score});
+  const _LeaderboardRow({
+    required this.rank,
+    required this.contestant,
+    required this.score,
+  });
   final int rank;
   final Contestant contestant;
   final int score;
@@ -217,20 +244,25 @@ class _LeaderboardRow extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: AppSpacing.xs),
       padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.md, vertical: AppSpacing.sm),
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.sm,
+      ),
       decoration: BoxDecoration(
         color: rank <= 3
             ? AppColors.accent.withValues(alpha: 0.1)
             : AppColors.inkSoft,
-        border:
-            Border.all(color: rank <= 3 ? AppColors.accent : AppColors.line),
+        border: Border.all(
+          color: rank <= 3 ? AppColors.accent : AppColors.line,
+        ),
       ),
       child: Row(
         children: [
           SizedBox(
             width: 34,
-            child:
-                Text('$rank', style: Theme.of(context).textTheme.headlineSmall),
+            child: Text(
+              '$rank',
+              style: Theme.of(context).textTheme.headlineSmall,
+            ),
           ),
           Expanded(
             child: Text(
@@ -242,9 +274,10 @@ class _LeaderboardRow extends StatelessWidget {
           ),
           Text(
             '$score',
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  color: AppColors.accentBright,
-                ),
+            style: Theme.of(context)
+                .textTheme
+                .headlineSmall
+                ?.copyWith(color: AppColors.accentBright),
           ),
         ],
       ),
@@ -278,10 +311,10 @@ class _ResultSpotlight extends StatelessWidget {
           children: [
             Text(
               label,
-              style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                    color: AppColors.accentSoft,
-                    letterSpacing: 1,
-                  ),
+              style: Theme.of(context)
+                  .textTheme
+                  .labelMedium
+                  ?.copyWith(color: AppColors.accentSoft, letterSpacing: 1),
             ),
             const SizedBox(height: AppSpacing.sm),
             AspectRatio(
@@ -301,9 +334,10 @@ class _ResultSpotlight extends StatelessWidget {
                 ),
                 Text(
                   '${result.overall}',
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        color: AppColors.accentBright,
-                      ),
+                  style: Theme.of(context)
+                      .textTheme
+                      .headlineSmall
+                      ?.copyWith(color: AppColors.accentBright),
                 ),
               ],
             ),
@@ -351,9 +385,10 @@ class _RadarSummaryCard extends StatelessWidget {
               ),
               Text(
                 '$score',
-                style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                      color: AppColors.accentBright,
-                    ),
+                style: Theme.of(context)
+                    .textTheme
+                    .labelLarge
+                    ?.copyWith(color: AppColors.accentBright),
               ),
             ],
           ),

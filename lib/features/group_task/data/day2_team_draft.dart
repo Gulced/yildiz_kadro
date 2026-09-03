@@ -1,5 +1,8 @@
+import 'package:yildiz_kadro/l10n/l10n.dart';
+
 import 'dart:math' as math;
 
+import 'package:flutter/widgets.dart';
 import 'package:yildiz_kadro/features/evaluation/domain/evaluation_result.dart';
 import 'package:yildiz_kadro/features/group_task/data/group_task_profiles.dart';
 import 'package:yildiz_kadro/features/group_task/domain/day2_draft_result.dart';
@@ -48,13 +51,15 @@ Day2DraftResult generateDay2Teams({
     final selected = candidates.first;
     team.add(selected.id);
     available.remove(selected.id);
-    events.add(Day2DraftEvent(
-      captainId: captainId,
-      selectedContestantId: selected.id,
-      pickNumber: pick,
-      teamId: teamId,
-      reason: selected.reason,
-    ));
+    events.add(
+      Day2DraftEvent(
+        captainId: captainId,
+        selectedContestantId: selected.id,
+        pickNumber: pick,
+        teamId: teamId,
+        reason: selected.reason,
+      ),
+    );
   }
 
   final teamA = List<int>.unmodifiable(teams['A']!);
@@ -93,7 +98,8 @@ Day2DraftResult generateDay2Teams({
   final fillsWeakness = candidate.primaryRole == weakest;
   final primaryCount = teamIds
       .where(
-          (id) => groupTaskProfiles[id]!.primaryRole == candidate.primaryRole)
+        (id) => groupTaskProfiles[id]!.primaryRole == candidate.primaryRole,
+      )
       .length;
   final addsDiversity = primaryCount == 0;
   final isAllRounder = candidate.primaryRole == GroupRole.allRounder ||
@@ -117,10 +123,7 @@ Day2DraftResult generateDay2Teams({
   return (id: candidateId, score: score, reason: reason);
 }
 
-GroupRole _weakestArea(
-  List<int> teamIds,
-  Map<int, EvaluationResult> results,
-) {
+GroupRole _weakestArea(List<int> teamIds, Map<int, EvaluationResult> results) {
   final averages = calculateTeamAverages(teamIds, results);
   final values = <GroupRole, double>{
     GroupRole.vocal: averages.vocal,
@@ -171,14 +174,17 @@ TeamAverages calculateTeamAverages(
   );
 }
 
-String teamProfileLabel(TeamAverages averages) {
+String teamProfileLabel(TeamAverages averages, [BuildContext? context]) {
+  final isEn = isAppEnglish(context);
   final values = [averages.vocal, averages.dance, averages.stage];
   if (values.reduce(math.max) - values.reduce(math.min) <= 2) {
-    return 'DENGELİ TAKIM';
+    return isEn ? 'BALANCED SQUAD' : 'DENGELİ TAKIM';
   }
   if (averages.vocal >= averages.dance && averages.vocal >= averages.stage) {
-    return 'SES GÜCÜ';
+    return isEn ? 'VOCAL POWER' : 'SES GÜCÜ';
   }
-  if (averages.dance >= averages.stage) return 'HAREKET GÜCÜ';
-  return 'SAHNE GÜCÜ';
+  if (averages.dance >= averages.stage) {
+    return isEn ? 'DANCE POWER' : 'HAREKET GÜCÜ';
+  }
+  return isEn ? 'STAGE POWER' : 'SAHNE GÜCÜ';
 }

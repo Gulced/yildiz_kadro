@@ -5,6 +5,8 @@ import 'package:yildiz_kadro/app/theme/app_colors.dart';
 import 'package:yildiz_kadro/app/theme/app_spacing.dart';
 import 'package:yildiz_kadro/features/contestants/data/contestant_seed_data.dart';
 import 'package:yildiz_kadro/features/contestants/domain/contestant.dart';
+import 'package:yildiz_kadro/features/contestants/domain/contestant_localization.dart';
+import 'package:yildiz_kadro/l10n/l10n.dart';
 import 'package:yildiz_kadro/features/contestants/presentation/widgets/contestant_portrait.dart';
 import 'package:yildiz_kadro/features/evaluation/data/evaluation1_data.dart';
 import 'package:yildiz_kadro/features/evaluation/domain/evaluation_result.dart';
@@ -65,7 +67,8 @@ class _EvaluationRevealScreenState extends State<EvaluationRevealScreen> {
       GameScope.of(context).completeEvaluation1(evaluation1Results);
       Navigator.of(context).pushReplacement(
         MaterialPageRoute<void>(
-            builder: (_) => const EvaluationResultsScreen()),
+          builder: (_) => const EvaluationResultsScreen(),
+        ),
       );
       return;
     }
@@ -86,8 +89,9 @@ class _EvaluationRevealScreenState extends State<EvaluationRevealScreen> {
   @override
   Widget build(BuildContext context) {
     final gameState = GameScope.of(context);
-    final isOnRadar =
-        gameState.playerRadarContestantIds.contains(_contestant.id);
+    final isOnRadar = gameState.playerRadarContestantIds.contains(
+      _contestant.id,
+    );
     final isComplete = _revealedScoreCount == 4;
     return Scaffold(
       backgroundColor: AppColors.ink,
@@ -102,7 +106,7 @@ class _EvaluationRevealScreenState extends State<EvaluationRevealScreen> {
                   children: [
                     IconButton(
                       onPressed: () => Navigator.of(context).pop(),
-                      tooltip: 'Geri',
+                      tooltip: context.l10n.back,
                       icon: const Icon(Icons.arrow_back_rounded),
                     ),
                     const Spacer(),
@@ -129,8 +133,8 @@ class _EvaluationRevealScreenState extends State<EvaluationRevealScreen> {
                 const SizedBox(height: AppSpacing.sm),
                 AppButton(
                   label: _contestantIndex == 14
-                      ? 'SONUÇLARI GÖR'
-                      : 'SONRAKİ YARIŞMACI',
+                      ? context.l10n.seeResults
+                      : context.l10n.nextContestant,
                   onPressed: isComplete ? _next : null,
                 ),
               ],
@@ -155,21 +159,22 @@ class _RevealCard extends StatelessWidget {
   final bool isOnRadar;
   final int revealedScoreCount;
 
-  String? get _radarReaction {
+  String? _radarReaction(BuildContext context) {
     if (isOnRadar && result.overall >= 88) {
-      return '★ Radar seçimin karşılığını verdi.';
+      return context.l10n.radarPaidOff;
     }
     if (isOnRadar && result.overall <= 84) {
-      return '★ İlk izlenimin şimdilik tartışmalı.';
+      return context.l10n.radarDebatable;
     }
     if (!isOnRadar && result.overall >= 89) {
-      return 'Onu radarına almamıştın.\nBelki tekrar düşünmelisin.';
+      return context.l10n.notOnRadarThinkAgain;
     }
     return null;
   }
 
   @override
   Widget build(BuildContext context) {
+    final reaction = _radarReaction(context);
     return DecoratedBox(
       decoration: BoxDecoration(
         color: AppColors.inkSoft,
@@ -199,7 +204,7 @@ class _RevealCard extends StatelessWidget {
                       ),
                       const SizedBox(height: AppSpacing.xs),
                       Text(
-                        contestant.archetype.toUpperCase(),
+                        contestant.localizedArchetype(context).toUpperCase(),
                         style:
                             Theme.of(context).textTheme.labelMedium?.copyWith(
                                   color: AppColors.accentSoft,
@@ -211,14 +216,17 @@ class _RevealCard extends StatelessWidget {
                 ),
                 if (isOnRadar)
                   Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 9,
+                      vertical: 6,
+                    ),
                     color: AppColors.accent,
                     child: Text(
-                      '★ RADARINDA',
-                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                            color: AppColors.accentInk,
-                          ),
+                      isAppEnglish(context) ? '★ ON RADAR' : '★ RADARINDA',
+                      style: Theme.of(context)
+                          .textTheme
+                          .labelMedium
+                          ?.copyWith(color: AppColors.accentInk),
                     ),
                   ),
               ],
@@ -227,17 +235,20 @@ class _RevealCard extends StatelessWidget {
             Row(
               children: [
                 _Score(
-                    label: 'VOKAL',
-                    value: result.vocal,
-                    revealed: revealedScoreCount >= 1),
+                  label: context.l10n.vocal,
+                  value: result.vocal,
+                  revealed: revealedScoreCount >= 1,
+                ),
                 _Score(
-                    label: 'DANS',
-                    value: result.dance,
-                    revealed: revealedScoreCount >= 2),
+                  label: context.l10n.dance,
+                  value: result.dance,
+                  revealed: revealedScoreCount >= 2,
+                ),
                 _Score(
-                    label: 'SAHNE',
-                    value: result.stage,
-                    revealed: revealedScoreCount >= 3),
+                  label: context.l10n.stage,
+                  value: result.stage,
+                  revealed: revealedScoreCount >= 3,
+                ),
               ],
             ),
             const SizedBox(height: AppSpacing.md),
@@ -248,15 +259,15 @@ class _RevealCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'GENEL ${revealedScoreCount >= 4 ? result.overall : '--'}',
-                    style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                          color: AppColors.accentBright,
-                          fontSize: 44,
-                        ),
+                    '${isAppEnglish(context) ? 'OVERALL' : 'GENEL'} ${revealedScoreCount >= 4 ? result.overall : '--'}',
+                    style: Theme.of(context)
+                        .textTheme
+                        .displayLarge
+                        ?.copyWith(color: AppColors.accentBright, fontSize: 44),
                   ),
                   const SizedBox(height: AppSpacing.md),
                   Text(
-                    result.tag,
+                    result.localizedTag(context),
                     style: Theme.of(context).textTheme.labelLarge?.copyWith(
                           color: AppColors.accentSoft,
                           letterSpacing: 1,
@@ -264,15 +275,16 @@ class _RevealCard extends StatelessWidget {
                   ),
                   const SizedBox(height: AppSpacing.xs),
                   Text(
-                    '“${result.comment}”',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          color: AppColors.paper,
-                        ),
+                    '“${result.localizedComment(context)}”',
+                    style: Theme.of(context)
+                        .textTheme
+                        .titleMedium
+                        ?.copyWith(color: AppColors.paper),
                   ),
-                  if (_radarReaction != null) ...[
+                  if (reaction != null) ...[
                     const SizedBox(height: AppSpacing.md),
                     Text(
-                      _radarReaction!,
+                      reaction,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                             color: AppColors.paperMuted,
                             fontStyle: FontStyle.italic,
@@ -290,8 +302,11 @@ class _RevealCard extends StatelessWidget {
 }
 
 class _Score extends StatelessWidget {
-  const _Score(
-      {required this.label, required this.value, required this.revealed});
+  const _Score({
+    required this.label,
+    required this.value,
+    required this.revealed,
+  });
 
   final String label;
   final int value;

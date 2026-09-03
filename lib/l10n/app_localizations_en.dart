@@ -28,6 +28,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get back => 'Back';
 
   @override
+  String get confirm => 'Confirm';
+
+  @override
+  String get cancel => 'Cancel';
+
+  @override
   String get startSeason => 'Start the Season';
 
   @override
@@ -241,4 +247,451 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get addToRadar => 'ADD TO RADAR  ★';
+
+  @override
+  String get producerDesk => 'PRODUCER DESK';
+
+  @override
+  String get tabOverview => 'AGENDA';
+
+  @override
+  String get tabTeams => 'TEAMS';
+
+  @override
+  String get tabBackstage => 'BACKSTAGE';
+
+  @override
+  String get backstagePreparing => 'BACKSTAGE PREPARING';
+
+  @override
+  String get backstagePreparingDesc =>
+      'Today\'s backstage developments will arrive shortly.';
+
+  @override
+  String get backstageInterview => 'BACKSTAGE INTERVIEW';
+
+  @override
+  String get applyThisDecision => 'APPLY THIS DECISION';
+
+  @override
+  String get history => 'HISTORY';
+
+  @override
+  String get captain => 'CAPTAIN';
+
+  @override
+  String get roleCenter => 'CENTER';
+
+  @override
+  String get roleMainVocal => 'MAIN VOCAL';
+
+  @override
+  String get roleDanceLead => 'DANCE LEAD';
+
+  @override
+  String get noEventScheduledToday => 'No special events scheduled for today.';
+
+  @override
+  String get activeContestants => 'Active Contestants';
+
+  @override
+  String get topMorale => 'Top Morale';
+
+  @override
+  String get topPopularity => 'Most Popular';
+
+  @override
+  String get topBuzz => 'Top Buzz';
+
+  @override
+  String get criticalEnergy => 'Critical Energy';
+
+  @override
+  String get story => 'STORY';
+
+  @override
+  String get personality => 'PERSONALITY';
+
+  @override
+  String get specialTrait => 'SPECIAL TRAIT';
+
+  @override
+  String get risk => 'RISK';
+
+  @override
+  String get talentReport => 'TALENT REPORT';
+
+  @override
+  String get role => 'ROLE';
+
+  @override
+  String get producerNoteLabel => 'PRODUCER NOTE';
+
+  @override
+  String get potential => 'POTENTIAL';
+
+  @override
+  String ageWithCity(int age, String city) {
+    return '$age • $city';
+  }
+
+  @override
+  String get stageTest => 'DAY 1 • STAGE TEST';
+
+  @override
+  String get evalCompleteTitle => 'FIRST EVALUATION\nCOMPLETE';
+
+  @override
+  String get evalCompleteDesc =>
+      'The first stage confirmed some expectations.\nOthers were completely overturned.';
+
+  @override
+  String get topFiveTonight => 'TOP 5 TONIGHT';
+
+  @override
+  String get outsideRadarSurprise => 'OFF-RADAR SURPRISE';
+
+  @override
+  String get radarTop => 'TOP ON YOUR RADAR';
+
+  @override
+  String get radarRisk => 'AT RISK ON YOUR RADAR';
+
+  @override
+  String get radarPerformance => 'RADAR PERFORMANCE';
+
+  @override
+  String radarAverageScore(String score) {
+    return 'Radar average: $score';
+  }
+
+  @override
+  String get goToJuryRoom => 'ENTER JURY ROOM';
+
+  @override
+  String get seeResults => 'SEE RESULTS';
+
+  @override
+  String get nextContestant => 'NEXT CONTESTANT';
+
+  @override
+  String get radarPaidOff => '★ Your radar pick delivered on stage.';
+
+  @override
+  String get radarDebatable => '★ First impression is currently on the fence.';
+
+  @override
+  String get notOnRadarThinkAgain =>
+      'She wasn\'t on your radar.\nMaybe take another look.';
+
+  @override
+  String revealProgress(int current, int total) {
+    return '$current / $total';
+  }
+
+  @override
+  String get juryDecisionTitle => 'JURY DECISION';
+
+  @override
+  String get scoresDontSayAll => 'Scores don\'t tell the whole story.';
+
+  @override
+  String get juryIntroDesc =>
+      'The first evaluation is in.\nNow the jury takes the floor.';
+
+  @override
+  String get lowestFiveRisk =>
+      'The 5 lowest-scoring contestants enter the risk zone.';
+
+  @override
+  String get oneDecisionIsYours => 'Yet tonight, one decision belongs to you.';
+
+  @override
+  String get viewRiskZone => 'VIEW RISK ZONE';
+
+  @override
+  String get safe => 'SAFE';
+
+  @override
+  String get faceTheJury => 'FACE THE JURY';
+
+  @override
+  String get riskZone => 'RISK ZONE';
+
+  @override
+  String get riskZoneDesc => '5 contestants at risk of elimination tonight:';
+
+  @override
+  String get protectOnePerson => 'SAVE ONE CONTESTANT';
+
+  @override
+  String get confirmProtection => 'CONFIRM SAVE';
+
+  @override
+  String protectingContestant(String name) {
+    return 'SAVING $name';
+  }
+
+  @override
+  String protectionWarning(String name) {
+    return '$name will be directly safe tonight.\nYou cannot change this call later.';
+  }
+
+  @override
+  String get yesProtect => 'YES, SAVE';
+
+  @override
+  String get goBack => 'GO BACK';
+
+  @override
+  String get producerRightUsed => 'PRODUCER SAVE USED';
+
+  @override
+  String producerProtectedMsg(String name) {
+    return 'As producer, you saved $name.\nShe advances directly to the next day.';
+  }
+
+  @override
+  String get jurySavedTop =>
+      'The jury protected the highest-scoring candidate.';
+
+  @override
+  String get juryProtected => 'JURY SAVED';
+
+  @override
+  String get goToLastChance => 'ENTER LAST CHANCE STAGE';
+
+  @override
+  String get juryDecisionSummaryTitle => 'JURY DECISION LOCKED';
+
+  @override
+  String get juryDecisionSummaryDesc =>
+      'After producer and jury saves, 3 contestants enter the Last Chance Stage.';
+
+  @override
+  String get lastChanceTitle => 'LAST CHANCE STAGE';
+
+  @override
+  String get threeContestantsOneFarewell => '3 contestants.\n1 farewell.';
+
+  @override
+  String get lastChanceIntroDesc =>
+      'Scores aren\'t wiped clean, but everything hangs on this stage.';
+
+  @override
+  String get enterStage => 'TAKE THE STAGE';
+
+  @override
+  String givingCoachingNote(String name) {
+    return 'COACHING NOTE FOR $name';
+  }
+
+  @override
+  String get coachingSingleWarning =>
+      'You can only intervene with one contestant in this round.';
+
+  @override
+  String get yesSelect => 'YES, SELECT';
+
+  @override
+  String get coachingPrompt =>
+      'Give a critical coaching note to one contestant (+3 pts):';
+
+  @override
+  String get noIntervention => 'WATCH WITHOUT INTERVENTION';
+
+  @override
+  String get confirmChoice => 'CONFIRM SELECTION';
+
+  @override
+  String get performanceReveal => 'PERFORMANCE REVEAL';
+
+  @override
+  String get scoresCompared => 'COMPARING SCORES';
+
+  @override
+  String get firstSafeContestant => 'FIRST CONTESTANT SAFE';
+
+  @override
+  String get finalTwoTitle => 'FINAL TWO';
+
+  @override
+  String get farewellTitle => 'FAREWELL MOMENT';
+
+  @override
+  String farewellDesc(String name) {
+    return '$name has been eliminated.';
+  }
+
+  @override
+  String get coachedBadge => 'COACHING BONUS APPLIED (+3)';
+
+  @override
+  String get continueToRoster => 'PROCEED TO ROSTER UPDATE';
+
+  @override
+  String get day1Complete => 'DAY 1 COMPLETE';
+
+  @override
+  String activeRemainingCount(int count) {
+    return '$count CONTESTANTS REMAIN';
+  }
+
+  @override
+  String get firstDayLessonsDesc =>
+      'Following Day 1, the field is taking shape.\nNext up: The Group Mission.';
+
+  @override
+  String get eliminatedMember => 'ELIMINATED CONTESTANT';
+
+  @override
+  String get activeRoster => 'REMAINING ROSTER';
+
+  @override
+  String get advanceToDay2 => 'ADVANCE TO DAY 2';
+
+  @override
+  String get day2Title => 'DAY 2 • GROUP MISSION';
+
+  @override
+  String get groupTaskBriefing => 'Group Mission: Track & Chemistry';
+
+  @override
+  String get teamFormationTitle => 'TEAM FORMATION';
+
+  @override
+  String get teamA => 'TEAM A';
+
+  @override
+  String get teamB => 'TEAM B';
+
+  @override
+  String get autoFormTeams => 'CONFIRM AUTO TEAMS';
+
+  @override
+  String get manualBuilder => 'MANUAL TEAM BUILDER';
+
+  @override
+  String get rehearsalTitle => 'REHEARSAL ROOM';
+
+  @override
+  String get rehearsalCrisesTitle => 'REHEARSAL CRISIS';
+
+  @override
+  String get resolveCrisis => 'RESOLVE CRISIS';
+
+  @override
+  String get groupStageTitle => 'GROUP STAGE';
+
+  @override
+  String get groupResultsTitle => 'GROUP RESULTS';
+
+  @override
+  String get winningTeamImmune => 'WINNING TEAM IMMUNE';
+
+  @override
+  String get juryTableTitle => 'JURY TABLE';
+
+  @override
+  String get duelTitle => 'HEAD-TO-HEAD DUEL';
+
+  @override
+  String get duelWinner => 'DUEL WINNER';
+
+  @override
+  String get duelElimination => 'DUEL ELIMINATION';
+
+  @override
+  String get advanceToDay3 => 'ADVANCE TO DAY 3';
+
+  @override
+  String get day3Title => 'DAY 3 • ICON TRACKS';
+
+  @override
+  String get iconStageBriefing => 'Icon Stage';
+
+  @override
+  String get iconPerformanceResults => 'Icon Performance Results';
+
+  @override
+  String get finalCutTitle => 'SEMIFINAL CUT';
+
+  @override
+  String get advanceToDay4 => 'ADVANCE TO DAY 4';
+
+  @override
+  String get day4Title => 'DAY 4 • POSITION BATTLE';
+
+  @override
+  String get positionBattleBriefing => 'Position Battle';
+
+  @override
+  String get roomVocal => 'VOCAL ROOM';
+
+  @override
+  String get roomDance => 'DANCE ROOM';
+
+  @override
+  String get roomStage => 'STAGE ROOM';
+
+  @override
+  String get positionBattleResults => 'Position Battle Results';
+
+  @override
+  String get advanceToDay5 => 'ADVANCE TO DAY 5';
+
+  @override
+  String get day5Title => 'DAY 5 • LIVE BROADCAST';
+
+  @override
+  String get liveShowBriefing => 'Live Broadcast Showcase';
+
+  @override
+  String get broadcastDirection => 'BROADCAST STRATEGY';
+
+  @override
+  String get liveShowResults => 'Live Broadcast Results';
+
+  @override
+  String get advanceToGrandFinal => 'ADVANCE TO GRAND FINAL';
+
+  @override
+  String get grandFinalTitle => 'GRAND FINAL';
+
+  @override
+  String get selectFinalFive => 'CHOOSE FINAL FIVE';
+
+  @override
+  String get conceptSelection => 'DEBUT CONCEPT';
+
+  @override
+  String get groupNaming => 'NAME YOUR GROUP';
+
+  @override
+  String get enterGroupName => 'Enter Group Name';
+
+  @override
+  String get confirmDebut => 'CONFIRM DEBUT';
+
+  @override
+  String get debutPoster => 'DEBUT POSTER';
+
+  @override
+  String get seasonComplete => 'SEASON COMPLETE';
+
+  @override
+  String get newSeason => 'NEW SEASON';
+
+  @override
+  String get startNewSeason => 'START NEW SEASON';
+
+  @override
+  String scoreLabel(int score) {
+    return 'Score: $score';
+  }
+
+  @override
+  String rankLabel(int rank) {
+    return '#$rank';
+  }
 }

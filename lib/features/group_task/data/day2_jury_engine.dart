@@ -1,3 +1,5 @@
+import 'package:yildiz_kadro/l10n/l10n.dart';
+import 'package:flutter/widgets.dart';
 import 'package:yildiz_kadro/features/evaluation/domain/evaluation_result.dart';
 import 'package:yildiz_kadro/features/group_task/data/group_task_profiles.dart';
 import 'package:yildiz_kadro/features/group_task/domain/day2_group_performance.dart';
@@ -64,12 +66,13 @@ Day2JuryResultSnapshot calculateDay2JuryResult({
       if (result != 0) return result;
       result = y.potentialScore.compareTo(x.potentialScore);
       if (result != 0) return result;
-      result = groupPerformance.individualResults[b]!.stage
-          .compareTo(groupPerformance.individualResults[a]!.stage);
+      result = groupPerformance.individualResults[b]!.stage.compareTo(
+        groupPerformance.individualResults[a]!.stage,
+      );
       if (result != 0) return result;
-      result = firstEvaluationResults[b]!
-          .overall
-          .compareTo(firstEvaluationResults[a]!.overall);
+      result = firstEvaluationResults[b]!.overall.compareTo(
+            firstEvaluationResults[a]!.overall,
+          );
       return result != 0 ? result : a.compareTo(b);
     });
   return Day2JuryResultSnapshot(
@@ -99,23 +102,69 @@ int _workStyleModifier(WorkStyle style) => switch (style) {
       _ => 0,
     };
 
-String juryCategoryComment(String category, int score) {
-  if (category == 'PERFORMANS') {
-    if (score >= 90) return 'Bu gece takım sonucundan daha iyiydin.';
-    if (score >= 85) return 'Kendini oyunda tutacak bir performans verdin.';
-    if (score >= 80) return 'Temiz anların vardı ama yeterince öne çıkamadın.';
-    return 'Bu gece geri planda kaldın.';
-  }
-  if (category == 'GELİŞİM') {
+String juryCategoryComment(
+  String category,
+  int score, [
+  BuildContext? context,
+]) {
+  final isEn = isAppEnglish(context);
+  final cat = category.toUpperCase();
+  if (cat == 'PERFORMANS' || cat == 'PERFORMANCE') {
     if (score >= 90) {
-      return 'Yarışmaya başladığın yerle bugün aynı yerde değilsin.';
+      return isEn
+          ? 'Tonight you outshone the team’s overall score.'
+          : 'Bu gece takım sonucundan daha iyiydin.';
     }
-    if (score >= 85) return 'Gelişimin görünür.';
-    if (score >= 80) return 'İlerleme var ama henüz istikrarlı değil.';
-    return 'Jüri senden daha hızlı bir değişim bekliyor.';
+    if (score >= 85) {
+      return isEn
+          ? 'You delivered a solid stage that keeps you firmly in the game.'
+          : 'Kendini oyunda tutacak bir performans verdin.';
+    }
+    if (score >= 80) {
+      return isEn
+          ? 'You had clean moments, but failed to seize command.'
+          : 'Temiz anların vardı ama yeterince öne çıkamadın.';
+    }
+    return isEn
+        ? 'Tonight you faded into the background.'
+        : 'Bu gece geri planda kaldın.';
   }
-  if (score >= 92) return 'Jüri sende uzun vadeli bir yıldız görüyor.';
-  if (score >= 87) return 'Doğru yönlendirmeyle çok daha fazlası olabilir.';
-  if (score >= 82) return 'Potansiyel var ama henüz sahneye tam yansımıyor.';
-  return 'Yarışmada kalmak için artık potansiyelden fazlası gerekiyor.';
+  if (cat == 'GELİŞİM' || cat == 'GROWTH' || cat == 'DEVELOPMENT') {
+    if (score >= 90) {
+      return isEn
+          ? 'You are lightyears ahead of where you started.'
+          : 'Yarışmaya başladığın yerle bugün aynı yerde değilsin.';
+    }
+    if (score >= 85) {
+      return isEn
+          ? 'Your continuous growth is undeniable.'
+          : 'Gelişimin görünür.';
+    }
+    if (score >= 80) {
+      return isEn
+          ? 'There is progress, but you lack consistency.'
+          : 'İlerleme var ama henüz istikrarlı değil.';
+    }
+    return isEn
+        ? 'The jury demands a sharper transformation from you.'
+        : 'Jüri senden daha hızlı bir değişim bekliyor.';
+  }
+  if (score >= 92) {
+    return isEn
+        ? 'The jury envisions a long-term commercial pop star in you.'
+        : 'Jüri sende uzun vadeli bir yıldız görüyor.';
+  }
+  if (score >= 87) {
+    return isEn
+        ? 'With the right mentorship, your ceiling is limitless.'
+        : 'Doğru yönlendirmeyle çok daha fazlası olabilir.';
+  }
+  if (score >= 82) {
+    return isEn
+        ? 'The raw potential is there, but hasn’t translated into stage dominance.'
+        : 'Potansiyel var ama henüz sahneye tam yansımıyor.';
+  }
+  return isEn
+      ? 'Staying in this competition now requires more than just raw potential.'
+      : 'Yarışmada kalmak için artık potansiyelden fazlası gerekiyor.';
 }

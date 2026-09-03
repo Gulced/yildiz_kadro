@@ -1,3 +1,5 @@
+import 'package:yildiz_kadro/l10n/l10n.dart';
+import 'package:flutter/widgets.dart';
 import 'package:yildiz_kadro/features/evaluation/domain/evaluation_result.dart';
 import 'package:yildiz_kadro/features/group_task/data/group_task_profiles.dart';
 import 'package:yildiz_kadro/features/group_task/domain/day2_duel_result.dart';
@@ -49,8 +51,12 @@ Day2DuelResultSnapshot calculateDay2DuelResult({
     };
     final conceptFit = _conceptFit(concept, profile);
     final approachFit = _approachFit(approach, profile);
-    final coachingFit =
-        _coachingFit(coaching, first, profile, juryResult.developmentScore);
+    final coachingFit = _coachingFit(
+      coaching,
+      first,
+      profile,
+      juryResult.developmentScore,
+    );
     final formModifier = _formModifier(
       moraleByContestant[id],
       professionalismByContestant[id],
@@ -89,11 +95,13 @@ Day2DuelResultSnapshot calculateDay2DuelResult({
     if (result != 0) return result;
     result = y.stage.compareTo(x.stage);
     if (result != 0) return result;
-    result = jury.evaluations[b]!.juryScore
-        .compareTo(jury.evaluations[a]!.juryScore);
+    result = jury.evaluations[b]!.juryScore.compareTo(
+      jury.evaluations[a]!.juryScore,
+    );
     if (result != 0) return result;
-    result = jury.evaluations[b]!.developmentScore
-        .compareTo(jury.evaluations[a]!.developmentScore);
+    result = jury.evaluations[b]!.developmentScore.compareTo(
+      jury.evaluations[a]!.developmentScore,
+    );
     if (result != 0) return result;
     result = firstResults[b]!.overall.compareTo(firstResults[a]!.overall);
     return result != 0 ? result : a.compareTo(b);
@@ -105,8 +113,9 @@ Day2DuelResultSnapshot calculateDay2DuelResult({
     ..sort((a, b) => compare(a, b, baseline: true));
   final order = contestantIds.toList()
     ..sort((a, b) {
-      final score = jury.evaluations[a]!.juryScore
-          .compareTo(jury.evaluations[b]!.juryScore);
+      final score = jury.evaluations[a]!.juryScore.compareTo(
+        jury.evaluations[b]!.juryScore,
+      );
       return score != 0 ? score : a.compareTo(b);
     });
   return Day2DuelResultSnapshot(
@@ -144,7 +153,7 @@ int _conceptFit(Day2DuelConcept concept, GroupTaskProfile profile) {
   final role = switch (concept) {
     Day2DuelConcept.vocal => GroupRole.vocal,
     Day2DuelConcept.dance => GroupRole.dance,
-    Day2DuelConcept.stage => GroupRole.stage
+    Day2DuelConcept.stage => GroupRole.stage,
   };
   var value = profile.primaryRole == role
       ? 3
@@ -167,7 +176,7 @@ int _approachFit(Day2DuelApproach approach, GroupTaskProfile profile) {
       WorkStyle.sensitive || WorkStyle.protective => 1,
       WorkStyle.chaotic => -2,
       WorkStyle.spontaneous => -1,
-      _ => 0
+      _ => 0,
     };
     if (profile.primaryRole == GroupRole.allRounder ||
         profile.secondaryRole == GroupRole.allRounder) {
@@ -181,7 +190,7 @@ int _approachFit(Day2DuelApproach approach, GroupTaskProfile profile) {
     WorkStyle.playful || WorkStyle.instinctive => 2,
     WorkStyle.chaotic || WorkStyle.experienced || WorkStyle.direct => 1,
     WorkStyle.controlled || WorkStyle.calm => -1,
-    _ => 0
+    _ => 0,
   };
   if (profile.primaryRole == GroupRole.stage) {
     value++;
@@ -189,8 +198,12 @@ int _approachFit(Day2DuelApproach approach, GroupTaskProfile profile) {
   return value.clamp(-1, 4);
 }
 
-int _coachingFit(Day2DuelCoaching coaching, EvaluationResult first,
-    GroupTaskProfile profile, int development) {
+int _coachingFit(
+  Day2DuelCoaching coaching,
+  EvaluationResult first,
+  GroupTaskProfile profile,
+  int development,
+) {
   if (coaching == Day2DuelCoaching.technique) {
     var value = (first.vocal >= 90 || first.dance >= 90) ? 3 : 1;
     if (profile.primaryRole == GroupRole.vocal ||
@@ -234,15 +247,29 @@ int _coachingFit(Day2DuelCoaching coaching, EvaluationResult first,
   return value.clamp(0, 4);
 }
 
-String duelConceptLabel(Day2DuelConcept value) => switch (value) {
-      Day2DuelConcept.vocal => 'VOKAL ODAKLI',
-      Day2DuelConcept.dance => 'DANS ODAKLI',
-      Day2DuelConcept.stage => 'SAHNE ODAKLI'
-    };
-String duelApproachLabel(Day2DuelApproach value) =>
-    value == Day2DuelApproach.clean ? 'TEMİZ PERFORMANS' : 'YILDIZ ANI';
-String duelCoachingLabel(Day2DuelCoaching value) => switch (value) {
-      Day2DuelCoaching.technique => 'TEKNİĞİNE GÜVEN',
-      Day2DuelCoaching.showYourself => 'KENDİNİ GÖSTER',
-      Day2DuelCoaching.tellStory => 'HİKÂYE ANLAT'
-    };
+String duelConceptLabel(Day2DuelConcept value, [BuildContext? context]) {
+  final isEn = isAppEnglish(context);
+  return switch (value) {
+    Day2DuelConcept.vocal => isEn ? 'VOCAL-FOCUSED' : 'VOKAL ODAKLI',
+    Day2DuelConcept.dance => isEn ? 'DANCE-FOCUSED' : 'DANS ODAKLI',
+    Day2DuelConcept.stage => isEn ? 'STAGE-FOCUSED' : 'SAHNE ODAKLI',
+  };
+}
+
+String duelApproachLabel(Day2DuelApproach value, [BuildContext? context]) {
+  final isEn = isAppEnglish(context);
+  return value == Day2DuelApproach.clean
+      ? (isEn ? 'CLEAN EXECUTION' : 'TEMİZ PERFORMANS')
+      : (isEn ? 'STAR MOMENT' : 'YILDIZ ANI');
+}
+
+String duelCoachingLabel(Day2DuelCoaching value, [BuildContext? context]) {
+  final isEn = isAppEnglish(context);
+  return switch (value) {
+    Day2DuelCoaching.technique =>
+      isEn ? 'TRUST YOUR TECHNIQUE' : 'TEKNİĞİNE GÜVEN',
+    Day2DuelCoaching.showYourself =>
+      isEn ? 'SHOW YOUR IDENTITY' : 'KENDİNİ GÖSTER',
+    Day2DuelCoaching.tellStory => isEn ? 'TELL A STORY' : 'HİKÂYE ANLAT',
+  };
+}

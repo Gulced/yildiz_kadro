@@ -60,7 +60,9 @@ class _FirstImpressionTransitionScreenState
                   Text(
                     context.l10n.firstImpressionsComplete,
                     textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.displayLarge
+                    style: Theme.of(context)
+                        .textTheme
+                        .displayLarge
                         ?.copyWith(fontSize: 42),
                   ),
                   const SizedBox(height: AppSpacing.md),
@@ -74,9 +76,9 @@ class _FirstImpressionTransitionScreenState
                     context.l10n.firstEvaluationStarting.toUpperCase(),
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                      color: AppColors.accentSoft,
-                      letterSpacing: 1.2,
-                    ),
+                          color: AppColors.accentSoft,
+                          letterSpacing: 1.2,
+                        ),
                   ),
                 ],
               ),

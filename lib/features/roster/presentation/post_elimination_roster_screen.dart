@@ -9,6 +9,7 @@ import 'package:yildiz_kadro/features/evaluation/data/evaluation1_data.dart';
 import 'package:yildiz_kadro/features/game/application/game_scope.dart';
 import 'package:yildiz_kadro/features/last_chance/data/last_chance_data.dart';
 import 'package:yildiz_kadro/features/producer/presentation/producer_dashboard_screen.dart';
+import 'package:yildiz_kadro/l10n/l10n.dart';
 import 'package:yildiz_kadro/shared/widgets/app_button.dart';
 import 'package:yildiz_kadro/shared/widgets/max_width_container.dart';
 
@@ -30,9 +31,7 @@ class PostEliminationRosterScreen extends StatelessWidget {
           if (navigator.canPop()) {
             navigator.pop();
           } else {
-            navigator.pushReplacement(MaterialPageRoute<void>(
-              builder: (_) => const ProducerDashboardScreen(day: 1),
-            ));
+            navigator.pushReplacement(ProducerDashboardScreen.route(day: 1));
           }
         },
       );
@@ -48,6 +47,7 @@ class PostEliminationRosterScreen extends StatelessWidget {
         onExit: () => Navigator.of(context).maybePop(),
       );
     }
+    final isEn = isAppEnglish(context);
     final eliminatedScore = eliminatedResult.finalScore(
       coached: eliminatedId == state.lastChanceCoachContestantId,
     );
@@ -61,13 +61,19 @@ class PostEliminationRosterScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('1. GÜN TAMAMLANDI', style: _pinkLabel(context)),
+                  Text(context.l10n.day1Complete, style: _pinkLabel(context)),
                   const SizedBox(height: AppSpacing.sm),
-                  Text('${state.activeContestantCount} KİŞİ KALDI',
-                      style: Theme.of(context).textTheme.displayLarge),
+                  Text(
+                    context.l10n.activeRemainingCount(
+                      state.activeContestantCount,
+                    ),
+                    style: Theme.of(context).textTheme.displayLarge,
+                  ),
                   const SizedBox(height: AppSpacing.md),
                   Text(
-                    'İlk gün bir kişiyi geride bıraktı.\nAma asıl yarış şimdi başlıyor.',
+                    isEn
+                        ? 'Day 1 left one person behind.\nNow the real contest begins.'
+                        : 'İlk gün bir kişiyi geride bıraktı.\nAma asıl yarış şimdi başlıyor.',
                     style: Theme.of(context).textTheme.bodyLarge,
                   ),
                   const SizedBox(height: AppSpacing.xl),
@@ -85,7 +91,10 @@ class PostEliminationRosterScreen extends StatelessWidget {
                     itemBuilder: (context, index) => _ActiveCard(active[index]),
                   ),
                   const SizedBox(height: AppSpacing.xxl),
-                  Text('VEDA EDEN', style: _pinkLabel(context)),
+                  Text(
+                    context.l10n.eliminatedMember,
+                    style: _pinkLabel(context),
+                  ),
                   const SizedBox(height: AppSpacing.sm),
                   ColorFiltered(
                     colorFilter: const ColorFilter.mode(
@@ -106,12 +115,15 @@ class PostEliminationRosterScreen extends StatelessWidget {
                               mainAxisAlignment: MainAxisAlignment.center,
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(eliminated.displayName,
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .headlineSmall),
-                                Text('SON ŞANS $eliminatedScore'),
-                                const Text('ELENDİ'),
+                                Text(
+                                  eliminated.displayName,
+                                  style:
+                                      Theme.of(context).textTheme.headlineSmall,
+                                ),
+                                Text(
+                                  '${isEn ? "LAST CHANCE" : "SON ŞANS"} $eliminatedScore',
+                                ),
+                                Text(isEn ? 'ELIMINATED' : 'ELENDİ'),
                               ],
                             ),
                           ),
@@ -120,41 +132,64 @@ class PostEliminationRosterScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: AppSpacing.xxl),
-                  Text('1. GÜN ÖZETİ', style: _pinkLabel(context)),
+                  Text(
+                    isEn ? 'DAY 1 SUMMARY' : '1. GÜN ÖZETİ',
+                    style: _pinkLabel(context),
+                  ),
                   const SizedBox(height: AppSpacing.md),
-                  _SummaryLine('İlk değerlendirme lideri',
-                      '${_contestant(4).displayName} — ${evaluation1Results[4]!.overall}'),
-                  _SummaryLine('Senin koruduğun',
-                      _contestant(state.producerSaveContestantId!).displayName),
-                  _SummaryLine('Jürinin kurtardığı',
-                      _contestant(state.jurySaveContestantId!).displayName),
                   _SummaryLine(
-                      'Sahne notunu verdiğin',
-                      _contestant(state.lastChanceCoachContestantId!)
-                          .displayName),
-                  _SummaryLine('Veda eden', eliminated.displayName),
+                    isEn
+                        ? 'First evaluation leader'
+                        : 'İlk değerlendirme lideri',
+                    '${_contestant(4).displayName} — ${evaluation1Results[4]!.overall}',
+                  ),
+                  _SummaryLine(
+                    isEn ? 'Protected by you' : 'Senin koruduğun',
+                    _contestant(state.producerSaveContestantId!).displayName,
+                  ),
+                  _SummaryLine(
+                    isEn ? 'Saved by jury' : 'Jürinin kurtardığı',
+                    _contestant(state.jurySaveContestantId!).displayName,
+                  ),
+                  _SummaryLine(
+                    isEn ? 'Coached by you' : 'Sahne notunu verdiğin',
+                    _contestant(state.lastChanceCoachContestantId!).displayName,
+                  ),
+                  _SummaryLine(
+                    isEn ? 'Eliminated' : 'Veda eden',
+                    eliminated.displayName,
+                  ),
                   const SizedBox(height: AppSpacing.xxl),
-                  Text('YARIN', style: _pinkLabel(context)),
+                  Text(isEn ? 'TOMORROW' : 'YARIN', style: _pinkLabel(context)),
                   const SizedBox(height: AppSpacing.sm),
-                  Text('Tek başına iyi olmak yetmeyecek.',
-                      style: Theme.of(context).textTheme.headlineLarge),
+                  Text(
+                    isEn
+                        ? "Being good on your own won't be enough."
+                        : 'Tek başına iyi olmak yetmeyecek.',
+                    style: Theme.of(context).textTheme.headlineLarge,
+                  ),
                   const SizedBox(height: AppSpacing.md),
-                  Text('İlk grup görevi geliyor.',
-                      style: Theme.of(context).textTheme.titleLarge),
-                  Text('14 yarışmacı ilk kez birlikte çalışmak zorunda.',
-                      style: Theme.of(context).textTheme.bodyLarge),
+                  Text(
+                    isEn
+                        ? 'The first group task is coming.'
+                        : 'İlk grup görevi geliyor.',
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                  Text(
+                    isEn
+                        ? '14 contestants must work together for the first time.'
+                        : '14 yarışmacı ilk kez birlikte çalışmak zorunda.',
+                    style: Theme.of(context).textTheme.bodyLarge,
+                  ),
                   const SizedBox(height: AppSpacing.xl),
                   OutlinedButton(
-                    onPressed: () => Navigator.of(context).push(
-                      MaterialPageRoute<void>(
-                        builder: (_) => const ProducerDashboardScreen(day: 2),
-                      ),
-                    ),
-                    child: const Text('YAPIMCI MASASI'),
+                    onPressed: () => Navigator.of(context)
+                        .push(ProducerDashboardScreen.route(day: 2)),
+                    child: Text(context.l10n.producerDesk),
                   ),
                   const SizedBox(height: AppSpacing.sm),
                   AppButton(
-                    label: '2. GÜNE GEÇ',
+                    label: context.l10n.advanceToDay2,
                     onPressed: () => Navigator.of(context).push(
                       MaterialPageRoute<void>(
                         builder: (_) => const Day2BriefingScreen(),
@@ -176,28 +211,41 @@ class _MissingRosterState extends StatelessWidget {
   final VoidCallback onExit;
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-        backgroundColor: AppColors.ink,
-        body: SafeArea(
-          child: Center(
-            child: Padding(
-              padding: const EdgeInsets.all(AppSpacing.lg),
-              child: Column(mainAxisSize: MainAxisSize.min, children: [
-                Text('KADRO SONUCU HAZIR DEĞİL',
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.headlineLarge),
+  Widget build(BuildContext context) {
+    final isEn = isAppEnglish(context);
+    return Scaffold(
+      backgroundColor: AppColors.ink,
+      body: SafeArea(
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(AppSpacing.lg),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  isEn ? 'ROSTER RESULT NOT READY' : 'KADRO SONUCU HAZIR DEĞİL',
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.headlineLarge,
+                ),
                 const SizedBox(height: AppSpacing.md),
-                const Text(
-                  'Eleme sonucu tamamlandıktan sonra kadro güncellenecek.',
+                Text(
+                  isEn
+                      ? 'Roster will update once elimination is concluded.'
+                      : 'Eleme sonucu tamamlandıktan sonra kadro güncellenecek.',
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: AppSpacing.lg),
-                AppButton(label: 'GERİ DÖN', onPressed: onExit),
-              ]),
+                AppButton(
+                  label: isEn ? 'GO BACK' : 'GERİ DÖN',
+                  onPressed: onExit,
+                ),
+              ],
             ),
           ),
         ),
-      );
+      ),
+    );
+  }
 }
 
 class _ActiveCard extends StatelessWidget {
@@ -245,24 +293,28 @@ class _SummaryLine extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(
-              child: Text(label,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppColors.paperMuted,
-                      )),
+              child: Text(
+                label,
+                style: Theme.of(context)
+                    .textTheme
+                    .bodySmall
+                    ?.copyWith(color: AppColors.paperMuted),
+              ),
             ),
             const SizedBox(width: AppSpacing.md),
             Expanded(
-              child: Text(value,
-                  textAlign: TextAlign.right,
-                  style: Theme.of(context).textTheme.labelLarge),
+              child: Text(
+                value,
+                textAlign: TextAlign.right,
+                style: Theme.of(context).textTheme.labelLarge,
+              ),
             ),
           ],
         ),
       );
 }
 
-TextStyle? _pinkLabel(BuildContext context) =>
-    Theme.of(context).textTheme.labelMedium?.copyWith(
-          color: AppColors.accentSoft,
-          letterSpacing: 0.9,
-        );
+TextStyle? _pinkLabel(BuildContext context) => Theme.of(context)
+    .textTheme
+    .labelMedium
+    ?.copyWith(color: AppColors.accentSoft, letterSpacing: 0.9);

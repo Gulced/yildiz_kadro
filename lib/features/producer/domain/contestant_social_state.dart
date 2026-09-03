@@ -1,6 +1,9 @@
 class FollowerSnapshot {
-  const FollowerSnapshot(
-      {required this.day, required this.count, required this.reason});
+  const FollowerSnapshot({
+    required this.day,
+    required this.count,
+    required this.reason,
+  });
   final int day;
   final int count;
   final String reason;
@@ -67,7 +70,8 @@ class ContestantSocialState {
     final history = [...followerHistory];
     if (followers != 0 && day != null) {
       history.add(
-          FollowerSnapshot(day: day, count: nextFollowers, reason: reason));
+        FollowerSnapshot(day: day, count: nextFollowers, reason: reason),
+      );
     }
     return ContestantSocialState(
       popularity: bounded(this.popularity + popularity),
@@ -78,10 +82,12 @@ class ContestantSocialState {
       professionalism: bounded(this.professionalism + professionalism),
       energy: bounded(this.energy + energy),
       preparation: bounded(this.preparation + preparation),
-      vocalCoachImpression:
-          bounded(this.vocalCoachImpression + vocalCoachImpression),
-      danceCoachImpression:
-          bounded(this.danceCoachImpression + danceCoachImpression),
+      vocalCoachImpression: bounded(
+        this.vocalCoachImpression + vocalCoachImpression,
+      ),
+      danceCoachImpression: bounded(
+        this.danceCoachImpression + danceCoachImpression,
+      ),
       followerHistory: List.unmodifiable(history),
       experienceXp: (this.experienceXp + experienceXp).clamp(0, 99999),
     );

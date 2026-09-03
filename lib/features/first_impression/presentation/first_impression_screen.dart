@@ -5,6 +5,7 @@ import 'package:yildiz_kadro/core/responsive/breakpoints.dart';
 import 'package:yildiz_kadro/features/contestants/data/contestant_seed_data.dart';
 import 'package:yildiz_kadro/features/contestants/data/contestant_identity_profiles.dart';
 import 'package:yildiz_kadro/features/contestants/domain/contestant.dart';
+import 'package:yildiz_kadro/features/contestants/domain/contestant_localization.dart';
 import 'package:yildiz_kadro/features/contestants/presentation/widgets/contestant_portrait.dart';
 import 'package:yildiz_kadro/features/first_impression/presentation/first_impression_transition_screen.dart';
 import 'package:yildiz_kadro/features/first_impression/presentation/widgets/radar_contestant_card.dart';
@@ -135,8 +136,7 @@ class _FirstImpressionScreenState extends State<FirstImpressionScreen> {
               ),
               sliver: SliverLayoutBuilder(
                 builder: (context, constraints) {
-                  final sideSpace =
-                      (constraints.crossAxisExtent - 760).clamp(
+                  final sideSpace = (constraints.crossAxisExtent - 760).clamp(
                         0.0,
                         double.infinity,
                       ) /
@@ -175,7 +175,6 @@ class _FirstImpressionScreenState extends State<FirstImpressionScreen> {
 
   void _showPreview(Contestant contestant) {
     final state = GameScope.of(context);
-    final identity = identityFor(contestant);
     final social = state.socialStateFor(contestant.id);
     showModalBottomSheet<void>(
       context: context,
@@ -207,10 +206,14 @@ class _FirstImpressionScreenState extends State<FirstImpressionScreen> {
                         contestant.displayName,
                         style: Theme.of(context).textTheme.headlineLarge,
                       ),
-                      Text(contestant.personalityTraits.join(' · ')),
+                      Text(
+                        contestant
+                            .localizedPersonalityTraits(context)
+                            .join(' · '),
+                      ),
                       const SizedBox(height: AppSpacing.sm),
                       Text(
-                        identity.hook,
+                        localizedHook(contestant, context),
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
                     ],
@@ -236,13 +239,13 @@ class _FirstImpressionScreenState extends State<FirstImpressionScreen> {
             ),
             const SizedBox(height: AppSpacing.lg),
             Text(context.l10n.goal, style: _previewLabel(context)),
-            Text(identity.goal),
+            Text(localizedGoal(contestant, context)),
             const SizedBox(height: AppSpacing.md),
             Text(context.l10n.strength, style: _previewLabel(context)),
-            Text(identity.characterStrength),
+            Text(contestant.localizedSpecialTraitDescription(context)),
             const SizedBox(height: AppSpacing.md),
             Text(context.l10n.attention, style: _previewLabel(context)),
-            Text(identity.sensitivity),
+            Text(contestant.localizedRiskDescription(context)),
             const SizedBox(height: AppSpacing.lg),
             AppButton(
               label: _selectedIds.contains(contestant.id)
@@ -259,9 +262,10 @@ class _FirstImpressionScreenState extends State<FirstImpressionScreen> {
     );
   }
 
-  TextStyle _previewLabel(BuildContext context) =>
-      Theme.of(context).textTheme.labelLarge!
-          .copyWith(color: AppColors.accentBright, letterSpacing: 1.1);
+  TextStyle _previewLabel(BuildContext context) => Theme.of(context)
+      .textTheme
+      .labelLarge!
+      .copyWith(color: AppColors.accentBright, letterSpacing: 1.1);
 }
 
 class _PreviewMeter extends StatelessWidget {
@@ -271,23 +275,23 @@ class _PreviewMeter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.only(top: AppSpacing.sm),
-    child: Row(
-      children: [
-        SizedBox(width: 100, child: Text(label)),
-        Expanded(
-          child: LinearProgressIndicator(
-            value: value / 100,
-            minHeight: 5,
-            color: AppColors.accentBright,
-            backgroundColor: AppColors.line,
-          ),
+        padding: const EdgeInsets.only(top: AppSpacing.sm),
+        child: Row(
+          children: [
+            SizedBox(width: 100, child: Text(label)),
+            Expanded(
+              child: LinearProgressIndicator(
+                value: value / 100,
+                minHeight: 5,
+                color: AppColors.accentBright,
+                backgroundColor: AppColors.line,
+              ),
+            ),
+            const SizedBox(width: AppSpacing.sm),
+            SizedBox(width: 28, child: Text('$value')),
+          ],
         ),
-        const SizedBox(width: AppSpacing.sm),
-        SizedBox(width: 28, child: Text('$value')),
-      ],
-    ),
-  );
+      );
 }
 
 class _FirstImpressionHeader extends StatelessWidget {
@@ -312,13 +316,17 @@ class _FirstImpressionHeader extends StatelessWidget {
         const SizedBox(height: AppSpacing.md),
         Text(
           context.l10n.dayLabel(1),
-          style: Theme.of(context).textTheme.labelMedium
+          style: Theme.of(context)
+              .textTheme
+              .labelMedium
               ?.copyWith(color: AppColors.accentSoft, letterSpacing: 1.4),
         ),
         const SizedBox(height: AppSpacing.sm),
         Text(
           context.l10n.firstImpressionTitle,
-          style: Theme.of(context).textTheme.displayLarge
+          style: Theme.of(context)
+              .textTheme
+              .displayLarge
               ?.copyWith(fontSize: 43, height: 0.98),
         ),
         const SizedBox(height: AppSpacing.md),
@@ -330,9 +338,9 @@ class _FirstImpressionHeader extends StatelessWidget {
         Text(
           context.l10n.firstImpressionNote,
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            color: AppColors.paperMuted,
-            fontStyle: FontStyle.italic,
-          ),
+                color: AppColors.paperMuted,
+                fontStyle: FontStyle.italic,
+              ),
         ),
         const SizedBox(height: AppSpacing.lg),
         AnimatedSwitcher(
@@ -341,11 +349,11 @@ class _FirstImpressionHeader extends StatelessWidget {
             context.l10n.radarCount(selectedCount),
             key: ValueKey(selectedCount),
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-              color: selectedCount == 5
-                  ? AppColors.accentBright
-                  : AppColors.paper,
-              letterSpacing: 1,
-            ),
+                  color: selectedCount == 5
+                      ? AppColors.accentBright
+                      : AppColors.paper,
+                  letterSpacing: 1,
+                ),
           ),
         ),
       ],

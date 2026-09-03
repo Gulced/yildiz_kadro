@@ -60,10 +60,10 @@ class ContestantPortrait extends StatelessWidget {
                   color: AppColors.ink.withValues(alpha: 0.78),
                   child: Text(
                     contestant.number,
-                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                          color: AppColors.paper,
-                          letterSpacing: 1,
-                        ),
+                    style: Theme.of(context)
+                        .textTheme
+                        .labelMedium
+                        ?.copyWith(color: AppColors.paper, letterSpacing: 1),
                   ),
                 ),
               ),
@@ -85,10 +85,7 @@ class ContestantPortrait extends StatelessWidget {
 }
 
 class _PortraitPlaceholder extends StatelessWidget {
-  const _PortraitPlaceholder({
-    required this.contestant,
-    required this.palette,
-  });
+  const _PortraitPlaceholder({required this.contestant, required this.palette});
 
   final Contestant contestant;
   final List<Color> palette;

@@ -18,9 +18,7 @@ class DossierTag extends StatelessWidget {
       ),
       decoration: BoxDecoration(
         color: accent ? AppColors.accent.withValues(alpha: 0.12) : null,
-        border: Border.all(
-          color: accent ? AppColors.accent : AppColors.line,
-        ),
+        border: Border.all(color: accent ? AppColors.accent : AppColors.line),
         borderRadius: const BorderRadius.all(Radius.circular(3)),
       ),
       child: Text(

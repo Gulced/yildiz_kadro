@@ -79,7 +79,7 @@ class _StoryEventDialogState extends State<_StoryEventDialog> {
                 ),
                 const SizedBox(height: AppSpacing.sm),
                 Text(
-                  widget.event.title,
+                  widget.event.localizedTitle(context),
                   style: Theme.of(context).textTheme.headlineLarge,
                 ),
                 const SizedBox(height: AppSpacing.md),
@@ -107,18 +107,18 @@ class _StoryEventDialogState extends State<_StoryEventDialog> {
                   }).toList(),
                 ),
                 const SizedBox(height: AppSpacing.md),
-                Text(widget.event.body),
+                Text(widget.event.localizedBody(context)),
                 const SizedBox(height: AppSpacing.md),
                 Text(context.l10n.why, style: _overline(context)),
-                Text(widget.event.why),
-                if (widget.event.confessional != null) ...[
+                Text(widget.event.localizedWhy(context)),
+                if (widget.event.localizedConfessional(context) != null) ...[
                   const SizedBox(height: AppSpacing.md),
                   Text(
-                    widget.event.confessional!,
+                    widget.event.localizedConfessional(context)!,
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      fontStyle: FontStyle.italic,
-                      color: AppColors.paperMuted,
-                    ),
+                          fontStyle: FontStyle.italic,
+                          color: AppColors.paperMuted,
+                        ),
                   ),
                 ],
                 const SizedBox(height: AppSpacing.lg),
@@ -143,7 +143,7 @@ class _StoryEventDialogState extends State<_StoryEventDialog> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                option.label,
+                                option.localizedLabel(context),
                                 style: Theme.of(context).textTheme.titleMedium,
                               ),
                             ],
@@ -156,7 +156,7 @@ class _StoryEventDialogState extends State<_StoryEventDialog> {
                   Text(context.l10n.decisionApplied, style: _overline(context)),
                   const SizedBox(height: AppSpacing.sm),
                   Text(
-                    choice.feedback,
+                    choice.localizedFeedback(context),
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
                   const SizedBox(height: AppSpacing.md),
@@ -192,18 +192,18 @@ class _StoryEventDialogState extends State<_StoryEventDialog> {
                   onPressed: resolved
                       ? () => Navigator.pop(context)
                       : (choice == null || submitting)
-                      ? null
-                      : () {
-                          setState(() => submitting = true);
-                          state.resolveStoryEvent(
-                            day: widget.day,
-                            choiceId: choice.id,
-                          );
-                          setState(() {
-                            resolved = true;
-                            submitting = false;
-                          });
-                        },
+                          ? null
+                          : () {
+                              setState(() => submitting = true);
+                              state.resolveStoryEvent(
+                                day: widget.day,
+                                choiceId: choice.id,
+                              );
+                              setState(() {
+                                resolved = true;
+                                submitting = false;
+                              });
+                            },
                   child: Text(
                     resolved
                         ? context.l10n.continueLabel.toUpperCase()
@@ -219,7 +219,7 @@ class _StoryEventDialogState extends State<_StoryEventDialog> {
   }
 
   List<({String name, String metric, String metricKey, int delta})>
-  _resultChanges(GameState state) {
+      _resultChanges(GameState state) {
     final record = state.storyEventForDay(widget.day);
     if (record == null || record.choiceId == null) return const [];
     final changes =
@@ -257,20 +257,21 @@ class _StoryEventDialogState extends State<_StoryEventDialog> {
         StoryEventCategory.relationship => context.l10n.relationshipEvent,
       };
 
-  TextStyle _overline(BuildContext context) =>
-      Theme.of(context).textTheme.labelLarge!
-          .copyWith(color: AppColors.accentBright);
+  TextStyle _overline(BuildContext context) => Theme.of(context)
+      .textTheme
+      .labelLarge!
+      .copyWith(color: AppColors.accentBright);
 
   String _metric(String key) => switch (key) {
-    'morale' || 'motivation' => context.l10n.motivation,
-    'popularity' => context.l10n.popularity,
-    'buzz' => 'Buzz',
-    'followers' => context.l10n.followers,
-    'confidence' => context.l10n.confidence,
-    'professionalism' => context.l10n.professionalism,
-    'energy' => context.l10n.energy,
-    'preparation' => context.l10n.preparation,
-    'relationship' => context.l10n.relationship,
-    _ => key,
-  };
+        'morale' || 'motivation' => context.l10n.motivation,
+        'popularity' => context.l10n.popularity,
+        'buzz' => 'Buzz',
+        'followers' => context.l10n.followers,
+        'confidence' => context.l10n.confidence,
+        'professionalism' => context.l10n.professionalism,
+        'energy' => context.l10n.energy,
+        'preparation' => context.l10n.preparation,
+        'relationship' => context.l10n.relationship,
+        _ => key,
+      };
 }

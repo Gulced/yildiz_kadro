@@ -1,3 +1,4 @@
+import 'package:yildiz_kadro/l10n/l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:yildiz_kadro/app/theme/app_colors.dart';
 import 'package:yildiz_kadro/app/theme/app_spacing.dart';
@@ -5,19 +6,49 @@ import 'package:yildiz_kadro/app/theme/app_spacing.dart';
 class CastingWall extends StatelessWidget {
   const CastingWall({super.key});
 
-  static const _contestants = [
-    _Contestant('GÜLCE', 'ANA VOKAL', -0.07, 0.02, 0.18),
-    _Contestant('DURU', 'GÜÇLÜ SES', 0.045, 0.19, 0.05),
-    _Contestant('İDİL', 'GİZLİ CEVHER', -0.025, 0.38, 0.13),
-    _Contestant('ALARA', 'ANA DANSÇI', 0.065, 0.57, 0.02),
-    _Contestant('DERİN', 'MERKEZ', -0.045, 0.73, 0.16),
-  ];
+  List<_Contestant> _getContestants(BuildContext context) {
+    final isEn = isAppEnglish(context);
+    return [
+      _Contestant(
+        'GÜLCE',
+        isEn ? 'MAIN VOCAL' : 'ANA VOKAL',
+        -0.07,
+        0.02,
+        0.18,
+      ),
+      _Contestant(
+        'DURU',
+        isEn ? 'POWER VOCAL' : 'GÜÇLÜ SES',
+        0.045,
+        0.19,
+        0.05,
+      ),
+      _Contestant(
+        'İDİL',
+        isEn ? 'HIDDEN GEM' : 'GİZLİ CEVHER',
+        -0.025,
+        0.38,
+        0.13,
+      ),
+      _Contestant(
+        'ALARA',
+        isEn ? 'MAIN DANCER' : 'ANA DANSÇI',
+        0.065,
+        0.57,
+        0.02,
+      ),
+      _Contestant('DERİN', isEn ? 'CENTER' : 'MERKEZ', -0.045, 0.73, 0.16),
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
+    final isEn = isAppEnglish(context);
+    final contestants = _getContestants(context);
     return Semantics(
-      label:
-          'Casting panosu. Final adayları Gülce, Duru, İdil, Alara ve Derin.',
+      label: isEn
+          ? 'Casting board. Final contenders Gülce, Duru, İdil, Alara, and Derin.'
+          : 'Casting panosu. Final adayları Gülce, Duru, İdil, Alara ve Derin.',
       excludeSemantics: true,
       child: MediaQuery.withNoTextScaling(
         child: LayoutBuilder(
@@ -29,7 +60,7 @@ class CastingWall extends StatelessWidget {
                 clipBehavior: Clip.none,
                 children: [
                   Positioned.fill(child: _DossierBoard()),
-                  for (final contestant in _contestants)
+                  for (final contestant in contestants)
                     Positioned(
                       left: constraints.maxWidth * contestant.left,
                       top: constraints.maxWidth * contestant.top,
@@ -44,8 +75,8 @@ class CastingWall extends StatelessWidget {
                   Positioned(
                     left: constraints.maxWidth * 0.04,
                     bottom: constraints.maxWidth * 0.03,
-                    child: const _CastingNote(
-                      text: 'Final sahnesi  ★',
+                    child: _CastingNote(
+                      text: isEn ? 'Final Stage  ★' : 'Final sahnesi  ★',
                       accent: true,
                     ),
                   ),
@@ -54,8 +85,10 @@ class CastingWall extends StatelessWidget {
                     bottom: constraints.maxWidth * 0.015,
                     child: Transform.rotate(
                       angle: -0.025,
-                      child: const _CastingNote(
-                        text: 'Her karar her şeyi\ndeğiştirir.',
+                      child: _CastingNote(
+                        text: isEn
+                            ? 'Every choice changes\neverything.'
+                            : 'Her karar her şeyi\ndeğiştirir.',
                       ),
                     ),
                   ),
@@ -121,7 +154,10 @@ class _ContestantCard extends StatelessWidget {
         border: Border.all(color: const Color(0xFFD8CCD0)),
         boxShadow: const [
           BoxShadow(
-              color: Color(0x66000000), blurRadius: 10, offset: Offset(0, 6)),
+            color: Color(0x66000000),
+            blurRadius: 10,
+            offset: Offset(0, 6),
+          ),
         ],
       ),
       child: Column(

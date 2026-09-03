@@ -29,27 +29,33 @@ Map<int, List<String>> calculateAutomaticGroupTags(
       state.day5ResultSnapshot!.results[id]!.fanConnect;
   final visual = ids.reduce((a, b) => visualScore(a) >= visualScore(b) ? a : b);
   tags[visual]!.add('IMAGE MEMBER');
-  final moodCandidates = ids.where((id) => {WorkStyle.playful, WorkStyle.social}
-      .contains(groupTaskProfiles[id]!.workStyle));
+  final moodCandidates = ids.where(
+    (id) => {
+      WorkStyle.playful,
+      WorkStyle.social,
+    }.contains(groupTaskProfiles[id]!.workStyle),
+  );
   if (moodCandidates.isNotEmpty) {
     tags[moodCandidates.first]!.add('MOOD MAKER');
   }
   for (final entry in positions.entries) {
-    if ({FinalMemberPosition.mainVocal, FinalMemberPosition.leadVocal}
-        .contains(entry.key)) {
+    if ({
+      FinalMemberPosition.mainVocal,
+      FinalMemberPosition.leadVocal,
+    }.contains(entry.key)) {
       tags[entry.value]!.add('VOCAL LINE');
     }
-    if ({FinalMemberPosition.mainDancer, FinalMemberPosition.leadDancer}
-        .contains(entry.key)) {
+    if ({
+      FinalMemberPosition.mainDancer,
+      FinalMemberPosition.leadDancer,
+    }.contains(entry.key)) {
       tags[entry.value]!.add('DANCE LINE');
     }
   }
   return freezeAutomaticGroupTags(tags);
 }
 
-Map<int, List<String>> freezeAutomaticGroupTags(
-  Map<int, List<String>> tags,
-) =>
+Map<int, List<String>> freezeAutomaticGroupTags(Map<int, List<String>> tags) =>
     normalizeAutomaticGroupTags(tags);
 
 Contestant _c(int id) =>

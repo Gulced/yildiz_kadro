@@ -6,6 +6,8 @@
   "english": "English",
   "continueLabel": "Continue",
   "back": "Back",
+  "confirm": "Confirm",
+  "cancel": "Cancel",
   "startSeason": "Start the Season",
   "howToPlay": "How to Play",
   "howToIntro": "You're not a contestant—you’re the season's producer. Your decisions reshape the stage and every relationship.",
@@ -24,6 +26,13 @@
   "landingSupport": "Build the teams, make the calls, and create the final lineup.",
   "producerMode": "PRODUCER MODE",
   "seasonNumber": "SEASON {number}",
+  "@seasonNumber": {
+    "placeholders": {
+      "number": {
+        "type": "String"
+      }
+    }
+  },
   "producerRight": "USE PRODUCER SAVE",
   "producerRightTitle": "PRODUCER SAVE",
   "selectOnePerson": "You can save one contestant.",
@@ -46,6 +55,13 @@
   "vocalCoach": "Vocal coach",
   "danceCoach": "Dance coach",
   "dayLabel": "DAY {day}",
+  "@dayLabel": {
+    "placeholders": {
+      "day": {
+        "type": "int"
+      }
+    }
+  },
   "castingSeason": "CASTING • SEASON 01",
   "contestants": "CONTESTANTS",
   "meetAllContestants": "Meet all 15 contestants and start imagining your final lineup.",
@@ -54,10 +70,24 @@
   "firstImpressionBody": "You've met all 15 contestants.\nFor now, choose the five who caught your eye.",
   "firstImpressionNote": "This isn't an elimination. You can change your mind later.",
   "radarCount": "{count} / 5 ON YOUR RADAR",
+  "@radarCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "selectFive": "CHOOSE 5",
   "radarReady": "MY RADAR IS READY",
   "radarLimit": "You can only keep five contestants on your radar.",
   "enteredRadar": "{name} is now on your radar ★",
+  "@enteredRadar": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "firstImpressionsComplete": "First impressions locked in.",
   "stageLightsChangeEverything": "But everything can change once the stage lights come on.",
   "firstEvaluationStarting": "The first evaluation is about to begin.",
@@ -70,5 +100,226 @@
   "strength": "STRENGTH",
   "attention": "WATCH OUT",
   "removeFromRadar": "REMOVE FROM RADAR",
-  "addToRadar": "ADD TO RADAR  ★"
+  "addToRadar": "ADD TO RADAR  ★",
+  "producerDesk": "PRODUCER DESK",
+  "tabOverview": "AGENDA",
+  "tabTeams": "TEAMS",
+  "tabBackstage": "BACKSTAGE",
+  "backstagePreparing": "BACKSTAGE PREPARING",
+  "backstagePreparingDesc": "Today's backstage developments will arrive shortly.",
+  "backstageInterview": "BACKSTAGE INTERVIEW",
+  "applyThisDecision": "APPLY THIS DECISION",
+  "history": "HISTORY",
+  "captain": "CAPTAIN",
+  "roleCenter": "CENTER",
+  "roleMainVocal": "MAIN VOCAL",
+  "roleDanceLead": "DANCE LEAD",
+  "noEventScheduledToday": "No special events scheduled for today.",
+  "activeContestants": "Active Contestants",
+  "topMorale": "Top Morale",
+  "topPopularity": "Most Popular",
+  "topBuzz": "Top Buzz",
+  "criticalEnergy": "Critical Energy",
+  "story": "STORY",
+  "personality": "PERSONALITY",
+  "specialTrait": "SPECIAL TRAIT",
+  "risk": "RISK",
+  "talentReport": "TALENT REPORT",
+  "role": "ROLE",
+  "producerNoteLabel": "PRODUCER NOTE",
+  "potential": "POTENTIAL",
+  "ageWithCity": "{age} • {city}",
+  "@ageWithCity": {
+    "placeholders": {
+      "age": {
+        "type": "int"
+      },
+      "city": {
+        "type": "String"
+      }
+    }
+  },
+  "stageTest": "DAY 1 • STAGE TEST",
+  "evalCompleteTitle": "FIRST EVALUATION\nCOMPLETE",
+  "evalCompleteDesc": "The first stage confirmed some expectations.\nOthers were completely overturned.",
+  "topFiveTonight": "TOP 5 TONIGHT",
+  "outsideRadarSurprise": "OFF-RADAR SURPRISE",
+  "radarTop": "TOP ON YOUR RADAR",
+  "radarRisk": "AT RISK ON YOUR RADAR",
+  "radarPerformance": "RADAR PERFORMANCE",
+  "radarAverageScore": "Radar average: {score}",
+  "@radarAverageScore": {
+    "placeholders": {
+      "score": {
+        "type": "String"
+      }
+    }
+  },
+  "goToJuryRoom": "ENTER JURY ROOM",
+  "seeResults": "SEE RESULTS",
+  "nextContestant": "NEXT CONTESTANT",
+  "radarPaidOff": "★ Your radar pick delivered on stage.",
+  "radarDebatable": "★ First impression is currently on the fence.",
+  "notOnRadarThinkAgain": "She wasn't on your radar.\nMaybe take another look.",
+  "revealProgress": "{current} / {total}",
+  "@revealProgress": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "juryDecisionTitle": "JURY DECISION",
+  "scoresDontSayAll": "Scores don't tell the whole story.",
+  "juryIntroDesc": "The first evaluation is in.\nNow the jury takes the floor.",
+  "lowestFiveRisk": "The 5 lowest-scoring contestants enter the risk zone.",
+  "oneDecisionIsYours": "Yet tonight, one decision belongs to you.",
+  "viewRiskZone": "VIEW RISK ZONE",
+  "safe": "SAFE",
+  "faceTheJury": "FACE THE JURY",
+  "riskZone": "RISK ZONE",
+  "riskZoneDesc": "5 contestants at risk of elimination tonight:",
+  "protectOnePerson": "SAVE ONE CONTESTANT",
+  "confirmProtection": "CONFIRM SAVE",
+  "protectingContestant": "SAVING {name}",
+  "@protectingContestant": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "protectionWarning": "{name} will be directly safe tonight.\nYou cannot change this call later.",
+  "@protectionWarning": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "yesProtect": "YES, SAVE",
+  "goBack": "GO BACK",
+  "producerRightUsed": "PRODUCER SAVE USED",
+  "producerProtectedMsg": "As producer, you saved {name}.\nShe advances directly to the next day.",
+  "@producerProtectedMsg": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "jurySavedTop": "The jury protected the highest-scoring candidate.",
+  "juryProtected": "JURY SAVED",
+  "goToLastChance": "ENTER LAST CHANCE STAGE",
+  "juryDecisionSummaryTitle": "JURY DECISION LOCKED",
+  "juryDecisionSummaryDesc": "After producer and jury saves, 3 contestants enter the Last Chance Stage.",
+  "lastChanceTitle": "LAST CHANCE STAGE",
+  "threeContestantsOneFarewell": "3 contestants.\n1 farewell.",
+  "lastChanceIntroDesc": "Scores aren't wiped clean, but everything hangs on this stage.",
+  "enterStage": "TAKE THE STAGE",
+  "givingCoachingNote": "COACHING NOTE FOR {name}",
+  "@givingCoachingNote": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "coachingSingleWarning": "You can only intervene with one contestant in this round.",
+  "yesSelect": "YES, SELECT",
+  "coachingPrompt": "Give a critical coaching note to one contestant (+3 pts):",
+  "noIntervention": "WATCH WITHOUT INTERVENTION",
+  "confirmChoice": "CONFIRM SELECTION",
+  "performanceReveal": "PERFORMANCE REVEAL",
+  "scoresCompared": "COMPARING SCORES",
+  "firstSafeContestant": "FIRST CONTESTANT SAFE",
+  "finalTwoTitle": "FINAL TWO",
+  "farewellTitle": "FAREWELL MOMENT",
+  "farewellDesc": "{name} has been eliminated.",
+  "@farewellDesc": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "coachedBadge": "COACHING BONUS APPLIED (+3)",
+  "continueToRoster": "PROCEED TO ROSTER UPDATE",
+  "day1Complete": "DAY 1 COMPLETE",
+  "activeRemainingCount": "{count} CONTESTANTS REMAIN",
+  "@activeRemainingCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "firstDayLessonsDesc": "Following Day 1, the field is taking shape.\nNext up: The Group Mission.",
+  "eliminatedMember": "ELIMINATED CONTESTANT",
+  "activeRoster": "REMAINING ROSTER",
+  "advanceToDay2": "ADVANCE TO DAY 2",
+  "day2Title": "DAY 2 • GROUP MISSION",
+  "groupTaskBriefing": "Group Mission: Track & Chemistry",
+  "teamFormationTitle": "TEAM FORMATION",
+  "teamA": "TEAM A",
+  "teamB": "TEAM B",
+  "autoFormTeams": "CONFIRM AUTO TEAMS",
+  "manualBuilder": "MANUAL TEAM BUILDER",
+  "rehearsalTitle": "REHEARSAL ROOM",
+  "rehearsalCrisesTitle": "REHEARSAL CRISIS",
+  "resolveCrisis": "RESOLVE CRISIS",
+  "groupStageTitle": "GROUP STAGE",
+  "groupResultsTitle": "GROUP RESULTS",
+  "winningTeamImmune": "WINNING TEAM IMMUNE",
+  "juryTableTitle": "JURY TABLE",
+  "duelTitle": "HEAD-TO-HEAD DUEL",
+  "duelWinner": "DUEL WINNER",
+  "duelElimination": "DUEL ELIMINATION",
+  "advanceToDay3": "ADVANCE TO DAY 3",
+  "day3Title": "DAY 3 • ICON TRACKS",
+  "iconStageBriefing": "Icon Stage",
+  "iconPerformanceResults": "Icon Performance Results",
+  "finalCutTitle": "SEMIFINAL CUT",
+  "advanceToDay4": "ADVANCE TO DAY 4",
+  "day4Title": "DAY 4 • POSITION BATTLE",
+  "positionBattleBriefing": "Position Battle",
+  "roomVocal": "VOCAL ROOM",
+  "roomDance": "DANCE ROOM",
+  "roomStage": "STAGE ROOM",
+  "positionBattleResults": "Position Battle Results",
+  "advanceToDay5": "ADVANCE TO DAY 5",
+  "day5Title": "DAY 5 • LIVE BROADCAST",
+  "liveShowBriefing": "Live Broadcast Showcase",
+  "broadcastDirection": "BROADCAST STRATEGY",
+  "liveShowResults": "Live Broadcast Results",
+  "advanceToGrandFinal": "ADVANCE TO GRAND FINAL",
+  "grandFinalTitle": "GRAND FINAL",
+  "selectFinalFive": "CHOOSE FINAL FIVE",
+  "conceptSelection": "DEBUT CONCEPT",
+  "groupNaming": "NAME YOUR GROUP",
+  "enterGroupName": "Enter Group Name",
+  "confirmDebut": "CONFIRM DEBUT",
+  "debutPoster": "DEBUT POSTER",
+  "seasonComplete": "SEASON COMPLETE",
+  "newSeason": "NEW SEASON",
+  "startNewSeason": "START NEW SEASON",
+  "scoreLabel": "Score: {score}",
+  "@scoreLabel": {
+    "placeholders": {
+      "score": {
+        "type": "int"
+      }
+    }
+  },
+  "rankLabel": "#{rank}",
+  "@rankLabel": {
+    "placeholders": {
+      "rank": {
+        "type": "int"
+      }
+    }
+  }
 }

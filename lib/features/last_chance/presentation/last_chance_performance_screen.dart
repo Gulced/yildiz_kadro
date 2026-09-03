@@ -5,6 +5,7 @@ import 'package:yildiz_kadro/app/theme/app_colors.dart';
 import 'package:yildiz_kadro/app/theme/app_spacing.dart';
 import 'package:yildiz_kadro/features/contestants/data/contestant_seed_data.dart';
 import 'package:yildiz_kadro/features/contestants/domain/contestant.dart';
+import 'package:yildiz_kadro/l10n/l10n.dart';
 import 'package:yildiz_kadro/features/contestants/presentation/widgets/contestant_portrait.dart';
 import 'package:yildiz_kadro/features/evaluation/data/evaluation1_data.dart';
 import 'package:yildiz_kadro/features/game/application/game_scope.dart';
@@ -23,7 +24,7 @@ enum _Phase {
   comparison,
   firstSafe,
   finalTwo,
-  farewell
+  farewell,
 }
 
 class LastChancePerformanceScreen extends StatefulWidget {
@@ -51,10 +52,8 @@ class _LastChancePerformanceScreenState
   int get _coachId => _coachIdOrNull!;
   List<int> get _revealIds =>
       lastChanceRevealPriority.where(_trio.contains).toList(growable: false);
-  List<LastChanceResult> get _ranking => rankLastChanceResults(
-        contestantIds: _trio,
-        coachContestantId: _coachId,
-      );
+  List<LastChanceResult> get _ranking =>
+      rankLastChanceResults(contestantIds: _trio, coachContestantId: _coachId);
 
   @override
   void didChangeDependencies() {
@@ -81,40 +80,51 @@ class _LastChancePerformanceScreenState
     final confirmed = await showModalBottomSheet<bool>(
       context: context,
       backgroundColor: AppColors.inkSoft,
-      builder: (context) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.lg),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('${contestant.displayName}’YE SAHNE NOTU VERİYORSUN',
-                  style: Theme.of(context).textTheme.headlineSmall),
-              const SizedBox(height: AppSpacing.md),
-              Text('Bu bölümde yalnızca bir yarışmacıya müdahale edebilirsin.',
-                  style: Theme.of(context).textTheme.bodyLarge),
-              const SizedBox(height: AppSpacing.lg),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextButton(
-                      onPressed: () => Navigator.pop(context, false),
-                      child: const Text('GERİ DÖN'),
+      builder: (context) {
+        final isEn = isAppEnglish(context);
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(AppSpacing.lg),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  isEn
+                      ? 'GIVING COACHING NOTE TO ${contestant.displayName}'
+                      : '${contestant.displayName}’YE SAHNE NOTU VERİYORSUN',
+                  style: Theme.of(context).textTheme.headlineSmall,
+                ),
+                const SizedBox(height: AppSpacing.md),
+                Text(
+                  isEn
+                      ? 'You can only intervene with one contestant in this round.'
+                      : 'Bu bölümde yalnızca bir yarışmacıya müdahale edebilirsin.',
+                  style: Theme.of(context).textTheme.bodyLarge,
+                ),
+                const SizedBox(height: AppSpacing.lg),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextButton(
+                        onPressed: () => Navigator.pop(context, false),
+                        child: Text(isEn ? 'CANCEL' : 'GERİ DÖN'),
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: AppSpacing.sm),
-                  Expanded(
-                    child: FilledButton(
-                      onPressed: () => Navigator.pop(context, true),
-                      child: const Text('NOTU VER'),
+                    const SizedBox(width: AppSpacing.sm),
+                    Expanded(
+                      child: FilledButton(
+                        onPressed: () => Navigator.pop(context, true),
+                        child: Text(isEn ? 'GIVE NOTE' : 'NOTU VER'),
+                      ),
                     ),
-                  ),
-                ],
-              ),
-            ],
+                  ],
+                ),
+              ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
     if (confirmed == true && mounted) {
       _busy = true;
@@ -126,17 +136,21 @@ class _LastChancePerformanceScreenState
   void _startPerformanceReveal() {
     _cancelTimers();
     _revealStep = 0;
-    _timers.add(Timer(const Duration(milliseconds: 250), () {
-      if (mounted && _phase == _Phase.reveal) _busy = false;
-    }));
+    _timers.add(
+      Timer(const Duration(milliseconds: 250), () {
+        if (mounted && _phase == _Phase.reveal) _busy = false;
+      }),
+    );
     final coached = _revealIds[_performanceIndex] == _coachId;
     final totalSteps = coached ? 5 : 4;
     for (var step = 1; step <= totalSteps; step++) {
-      _timers.add(Timer(Duration(milliseconds: step * 360), () {
-        if (mounted && _phase == _Phase.reveal) {
-          setState(() => _revealStep = step);
-        }
-      }));
+      _timers.add(
+        Timer(Duration(milliseconds: step * 360), () {
+          if (mounted && _phase == _Phase.reveal) {
+            setState(() => _revealStep = step);
+          }
+        }),
+      );
     }
   }
 
@@ -162,9 +176,7 @@ class _LastChancePerformanceScreenState
     if (_busy || GameScope.of(context).lastChance1Completed) return;
     _busy = true;
     final ranking = _ranking;
-    final trioResults = {
-      for (final id in _trio) id: lastChanceResults[id]!,
-    };
+    final trioResults = {for (final id in _trio) id: lastChanceResults[id]!};
     GameScope.of(context).completeLastChance1(
       results: trioResults,
       eliminatedContestantId: ranking.last.contestantId,
@@ -217,9 +229,7 @@ class _LastChancePerformanceScreenState
     if (navigator.canPop()) {
       navigator.pop();
     } else {
-      navigator.pushReplacement(MaterialPageRoute<void>(
-        builder: (_) => const ProducerDashboardScreen(day: 1),
-      ));
+      navigator.pushReplacement(ProducerDashboardScreen.route(day: 1));
     }
   }
 
@@ -258,7 +268,7 @@ class _LastChancePerformanceScreenState
       case _Phase.firstSafe:
         final first = _ranking.first;
         return _SafeReveal(
-          label: 'İLK GÜVENDEKİ İSİM',
+          label: isAppEnglish(context) ? 'FIRST SAVED' : 'İLK GÜVENDEKİ İSİM',
           contestant: _contestant(first.contestantId),
           score: first.finalScore(coached: first.contestantId == _coachId),
           onNext: () => _go(_Phase.finalTwo),
@@ -295,23 +305,33 @@ class _MissingLastChanceState extends StatelessWidget {
   final VoidCallback onExit;
 
   @override
-  Widget build(BuildContext context) => Center(
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.lg),
-          child: Column(mainAxisSize: MainAxisSize.min, children: [
-            Text('SON ŞANS HENÜZ HAZIR DEĞİL',
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.headlineLarge),
+  Widget build(BuildContext context) {
+    final isEn = isAppEnglish(context);
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              isEn ? 'LAST CHANCE NOT READY YET' : 'SON ŞANS HENÜZ HAZIR DEĞİL',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.headlineLarge,
+            ),
             const SizedBox(height: AppSpacing.md),
-            const Text(
-              'Jüri kararı tamamlanmadan bu sahne açılamaz.',
+            Text(
+              isEn
+                  ? 'Cannot open this stage before jury decision is finalized.'
+                  : 'Jüri kararı tamamlanmadan bu sahne açılamaz.',
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: AppSpacing.lg),
-            AppButton(label: 'GERİ DÖN', onPressed: onExit),
-          ]),
+            AppButton(label: isEn ? 'GO BACK' : 'GERİ DÖN', onPressed: onExit),
+          ],
         ),
-      );
+      ),
+    );
+  }
 }
 
 class _Intro extends StatelessWidget {
@@ -323,27 +343,45 @@ class _Intro extends StatelessWidget {
   Widget build(BuildContext context) {
     final radar = GameScope.of(context).playerRadarContestantIds;
     final radarCount = trio.where((c) => radar.contains(c.id)).length;
-    final feedback = radarCount == 0
-        ? 'İlk favorilerin bu kez sahnenin dışında.'
-        : radarCount == 1
-            ? '★ Radarındaki bir isim tehlikede.'
-            : '★ Radarındaki $radarCount isim tehlikede.';
+    final isEn = isAppEnglish(context);
+    final feedback = !isEn
+        ? (radarCount == 0
+            ? 'İlk favorilerin bu kez sahnenin dışında.'
+            : radarCount == 1
+                ? '★ Radarındaki bir isim tehlikede.'
+                : '★ Radarındaki $radarCount isim tehlikede.')
+        : (radarCount == 0
+            ? 'Your initial favorites are out of danger for now.'
+            : radarCount == 1
+                ? '★ One name on your radar is in danger.'
+                : '★ $radarCount names on your radar are in danger.');
     return _Page(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('1. GÜN', style: _pinkLabel(context)),
-          const SizedBox(height: AppSpacing.sm),
-          Text('SON ŞANS', style: Theme.of(context).textTheme.displayLarge),
-          const SizedBox(height: AppSpacing.xl),
-          Text('Bu kez yalnızca üç kişi sahnede.',
-              style: Theme.of(context).textTheme.headlineLarge),
-          const SizedBox(height: AppSpacing.md),
-          Text('Aynı sahne.\nAynı baskı.\nTek bir veda.',
-              style: Theme.of(context).textTheme.titleLarge),
+          Text(context.l10n.dayLabel(1), style: _pinkLabel(context)),
           const SizedBox(height: AppSpacing.sm),
           Text(
-            'Bu performansın sonunda bir yarışmacı Yıldız Kadro’ya veda edecek.',
+            context.l10n.lastChanceTitle,
+            style: Theme.of(context).textTheme.displayLarge,
+          ),
+          const SizedBox(height: AppSpacing.xl),
+          Text(
+            context.l10n.threeContestantsOneFarewell,
+            style: Theme.of(context).textTheme.headlineLarge,
+          ),
+          const SizedBox(height: AppSpacing.md),
+          Text(
+            isEn
+                ? 'Same stage.\nSame pressure.\nA single farewell.'
+                : 'Aynı sahne.\nAynı baskı.\nTek bir veda.',
+            style: Theme.of(context).textTheme.titleLarge,
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Text(
+            isEn
+                ? 'At the end of this performance, one contestant will say goodbye to the group.'
+                : 'Bu performansın sonunda bir yarışmacı Yıldız Kadro’ya veda edecek.',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: AppColors.paperMuted,
                   fontStyle: FontStyle.italic,
@@ -352,24 +390,32 @@ class _Intro extends StatelessWidget {
           const SizedBox(height: AppSpacing.lg),
           Row(
             children: trio
-                .map((c) => Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.all(3),
-                        child: AspectRatio(
-                          aspectRatio: 0.75,
-                          child: ContestantPortrait(contestant: c),
-                        ),
+                .map(
+                  (c) => Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.all(3),
+                      child: AspectRatio(
+                        aspectRatio: 0.75,
+                        child: ContestantPortrait(contestant: c),
                       ),
-                    ))
+                    ),
+                  ),
+                )
                 .toList(),
           ),
           const SizedBox(height: AppSpacing.md),
-          Text(feedback,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: AppColors.accentSoft,
-                  )),
+          Text(
+            feedback,
+            style: Theme.of(context)
+                .textTheme
+                .titleMedium
+                ?.copyWith(color: AppColors.accentSoft),
+          ),
           const SizedBox(height: AppSpacing.xl),
-          AppButton(label: 'SON ŞANSI BAŞLAT', onPressed: onNext),
+          AppButton(
+            label: isEn ? 'START LAST CHANCE' : 'SON ŞANSI BAŞLAT',
+            onPressed: onNext,
+          ),
         ],
       ),
     );
@@ -381,27 +427,41 @@ class _Concept extends StatelessWidget {
   final VoidCallback onNext;
 
   @override
-  Widget build(BuildContext context) => _Page(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('SON ŞANS PERFORMANSI',
-                style: Theme.of(context).textTheme.displayLarge),
-            const SizedBox(height: AppSpacing.lg),
-            Text(
-              'Üç yarışmacı aynı kısa performans paketini hazırladı.\nJüri bu kez gelişime, baskı altında toparlanmaya ve sahne hakimiyetine bakacak.',
-              style: Theme.of(context).textTheme.bodyLarge,
-            ),
-            const SizedBox(height: AppSpacing.xl),
-            const Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [Text('VOKAL'), Text('DANS'), Text('SAHNE')],
-            ),
-            const SizedBox(height: AppSpacing.xxl),
-            AppButton(label: 'SAHNE NOTUNU SEÇ', onPressed: onNext),
-          ],
-        ),
-      );
+  Widget build(BuildContext context) {
+    final isEn = isAppEnglish(context);
+    return _Page(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            isEn ? 'LAST CHANCE PERFORMANCE' : 'SON ŞANS PERFORMANSI',
+            style: Theme.of(context).textTheme.displayLarge,
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          Text(
+            isEn
+                ? 'Three contestants prepared the same short routine.\nThe jury looks for growth, composure under pressure, and stage presence.'
+                : 'Üç yarışmacı aynı kısa performans paketini hazırladı.\nJüri bu kez gelişime, baskı altında toparlanmaya ve sahne hakimiyetine bakacak.',
+            style: Theme.of(context).textTheme.bodyLarge,
+          ),
+          const SizedBox(height: AppSpacing.xl),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              Text(context.l10n.vocal.toUpperCase()),
+              Text(context.l10n.dance.toUpperCase()),
+              Text(context.l10n.stage.toUpperCase()),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.xxl),
+          AppButton(
+            label: isEn ? 'CHOOSE COACHING NOTE' : 'SAHNE NOTUNU SEÇ',
+            onPressed: onNext,
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _Coaching extends StatelessWidget {
@@ -417,39 +477,57 @@ class _Coaching extends StatelessWidget {
   final VoidCallback? onConfirm;
 
   @override
-  Widget build(BuildContext context) => _Page(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('SAHNE NOTU', style: _pinkLabel(context)),
-            const SizedBox(height: AppSpacing.sm),
-            Text('Bir kişiye son bir not bırakabilirsin.',
-                style: Theme.of(context).textTheme.displayLarge),
-            const SizedBox(height: AppSpacing.md),
-            Text(
-              'Sahneye çıkmadan önce Son Şans’taki yarışmacılardan yalnızca birine koçluk yap.',
-              style: Theme.of(context).textTheme.bodyLarge,
+  Widget build(BuildContext context) {
+    final isEn = isAppEnglish(context);
+    return _Page(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            isEn ? 'COACHING NOTE' : 'SAHNE NOTU',
+            style: _pinkLabel(context),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Text(
+            isEn
+                ? 'Leave one final coaching note.'
+                : 'Bir kişiye son bir not bırakabilirsin.',
+            style: Theme.of(context).textTheme.displayLarge,
+          ),
+          const SizedBox(height: AppSpacing.md),
+          Text(
+            context.l10n.coachingPrompt,
+            style: Theme.of(context).textTheme.bodyLarge,
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            isEn
+                ? 'The right touch can transform their performance.'
+                : 'Doğru dokunuş performansını değiştirebilir.',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: AppColors.paperMuted,
+                  fontStyle: FontStyle.italic,
+                ),
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          ...trio.map(
+            (contestant) => _CoachCard(
+              contestant: contestant,
+              selected: selectedId == contestant.id,
+              onTap: () => onSelect(contestant.id),
             ),
-            const SizedBox(height: AppSpacing.xs),
-            Text('Doğru dokunuş performansını değiştirebilir.',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColors.paperMuted,
-                      fontStyle: FontStyle.italic,
-                    )),
-            const SizedBox(height: AppSpacing.lg),
-            ...trio.map((contestant) => _CoachCard(
-                  contestant: contestant,
-                  selected: selectedId == contestant.id,
-                  onTap: () => onSelect(contestant.id),
-                )),
-            const SizedBox(height: AppSpacing.lg),
-            AppButton(
-              label: selectedId == null ? 'BİR KİŞİ SEÇ' : 'NOTUMU VER',
-              onPressed: onConfirm,
-            ),
-          ],
-        ),
-      );
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          AppButton(
+            label: selectedId == null
+                ? (isEn ? 'SELECT ONE PERSON' : 'BİR KİŞİ SEÇ')
+                : (isEn ? 'SUBMIT NOTE' : 'NOTUMU VER'),
+            onPressed: onConfirm,
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _CoachCard extends StatelessWidget {
@@ -466,6 +544,7 @@ class _CoachCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final radar = GameScope.of(context).playerRadarContestantIds;
     final evaluation = evaluation1Results[contestant.id]!;
+    final isEn = isAppEnglish(context);
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
@@ -491,27 +570,47 @@ class _CoachCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(contestant.displayName,
-                      style: Theme.of(context).textTheme.headlineSmall),
-                  Text('İLK DEĞERLENDİRME ${evaluation.overall}',
-                      style: _pinkLabel(context)),
+                  Text(
+                    contestant.displayName,
+                    style: Theme.of(context).textTheme.headlineSmall,
+                  ),
+                  Text(
+                    '${isEn ? "FIRST EVALUATION" : "İLK DEĞERLENDİRME"} ${evaluation.overall}',
+                    style: _pinkLabel(context),
+                  ),
                   if (radar.contains(contestant.id))
-                    Text('★ RADARINDA', style: _pinkLabel(context)),
+                    Text(
+                      isEn ? '★ ON RADAR' : '★ RADARINDA',
+                      style: _pinkLabel(context),
+                    ),
                   const SizedBox(height: AppSpacing.xs),
                   Text(
-                    '“Kendini tutma. Bu sahne senin son şansın.”',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          fontStyle: FontStyle.italic,
-                        ),
+                    isEn
+                        ? '“Don\'t hold back. This stage is your final chance.”'
+                        : '“Kendini tutma. Bu sahne senin son şansın.”',
+                    style: Theme.of(context)
+                        .textTheme
+                        .bodySmall
+                        ?.copyWith(fontStyle: FontStyle.italic),
                   ),
                   const SizedBox(height: AppSpacing.xs),
-                  Text(selected ? '★ SAHNE NOTU SEÇİLDİ' : 'SAHNE NOTU VER',
-                      style: _pinkLabel(context)),
+                  Text(
+                    selected
+                        ? (isEn
+                            ? '★ COACHING NOTE SELECTED'
+                            : '★ SAHNE NOTU SEÇİLDİ')
+                        : (isEn ? 'GIVE COACHING NOTE' : 'SAHNE NOTU VER'),
+                    style: _pinkLabel(context),
+                  ),
                   if (selected)
                     Text(
                       radar.contains(contestant.id)
-                          ? '★ Favorinin arkasında duruyorsun.'
-                          : 'Bu kez ona güvenmeyi seçtin.',
+                          ? (isEn
+                              ? '★ Standing behind your favorite.'
+                              : '★ Favorinin arkasında duruyorsun.')
+                          : (isEn
+                              ? 'Decided to trust them this time.'
+                              : 'Bu kez ona güvenmeyi seçtin.'),
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
                 ],
@@ -548,35 +647,61 @@ class _PerformanceReveal extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('SON ŞANS — $progress / 3', style: _pinkLabel(context)),
+          Text(
+            '${isAppEnglish(context) ? 'LAST CHANCE' : 'SON ŞANS'} — $progress / 3',
+            style: _pinkLabel(context),
+          ),
           const SizedBox(height: AppSpacing.md),
           AspectRatio(
             aspectRatio: 1.05,
             child: ContestantPortrait(contestant: contestant),
           ),
           const SizedBox(height: AppSpacing.md),
-          Text('${contestant.displayName} — ${contestant.age}',
-              style: Theme.of(context).textTheme.headlineLarge),
+          Text(
+            '${contestant.displayName} — ${contestant.age}',
+            style: Theme.of(context).textTheme.headlineLarge,
+          ),
           if (radar.contains(contestant.id))
             Text('★ RADARINDA', style: _pinkLabel(context)),
-          if (coached) Text('★ SAHNE NOTUNU ALDI', style: _pinkLabel(context)),
+          if (coached)
+            Text(context.l10n.coachedBadge, style: _pinkLabel(context)),
           const SizedBox(height: AppSpacing.lg),
           Row(
             children: [
-              _Score('VOKAL', result.vocal, revealStep >= 1),
-              _Score('DANS', result.dance, revealStep >= 2),
-              _Score('SAHNE', result.stage, revealStep >= 3),
+              _Score(
+                context.l10n.vocal.toUpperCase(),
+                result.vocal,
+                revealStep >= 1,
+              ),
+              _Score(
+                context.l10n.dance.toUpperCase(),
+                result.dance,
+                revealStep >= 2,
+              ),
+              _Score(
+                context.l10n.stage.toUpperCase(),
+                result.stage,
+                revealStep >= 3,
+              ),
             ],
           ),
           const SizedBox(height: AppSpacing.lg),
-          Text('GENEL ${revealStep >= 4 ? result.baseOverall : '--'}',
-              style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                    color: AppColors.accentBright,
-                  )),
+          Text(
+            '${isAppEnglish(context) ? 'OVERALL' : 'GENEL'} ${revealStep >= 4 ? result.baseOverall : '--'}',
+            style: Theme.of(context)
+                .textTheme
+                .displayLarge
+                ?.copyWith(color: AppColors.accentBright),
+          ),
           if (coached && revealStep >= 5) ...[
-            Text('★ SAHNE NOTU +4', style: _pinkLabel(context)),
-            Text('${result.finalScore(coached: true)}',
-                style: Theme.of(context).textTheme.displayLarge),
+            Text(
+              isAppEnglish(context) ? '★ COACHING NOTE +4' : '★ SAHNE NOTU +4',
+              style: _pinkLabel(context),
+            ),
+            Text(
+              '${result.finalScore(coached: true)}',
+              style: Theme.of(context).textTheme.displayLarge,
+            ),
           ],
           AnimatedOpacity(
             opacity: showFinal ? 1 : 0,
@@ -585,15 +710,21 @@ class _PerformanceReveal extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: AppSpacing.md),
-                Text(result.tag, style: _pinkLabel(context)),
-                Text('“${result.comment}”',
-                    style: Theme.of(context).textTheme.titleMedium),
+                Text(result.localizedTag(context), style: _pinkLabel(context)),
+                Text(
+                  '“${result.localizedComment(context)}”',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
               ],
             ),
           ),
           const SizedBox(height: AppSpacing.lg),
           AppButton(
-            label: progress == 3 ? 'KARARI GÖR' : 'SONRAKİ PERFORMANS',
+            label: progress == 3
+                ? (isAppEnglish(context) ? 'VIEW VERDICT' : 'KARARI GÖR')
+                : (isAppEnglish(context)
+                    ? 'NEXT PERFORMANCE'
+                    : 'SONRAKİ PERFORMANS'),
             onPressed: onNext,
           ),
         ],
@@ -613,8 +744,10 @@ class _Score extends StatelessWidget {
         child: Column(
           children: [
             Text(label, style: Theme.of(context).textTheme.labelMedium),
-            Text(revealed ? '$value' : '--',
-                style: Theme.of(context).textTheme.headlineLarge),
+            Text(
+              revealed ? '$value' : '--',
+              style: Theme.of(context).textTheme.headlineLarge,
+            ),
           ],
         ),
       );
@@ -626,45 +759,60 @@ class _Comparison extends StatelessWidget {
   final VoidCallback onNext;
 
   @override
-  Widget build(BuildContext context) => _Page(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('SON ŞANS TAMAMLANDI',
-                style: Theme.of(context).textTheme.displayLarge),
-            const SizedBox(height: AppSpacing.md),
-            Text('Üç performans bitti.\nŞimdi yalnızca skorlar konuşuyor.',
-                style: Theme.of(context).textTheme.bodyLarge),
-            const SizedBox(height: AppSpacing.lg),
-            ...trio.map((c) => Container(
-                  margin: const EdgeInsets.only(bottom: AppSpacing.sm),
-                  padding: const EdgeInsets.all(AppSpacing.sm),
-                  decoration: BoxDecoration(
-                    color: AppColors.inkSoft,
-                    border: Border.all(color: AppColors.line),
+  Widget build(BuildContext context) {
+    final isEn = isAppEnglish(context);
+    return _Page(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            isEn ? 'LAST CHANCE COMPLETED' : 'SON ŞANS TAMAMLANDI',
+            style: Theme.of(context).textTheme.displayLarge,
+          ),
+          const SizedBox(height: AppSpacing.md),
+          Text(
+            isEn
+                ? 'Three performances concluded.\nNow the scores do all the talking.'
+                : 'Üç performans bitti.\nŞimdi yalnızca skorlar konuşuyor.',
+            style: Theme.of(context).textTheme.bodyLarge,
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          ...trio.map(
+            (c) => Container(
+              margin: const EdgeInsets.only(bottom: AppSpacing.sm),
+              padding: const EdgeInsets.all(AppSpacing.sm),
+              decoration: BoxDecoration(
+                color: AppColors.inkSoft,
+                border: Border.all(color: AppColors.line),
+              ),
+              child: Row(
+                children: [
+                  SizedBox(
+                    width: 90,
+                    height: 110,
+                    child: ContestantPortrait(contestant: c),
                   ),
-                  child: Row(
-                    children: [
-                      SizedBox(
-                        width: 90,
-                        height: 110,
-                        child: ContestantPortrait(contestant: c),
-                      ),
-                      const SizedBox(width: AppSpacing.md),
-                      Expanded(
-                        child: Text(c.displayName,
-                            style: Theme.of(context).textTheme.headlineSmall),
-                      ),
-                      Text('--',
-                          style: Theme.of(context).textTheme.headlineLarge),
-                    ],
+                  const SizedBox(width: AppSpacing.md),
+                  Expanded(
+                    child: Text(
+                      c.displayName,
+                      style: Theme.of(context).textTheme.headlineSmall,
+                    ),
                   ),
-                )),
-            const SizedBox(height: AppSpacing.lg),
-            AppButton(label: 'SONUÇLARI AÇ', onPressed: onNext),
-          ],
-        ),
-      );
+                  Text('--', style: Theme.of(context).textTheme.headlineLarge),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          AppButton(
+            label: isEn ? 'REVEAL RESULTS' : 'SONUÇLARI AÇ',
+            onPressed: onNext,
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _SafeReveal extends StatelessWidget {
@@ -690,15 +838,23 @@ class _SafeReveal extends StatelessWidget {
               child: ContestantPortrait(contestant: contestant),
             ),
             const SizedBox(height: AppSpacing.lg),
-            Text(contestant.displayName,
-                style: Theme.of(context).textTheme.displayLarge),
+            Text(
+              contestant.displayName,
+              style: Theme.of(context).textTheme.displayLarge,
+            ),
             Text('$score', style: Theme.of(context).textTheme.headlineLarge),
-            Text('GÜVENDE',
-                style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                      color: AppColors.accentBright,
-                    )),
+            Text(
+              isAppEnglish(context) ? 'SAFE' : 'GÜVENDE',
+              style: Theme.of(context)
+                  .textTheme
+                  .headlineLarge
+                  ?.copyWith(color: AppColors.accentBright),
+            ),
             const SizedBox(height: AppSpacing.xl),
-            AppButton(label: 'SON İKİYİ GÖR', onPressed: onNext),
+            AppButton(
+              label: isAppEnglish(context) ? 'SEE FINAL TWO' : 'SON İKİYİ GÖR',
+              onPressed: onNext,
+            ),
           ],
         ),
       );
@@ -717,43 +873,64 @@ class _FinalTwo extends StatelessWidget {
   final VoidCallback onNext;
 
   @override
-  Widget build(BuildContext context) => _Page(
-        child: Column(
-          children: [
-            Text('SON İKİ', style: Theme.of(context).textTheme.displayLarge),
-            const SizedBox(height: AppSpacing.md),
-            Text('Biriniz kalacak.\nBiriniz bu gece veda edecek.',
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyLarge),
-            const SizedBox(height: AppSpacing.lg),
-            Row(
-              children: [
-                Expanded(
-                  child: AspectRatio(
-                    aspectRatio: 0.75,
-                    child: ContestantPortrait(contestant: safeContestant),
-                  ),
+  Widget build(BuildContext context) {
+    final isEn = isAppEnglish(context);
+    return _Page(
+      child: Column(
+        children: [
+          Text(
+            isEn ? 'FINAL TWO' : 'SON İKİ',
+            style: Theme.of(context).textTheme.displayLarge,
+          ),
+          const SizedBox(height: AppSpacing.md),
+          Text(
+            isEn
+                ? 'One of you stays.\nOne of you bids farewell tonight.'
+                : 'Biriniz kalacak.\nBiriniz bu gece veda edecek.',
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodyLarge,
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          Row(
+            children: [
+              Expanded(
+                child: AspectRatio(
+                  aspectRatio: 0.75,
+                  child: ContestantPortrait(contestant: safeContestant),
                 ),
-                const SizedBox(width: AppSpacing.sm),
-                Expanded(
-                  child: AspectRatio(
-                    aspectRatio: 0.75,
-                    child: ContestantPortrait(contestant: eliminatedContestant),
-                  ),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: AspectRatio(
+                  aspectRatio: 0.75,
+                  child: ContestantPortrait(contestant: eliminatedContestant),
                 ),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.xl),
-            Text('GÜVENDE', style: _pinkLabel(context)),
-            Text(safeContestant.displayName,
-                style: Theme.of(context).textTheme.headlineLarge),
-            Text('$safeScore • Yıldız Kadro’da kalıyor.',
-                style: Theme.of(context).textTheme.bodyLarge),
-            const SizedBox(height: AppSpacing.xl),
-            AppButton(label: 'İLK VEDAYI AÇ', onPressed: onNext),
-          ],
-        ),
-      );
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.xl),
+          Text(isEn ? 'SAFE' : 'GÜVENDE', style: _pinkLabel(context)),
+          Text(
+            safeContestant.displayName,
+            style: Theme.of(context).textTheme.headlineLarge,
+          ),
+          Text(
+            isEn
+                ? '$safeScore • Stays in the competition.'
+                : '$safeScore • Yıldız Kadro’da kalıyor.',
+            style: Theme.of(context).textTheme.bodyLarge,
+          ),
+          const SizedBox(height: AppSpacing.xl),
+          AppButton(
+            label: isAppEnglish(context)
+                ? 'REVEAL FIRST FAREWELL'
+                : 'İLK VEDAYI AÇ',
+            onPressed: onNext,
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _Farewell extends StatelessWidget {
@@ -776,52 +953,83 @@ class _Farewell extends StatelessWidget {
       (id) =>
           id != contestant.id && state.playerRadarContestantIds.contains(id),
     );
-    final radarFeedback = onRadar
-        ? '★ İlk favorilerinden biri yarışmaya veda etti.'
-        : otherRadarSurvived
-            ? '★ Radarındaki isim tehlikeyi atlattı.'
-            : 'Radarındaki isimler bu geceyi atlattı.';
+    final isEn = isAppEnglish(context);
+    final radarFeedback = !isEn
+        ? (onRadar
+            ? '★ İlk favorilerinden biri yarışmaya veda etti.'
+            : otherRadarSurvived
+                ? '★ Radarındaki isim tehlikeyi atlattı.'
+                : 'Radarındaki isimler bu geceyi atlattı.')
+        : (onRadar
+            ? '★ One of your initial favorites has bid farewell.'
+            : otherRadarSurvived
+                ? '★ The name on your radar survived the cut.'
+                : 'The names on your radar survived tonight.');
     final coachedEliminated = coachId == contestant.id;
     final coachedName = _findContestant(coachId).name;
     return _Page(
       child: Column(
         children: [
-          Text('İLK VEDA', style: _pinkLabel(context)),
+          Text(
+            isEn ? 'FIRST FAREWELL' : 'İLK VEDA',
+            style: _pinkLabel(context),
+          ),
           const SizedBox(height: AppSpacing.lg),
           ColorFiltered(
-            colorFilter:
-                const ColorFilter.mode(Colors.grey, BlendMode.saturation),
+            colorFilter: const ColorFilter.mode(
+              Colors.grey,
+              BlendMode.saturation,
+            ),
             child: AspectRatio(
               aspectRatio: 0.85,
               child: ContestantPortrait(contestant: contestant),
             ),
           ),
           const SizedBox(height: AppSpacing.lg),
-          Text(contestant.displayName,
-              style: Theme.of(context).textTheme.displayLarge),
-          Text('Yıldız Kadro’ya veda ediyor.',
-              style: Theme.of(context).textTheme.titleLarge),
-          Text('SON ŞANS $score', style: _pinkLabel(context)),
+          Text(
+            contestant.displayName,
+            style: Theme.of(context).textTheme.displayLarge,
+          ),
+          Text(
+            context.l10n.farewellDesc(contestant.displayName),
+            style: Theme.of(context).textTheme.titleLarge,
+          ),
+          Text(
+            '${isEn ? "LAST CHANCE" : "SON ŞANS"} $score',
+            style: _pinkLabel(context),
+          ),
           const SizedBox(height: AppSpacing.md),
-          Text('“${farewellMessages[contestant.id]}”',
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyLarge),
+          Text(
+            '“${localizedFarewellMessage(contestant.id, context)}”',
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodyLarge,
+          ),
           const SizedBox(height: AppSpacing.md),
-          Text(radarFeedback,
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: AppColors.accentSoft,
-                  )),
+          Text(
+            radarFeedback,
+            textAlign: TextAlign.center,
+            style: Theme.of(context)
+                .textTheme
+                .titleMedium
+                ?.copyWith(color: AppColors.accentSoft),
+          ),
           const SizedBox(height: AppSpacing.lg),
           Text(
             coachedEliminated
-                ? 'SONUNA KADAR DESTEKLEDİN\n+4 puan bile ${contestant.name}’i bu gece kurtarmaya yetmedi.'
-                : 'SAHNE NOTUN İŞE YARADI\n$coachedName yarışmada kaldı.',
+                ? (isEn
+                    ? 'BACKED HER TO THE END\nEven +4 points was not enough to save ${contestant.name} tonight.'
+                    : 'SONUNA KADAR DESTEKLEDİN\n+4 puan bile ${contestant.name}’i bu gece kurtarmaya yetmedi.')
+                : (isEn
+                    ? 'YOUR COACHING NOTE WORKED\n$coachedName remains in the competition.'
+                    : 'SAHNE NOTUN İŞE YARADI\n$coachedName yarışmada kaldı.'),
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodyLarge,
           ),
           const SizedBox(height: AppSpacing.xl),
-          AppButton(label: 'KADROYA DÖN', onPressed: onNext),
+          AppButton(
+            label: isEn ? 'RETURN TO ROSTER' : 'KADROYA DÖN',
+            onPressed: onNext,
+          ),
         ],
       ),
     );
@@ -846,7 +1054,7 @@ class _Page extends StatelessWidget {
               children: [
                 IconButton(
                   onPressed: () => Navigator.of(context).pop(),
-                  tooltip: 'Geri',
+                  tooltip: context.l10n.back,
                   icon: const Icon(Icons.arrow_back_rounded),
                 ),
                 const SizedBox(height: AppSpacing.sm),
@@ -858,8 +1066,7 @@ class _Page extends StatelessWidget {
       );
 }
 
-TextStyle? _pinkLabel(BuildContext context) =>
-    Theme.of(context).textTheme.labelMedium?.copyWith(
-          color: AppColors.accentSoft,
-          letterSpacing: 0.9,
-        );
+TextStyle? _pinkLabel(BuildContext context) => Theme.of(context)
+    .textTheme
+    .labelMedium
+    ?.copyWith(color: AppColors.accentSoft, letterSpacing: 0.9);

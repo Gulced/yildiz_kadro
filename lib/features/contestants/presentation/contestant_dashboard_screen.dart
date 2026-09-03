@@ -62,8 +62,7 @@ class ContestantDashboardScreen extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
               sliver: SliverLayoutBuilder(
                 builder: (context, constraints) {
-                  final sideSpace =
-                      (constraints.crossAxisExtent -
+                  final sideSpace = (constraints.crossAxisExtent -
                               AppBreakpoints.maxContentWidth)
                           .clamp(0.0, double.infinity) /
                       2;
@@ -132,14 +131,16 @@ class _DashboardHeader extends StatelessWidget {
         const SizedBox(height: AppSpacing.md),
         Text(
           context.l10n.castingSeason,
-          style: Theme.of(context).textTheme.labelMedium
+          style: Theme.of(context)
+              .textTheme
+              .labelMedium
               ?.copyWith(color: AppColors.accentSoft),
         ),
         const SizedBox(height: AppSpacing.sm),
         Text(
           context.l10n.contestants,
-          style: Theme.of(context).textTheme.displayLarge
-              ?.copyWith(fontSize: 48),
+          style:
+              Theme.of(context).textTheme.displayLarge?.copyWith(fontSize: 48),
         ),
         const SizedBox(height: AppSpacing.md),
         ConstrainedBox(

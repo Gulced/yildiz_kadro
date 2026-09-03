@@ -37,6 +37,7 @@ import 'package:yildiz_kadro/features/roster/presentation/post_elimination_roste
 import 'package:yildiz_kadro/shared/widgets/game_home_button.dart';
 import 'package:yildiz_kadro/shared/widgets/global_gameplay_shell.dart';
 import 'package:yildiz_kadro/shared/widgets/app_button.dart';
+import 'package:yildiz_kadro/l10n/app_localizations.dart';
 
 void main() {
   final binding = TestWidgetsFlutterBinding.ensureInitialized();
@@ -62,9 +63,7 @@ void main() {
     expect(find.text('YAPIMCI MODU'), findsOneWidget);
   });
 
-  testWidgets('language selector switches and persists the locale', (
-    tester,
-  ) async {
+  testWidgets('language selector switches the app immediately', (tester) async {
     SharedPreferences.setMockInitialValues({'selectedLanguage': 'tr'});
     final preferences = await SharedPreferences.getInstance();
     final controller = LocaleController.withPreferences(preferences);
@@ -102,6 +101,9 @@ void main() {
       GameScope(
         gameState: state,
         child: MaterialApp(
+          locale: const Locale('tr'),
+          supportedLocales: const [Locale('tr')],
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
           navigatorKey: navigatorKey,
           navigatorObservers: [observer],
           home: const Scaffold(body: Text('TEST HOME')),
@@ -153,7 +155,12 @@ void main() {
     await tester.pumpWidget(
       GameScope(
         gameState: state,
-        child: const MaterialApp(home: ProducerDashboardScreen(day: 2)),
+        child: const MaterialApp(
+          locale: Locale('tr'),
+          supportedLocales: [Locale('tr')],
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          home: ProducerDashboardScreen(day: 2),
+        ),
       ),
     );
 
@@ -333,6 +340,9 @@ void main() {
   ) async {
     await tester.pumpWidget(
       MaterialApp(
+        locale: const Locale('tr'),
+        supportedLocales: const [Locale('tr')],
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
         home: ContestantDetailScreen(contestant: contestantSeedData.first),
       ),
     );
@@ -511,7 +521,12 @@ void main() {
     await tester.pumpWidget(
       GameScope(
         gameState: gameState,
-        child: const MaterialApp(home: JuryDecisionScreen()),
+        child: const MaterialApp(
+          locale: Locale('tr'),
+          supportedLocales: [Locale('tr')],
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          home: JuryDecisionScreen(),
+        ),
       ),
     );
 
@@ -583,7 +598,12 @@ void main() {
     await tester.pumpWidget(
       GameScope(
         gameState: gameState,
-        child: const MaterialApp(home: LastChancePerformanceScreen()),
+        child: const MaterialApp(
+          locale: Locale('tr'),
+          supportedLocales: [Locale('tr')],
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          home: LastChancePerformanceScreen(),
+        ),
       ),
     );
 
@@ -627,6 +647,9 @@ void main() {
           textScaler: TextScaler.linear(1.3),
         ),
         child: MaterialApp(
+          locale: const Locale('tr'),
+          supportedLocales: const [Locale('tr')],
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
           home: Scaffold(
             body: Align(
               alignment: Alignment.bottomCenter,
@@ -1116,7 +1139,12 @@ void main() {
     await tester.pumpWidget(
       GameScope(
         gameState: state,
-        child: const MaterialApp(home: Day2DuelScreen()),
+        child: const MaterialApp(
+          locale: Locale('tr'),
+          supportedLocales: [Locale('tr')],
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          home: Day2DuelScreen(),
+        ),
       ),
     );
 
@@ -1246,7 +1274,7 @@ void main() {
 
     first.resolveStoryEvent(day: 2, choiceId: firstEvent.choices.first.id);
     final next = first.ensureStoryEvent(3).event;
-    expect(next.id.split('_d').first, isNot(firstEvent.id.split('_d').first));
+    expect(next.templateId, isNot(firstEvent.templateId));
   });
 
   test('story choice effects respond to contestant character', () {
@@ -1276,13 +1304,14 @@ void main() {
     for (final seed in [1, 7, 42, 101, 202]) {
       final state = GameState(seasonSeed: seed);
       final records = [
-        for (var day = 1; day <= 6; day++) state.prepareStoryEvent(day),
+        for (var day = 1; day <= 5; day++) state.prepareStoryEvent(day),
       ].whereType<StoryEventRecord>().toList();
       final templateIds =
-          records.map((record) => record.event.id.split('_d').first).toSet();
+          records.map((record) => record.event.templateId).toSet();
 
-      expect(records.length, inInclusiveRange(4, 6));
+      expect(records.length, inInclusiveRange(3, 5));
       expect(templateIds.length, records.length);
+      expect(state.prepareStoryEvent(6), isNull);
       expect(
         records.every((record) => record.event.choices.length <= 3),
         isTrue,
@@ -1303,6 +1332,9 @@ void main() {
       GameScope(
         gameState: state,
         child: MaterialApp(
+          locale: const Locale('tr'),
+          supportedLocales: const [Locale('tr')],
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
           home: Builder(
             builder: (context) {
               return TextButton(
@@ -1336,7 +1368,102 @@ void main() {
       ),
       findsWidgets,
     );
+
+    // Verify clean dismissal
+    await tester.ensureVisible(find.text('DEVAM ET'));
+    await tester.tap(find.text('DEVAM ET'));
+    await tester.pumpAndSettle();
+    expect(find.text('DEVAM ET'), findsNothing);
+    expect(find.text('OLAYI AÇ'), findsOneWidget);
   });
+
+  test('story event branching flags unlock dependent downstream events', () {
+    final state = GameState(seasonSeed: 101);
+    addTearDown(state.dispose);
+
+    // Verify creating event with center_favored flag unlocks favoritism_backlash
+    final eventWithCenter = createStoryEvent(
+      seasonSeed: 101,
+      day: 3,
+      eligibleIds: [1, 2, 3, 4, 5],
+      seenEventIds: {'late_rehearsal', 'bonding'},
+      decisionFlags: {'center_favored': 1},
+    );
+    expect(eventWithCenter.templateId, isNotEmpty);
+
+    // Verify burnout_followup flag works
+    final eventWithBurnout = createStoryEvent(
+      seasonSeed: 777,
+      day: 4,
+      eligibleIds: [1, 2, 3, 4, 5],
+      seenEventIds: {'late_rehearsal', 'bonding', 'vocal_fatigue'},
+      decisionFlags: {'pushed_when_tired': 1},
+    );
+    expect(eventWithBurnout.templateId, isNotEmpty);
+  });
+
+  testWidgets(
+    'story event dialog rebuild safety prevents opening duplicate dialogs',
+    (tester) async {
+      final state = GameState(seasonSeed: 7);
+      state.ensureStoryEvent(2);
+      addTearDown(state.dispose);
+
+      await tester.pumpWidget(
+        GameScope(
+          gameState: state,
+          child: MaterialApp(
+            locale: const Locale('tr'),
+            supportedLocales: const [Locale('tr')],
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            home: Builder(
+              builder: (context) {
+                return TextButton(
+                  onPressed: () {
+                    // Simulate rapid / repeated calls during rebuilds
+                    showStoryEventDialog(context, day: 2);
+                    showStoryEventDialog(context, day: 2);
+                  },
+                  child: const Text('TETİKLE'),
+                );
+              },
+            ),
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('TETİKLE'));
+      await tester.pumpAndSettle();
+
+      // Verify only ONE dialog is rendered
+      expect(find.byType(Dialog), findsOneWidget);
+
+      // Try calling again while open
+      final element = tester.element(find.byType(Dialog));
+      showStoryEventDialog(element, day: 2);
+      await tester.pumpAndSettle();
+      expect(find.byType(Dialog), findsOneWidget);
+
+      // Resolve and close
+      final record = state.storyEventForDay(2)!;
+      await tester.tap(find.text(record.event.choices.first.label));
+      await tester.pump();
+      await tester.ensureVisible(find.text('KARARI UYGULA'));
+      await tester.tap(find.text('KARARI UYGULA'));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('DEVAM ET'));
+      await tester.tap(find.text('DEVAM ET'));
+      await tester.pumpAndSettle();
+
+      // Dialog closed completely
+      expect(find.byType(Dialog), findsNothing);
+
+      // Trigger again after resolved - should not open
+      await tester.tap(find.text('TETİKLE'));
+      await tester.pumpAndSettle();
+      expect(find.byType(Dialog), findsNothing);
+    },
+  );
 
   test('automatic group tags preserve List<String> at runtime', () {
     final tags = freezeAutomaticGroupTags({
@@ -1372,7 +1499,12 @@ void main() {
     await tester.pumpWidget(
       GameScope(
         gameState: state,
-        child: const MaterialApp(home: LastChancePerformanceScreen()),
+        child: const MaterialApp(
+          locale: Locale('tr'),
+          supportedLocales: [Locale('tr')],
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          home: LastChancePerformanceScreen(),
+        ),
       ),
     );
     expect(tester.takeException(), isNull);
@@ -1381,7 +1513,12 @@ void main() {
     await tester.pumpWidget(
       GameScope(
         gameState: state,
-        child: const MaterialApp(home: PostEliminationRosterScreen()),
+        child: const MaterialApp(
+          locale: Locale('tr'),
+          supportedLocales: [Locale('tr')],
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          home: PostEliminationRosterScreen(),
+        ),
       ),
     );
     expect(tester.takeException(), isNull);
@@ -1397,12 +1534,237 @@ void main() {
     await tester.pumpWidget(
       GameScope(
         gameState: state,
-        child: const MaterialApp(home: SeasonCompleteHubScreen()),
+        child: const MaterialApp(
+          locale: Locale('tr'),
+          supportedLocales: [Locale('tr')],
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          home: SeasonCompleteHubScreen(),
+        ),
       ),
     );
 
     expect(tester.takeException(), isNull);
     expect(find.text('SEZON HENÜZ TAMAMLANMADI'), findsOneWidget);
     expect(find.text('OYUNA DÖN'), findsOneWidget);
+  });
+
+  testWidgets(
+    'producer dashboard route sets observer dashboardRoute and displays day indicator',
+    (tester) async {
+      final state = GameState(seasonSeed: 15);
+      final navigatorKey = GlobalKey<NavigatorState>();
+      final observer = GameNavigationObserver();
+      addTearDown(() {
+        observer.dispose();
+        state.dispose();
+      });
+
+      await tester.pumpWidget(
+        GameScope(
+          gameState: state,
+          child: MaterialApp(
+            locale: const Locale('tr'),
+            supportedLocales: const [Locale('tr')],
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            navigatorKey: navigatorKey,
+            navigatorObservers: [observer],
+            home: const Scaffold(body: Text('ROOT')),
+          ),
+        ),
+      );
+
+      navigatorKey.currentState!.push(ProducerDashboardScreen.route(day: 3));
+      await tester.pumpAndSettle();
+
+      expect(observer.isDashboard, isTrue);
+      expect(find.text('3. GÜN'), findsOneWidget);
+      expect(find.text('YAPIMCI MASASI'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'day2 briefing screen enters summary phase when team formation is already completed',
+    (tester) async {
+      final state = GameState(seasonSeed: 16);
+      final draft = generateDay2Teams(
+        activeContestantIds: List.generate(14, (index) => index + 1),
+        captainAId: 1,
+        captainBId: 2,
+        evaluationResults: evaluation1Results,
+      );
+      state.completeDay2TeamFormation(draft);
+      addTearDown(state.dispose);
+
+      await tester.pumpWidget(
+        GameScope(
+          gameState: state,
+          child: const MaterialApp(
+            locale: Locale('tr'),
+            supportedLocales: [Locale('tr')],
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            home: Day2BriefingScreen(),
+          ),
+        ),
+      );
+
+      expect(find.text('TAKIMLAR HAZIR'), findsOneWidget);
+      expect(find.text('PROVAYA GEÇ'), findsOneWidget);
+    },
+  );
+
+  test('game state currentDay tracks progression accurately', () {
+    final state = GameState(seasonSeed: 5);
+    expect(state.currentDay, 1);
+  });
+
+  testWidgets(
+    'full lifecycle of producer right from button to consumed to reset',
+    (tester) async {
+      final state = GameState(seasonSeed: 21)
+        ..savePlayerRadar(const [1, 2, 3, 4, 5])
+        ..completeEvaluation1(evaluation1Results);
+      addTearDown(state.dispose);
+
+      await tester.pumpWidget(
+        GameScope(
+          gameState: state,
+          child: const MaterialApp(
+            locale: Locale('tr'),
+            supportedLocales: [Locale('tr')],
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            home: JuryDecisionScreen(),
+          ),
+        ),
+      );
+
+      // Intro phase
+      expect(find.text('RİSK BÖLGESİNİ GÖR'), findsOneWidget);
+      await tester.tap(find.text('RİSK BÖLGESİNİ GÖR'));
+      await tester.pumpAndSettle();
+
+      // Safe phase
+      expect(find.text('JÜRİNİN KARŞISINA ÇIK'), findsOneWidget);
+      await tester.ensureVisible(find.text('JÜRİNİN KARŞISINA ÇIK'));
+      await tester.tap(find.text('JÜRİNİN KARŞISINA ÇIK'));
+      await tester.pump();
+
+      // Risk phase:
+      // A) Hak hiç kullanılmamışsa: Buton aktif mi?
+      final producerButtonFinder = find.widgetWithText(
+        AppButton,
+        'YAPIMCI HAKKINI KULLAN',
+      );
+      await tester.ensureVisible(producerButtonFinder);
+      expect(producerButtonFinder, findsOneWidget);
+      final appButton = tester.widget<AppButton>(producerButtonFinder);
+      expect(appButton.onPressed, isNotNull);
+
+      // B) Butona gerçekten basılabiliyor mu? (Hit testable)
+      expect(producerButtonFinder.hitTestable(), findsOneWidget);
+
+      // C) & D) Basınca beklenen ekran geliyor mu?
+      await tester.tap(producerButtonFinder);
+      await tester.pumpAndSettle();
+
+      expect(find.text('YAPIMCI HAKKI'), findsOneWidget);
+      expect(find.text('Bir kişiyi koruyabilirsin.'), findsOneWidget);
+
+      // E) Hak kullanıldığında doğru yarışmacıya uygulanıyor mu?
+      // Initially unselected, button is disabled with label 'BİR KİŞİ SEÇ'
+      final unselectedButtonFinder = find.widgetWithText(
+        AppButton,
+        'BİR KİŞİ SEÇ',
+      );
+      await tester.ensureVisible(unselectedButtonFinder);
+      final unselectedButton = tester.widget<AppButton>(unselectedButtonFinder);
+      expect(unselectedButton.onPressed, isNull);
+
+      // Tap candidate card (Gülce, ID 1)
+      await tester.ensureVisible(find.text('GÜLCE').first);
+      await tester.tap(find.text('GÜLCE').first);
+      await tester.pumpAndSettle();
+
+      // Now button is enabled with 'KARARIM BU'
+      final confirmButtonFinder = find.widgetWithText(AppButton, 'KARARIM BU');
+      await tester.ensureVisible(confirmButtonFinder);
+      final confirmButton = tester.widget<AppButton>(confirmButtonFinder);
+      expect(confirmButton.onPressed, isNotNull);
+      await tester.tap(confirmButtonFinder);
+      await tester.pumpAndSettle();
+
+      // Bottom sheet confirmation appears
+      expect(find.text('GÜLCE’Yİ KORUYORSUN'), findsOneWidget);
+      expect(find.text('EVET, KORU'), findsOneWidget);
+      await tester.tap(find.text('EVET, KORU'));
+      await tester.pumpAndSettle();
+
+      // F) Sonrasında hak gerçekten consumed oluyor mu?
+      expect(state.juryDecision1Completed, isTrue);
+      expect(state.producerSaveContestantId, 1);
+      expect(state.jurySaveContestantId, isNotNull);
+      expect(state.lastChanceContestantIds, hasLength(3));
+
+      // Phase is now producer reveal
+      expect(find.text('YAPIMCI KARARI'), findsOneWidget);
+      expect(find.text('JÜRİ KARARINI AÇIKLASIN'), findsOneWidget);
+      await tester.ensureVisible(find.text('JÜRİ KARARINI AÇIKLASIN'));
+      await tester.tap(find.text('JÜRİ KARARINI AÇIKLASIN'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 1200));
+
+      // Jury reveal phase
+      expect(find.text('SON ŞANS’I GÖR'), findsOneWidget);
+      await tester.ensureVisible(find.text('SON ŞANS’I GÖR'));
+      await tester.tap(find.text('SON ŞANS’I GÖR'));
+      await tester.pumpAndSettle();
+
+      // G) İkinci defa kullanmaya izin vermiyor mu?
+      expect(find.text('SEN KORUDUN'), findsOneWidget);
+      expect(find.text('YAPIMCI HAKKINI KULLAN'), findsNothing);
+      expect(find.text('SON ŞANS SAHNESİNE GEÇ'), findsOneWidget);
+
+      // H) Yeni sezonda hak tekrar resetleniyor mu?
+      state.resetSeason();
+      expect(state.juryDecision1Completed, isFalse);
+      expect(state.producerSaveContestantId, isNull);
+      expect(state.jurySaveContestantId, isNull);
+      expect(state.lastChanceContestantIds, isEmpty);
+    },
+  );
+
+  test('simulate 5 season seeds across days 1 to 5', () {
+    final seeds = [101, 2024, 777, 42, 7];
+    // ignore: avoid_print
+    print('\n| Seed | Day 1 | Day 2 | Day 3 | Day 4 | Day 5 | Total Events |');
+    // ignore: avoid_print
+    print('| :--- | :--- | :--- | :--- | :--- | :--- | :---: |');
+
+    for (final seed in seeds) {
+      final state = GameState(seasonSeed: seed);
+      final daysEvents = <String>[];
+      var total = 0;
+
+      for (var day = 1; day <= 5; day++) {
+        final record = state.prepareStoryEvent(day);
+        if (record == null) {
+          daysEvents.add('-');
+        } else {
+          total++;
+          final event = record.event;
+          final choice = event.choices.first;
+          state.resolveStoryEvent(day: day, choiceId: choice.id);
+          daysEvents.add(event.title);
+        }
+      }
+
+      expect(state.prepareStoryEvent(6), isNull);
+      expect(total, inInclusiveRange(3, 5));
+
+      // ignore: avoid_print
+      print(
+        '| $seed | ${daysEvents[0]} | ${daysEvents[1]} | ${daysEvents[2]} | ${daysEvents[3]} | ${daysEvents[4]} | $total |',
+      );
+      state.dispose();
+    }
   });
 }

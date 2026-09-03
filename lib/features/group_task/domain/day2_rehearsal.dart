@@ -1,3 +1,6 @@
+import 'package:yildiz_kadro/l10n/l10n.dart';
+import 'package:flutter/widgets.dart';
+
 enum RehearsalCrisisType {
   centerConflict,
   vocalConflict,
@@ -26,10 +29,7 @@ List<Day2RoleSlot> getRolesForTeamSize(int teamSize) {
   while (slots.length < teamSize) {
     final type =
         index.isOdd ? Day2TeamRoleType.subVocal : Day2TeamRoleType.subDancer;
-    slots.add(Day2RoleSlot(
-      id: '${type.name}_${(index + 1) ~/ 2}',
-      type: type,
-    ));
+    slots.add(Day2RoleSlot(id: '${type.name}_${(index + 1) ~/ 2}', type: type));
     index++;
   }
   // Editorial order: vocal line together, dance line together.
@@ -37,23 +37,37 @@ List<Day2RoleSlot> getRolesForTeamSize(int teamSize) {
   return List.unmodifiable(slots);
 }
 
-String day2TeamRoleLabel(Day2TeamRoleType role) => switch (role) {
-      Day2TeamRoleType.center => 'CENTER',
-      Day2TeamRoleType.leadVocal => 'LEAD VOKAL',
-      Day2TeamRoleType.subVocal => 'SUB VOKAL',
-      Day2TeamRoleType.leadDancer => 'LEAD DANCER',
-      Day2TeamRoleType.subDancer => 'SUB DANCER',
-    };
+String day2TeamRoleLabel(Day2TeamRoleType role, [BuildContext? context]) {
+  final isEn = isAppEnglish(context);
+  return switch (role) {
+    Day2TeamRoleType.center => 'CENTER',
+    Day2TeamRoleType.leadVocal => isEn ? 'LEAD VOCAL' : 'LEAD VOKAL',
+    Day2TeamRoleType.subVocal => isEn ? 'SUB VOCAL' : 'SUB VOKAL',
+    Day2TeamRoleType.leadDancer => 'LEAD DANCER',
+    Day2TeamRoleType.subDancer => 'SUB DANCER',
+  };
+}
 
-String day2TeamRoleDescription(Day2TeamRoleType role) => switch (role) {
-      Day2TeamRoleType.center =>
-        'Sahne etkisi ve görünürlüğü yüksek üyeye uygun.',
-      Day2TeamRoleType.leadVocal => 'Takımın güçlü vokal bölümlerini taşır.',
-      Day2TeamRoleType.subVocal =>
-        'Vokal hattını ve diğer bölümleri destekler.',
-      Day2TeamRoleType.leadDancer => 'Zor koreografilerde öne çıkar.',
-      Day2TeamRoleType.subDancer => 'Dans formasyonunu ve lideri destekler.',
-    };
+String day2TeamRoleDescription(Day2TeamRoleType role, [BuildContext? context]) {
+  final isEn = isAppEnglish(context);
+  return switch (role) {
+    Day2TeamRoleType.center => isEn
+        ? 'Best suited for members with high stage presence and visibility.'
+        : 'Sahne etkisi ve görünürlüğü yüksek üyeye uygun.',
+    Day2TeamRoleType.leadVocal => isEn
+        ? 'Carries the team’s demanding vocal sections.'
+        : 'Takımın güçlü vokal bölümlerini taşır.',
+    Day2TeamRoleType.subVocal => isEn
+        ? 'Supports the vocal line and anchors harmonies.'
+        : 'Vokal hattını ve diğer bölümleri destekler.',
+    Day2TeamRoleType.leadDancer => isEn
+        ? 'Steps forward during challenging choreographies.'
+        : 'Zor koreografilerde öne çıkar.',
+    Day2TeamRoleType.subDancer => isEn
+        ? 'Supports dance formations and movement flow.'
+        : 'Dans formasyonunu ve lideri destekler.',
+  };
+}
 
 class TeamRoleAssignments {
   const TeamRoleAssignments({
@@ -70,19 +84,24 @@ class TeamRoleAssignments {
   final List<int> groupMemberIds;
   final List<({Day2RoleSlot slot, int contestantId})> roleSlots;
 
-  String roleLabelFor(int contestantId) {
-    final match =
-        roleSlots.where((entry) => entry.contestantId == contestantId);
-    if (match.isNotEmpty) return day2TeamRoleLabel(match.first.slot.type);
+  String roleLabelFor(int contestantId, [BuildContext? context]) {
+    final isEn = isAppEnglish(context);
+    final match = roleSlots.where(
+      (entry) => entry.contestantId == contestantId,
+    );
+    if (match.isNotEmpty) {
+      return day2TeamRoleLabel(match.first.slot.type, context);
+    }
     if (contestantId == centerId) return 'CENTER';
-    if (contestantId == mainVocalId) return 'LEAD VOKAL';
+    if (contestantId == mainVocalId) return isEn ? 'LEAD VOCAL' : 'LEAD VOKAL';
     if (contestantId == danceLeadId) return 'LEAD DANCER';
-    return 'GRUP ÜYESİ';
+    return isEn ? 'GROUP MEMBER' : 'GRUP ÜYESİ';
   }
 
   Day2TeamRoleType? roleTypeFor(int contestantId) {
-    final match =
-        roleSlots.where((entry) => entry.contestantId == contestantId);
+    final match = roleSlots.where(
+      (entry) => entry.contestantId == contestantId,
+    );
     return match.isEmpty ? null : match.first.slot.type;
   }
 }
@@ -110,6 +129,9 @@ class RehearsalCrisis {
     required this.title,
     required this.headline,
     required this.description,
+    this.titleEn,
+    this.headlineEn,
+    this.descriptionEn,
   });
 
   final String teamId;
@@ -119,6 +141,18 @@ class RehearsalCrisis {
   final String title;
   final String headline;
   final String description;
+  final String? titleEn;
+  final String? headlineEn;
+  final String? descriptionEn;
+
+  String localizedTitle(BuildContext context) =>
+      isAppEnglish(context) ? (titleEn ?? title) : title;
+
+  String localizedHeadline(BuildContext context) =>
+      isAppEnglish(context) ? (headlineEn ?? headline) : headline;
+
+  String localizedDescription(BuildContext context) =>
+      isAppEnglish(context) ? (descriptionEn ?? description) : description;
 }
 
 class RehearsalChoice {
@@ -130,6 +164,9 @@ class RehearsalChoice {
     required this.harmonyModifier,
     required this.readinessModifier,
     required this.energyModifier,
+    this.titleEn,
+    this.descriptionEn,
+    this.narrativeEn,
   });
 
   final String id;
@@ -139,6 +176,18 @@ class RehearsalChoice {
   final int harmonyModifier;
   final int readinessModifier;
   final int energyModifier;
+  final String? titleEn;
+  final String? descriptionEn;
+  final String? narrativeEn;
+
+  String localizedTitle(BuildContext context) =>
+      isAppEnglish(context) ? (titleEn ?? title) : title;
+
+  String localizedDescription(BuildContext context) =>
+      isAppEnglish(context) ? (descriptionEn ?? description) : description;
+
+  String localizedNarrative(BuildContext context) =>
+      isAppEnglish(context) ? (narrativeEn ?? narrative) : narrative;
 }
 
 class Day2RehearsalSetup {

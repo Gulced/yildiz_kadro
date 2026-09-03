@@ -40,47 +40,60 @@ Day6ResultSnapshot calculateDay6Results({
     final e = day5.results[id]!;
     final contestant = _contestant(id);
     final profile = groupTaskProfiles[id]!;
-    final live = _round(a.overall * .15 +
-        b.overall * .15 +
-        c.performance * .10 +
-        d.finalScore * .15 +
-        e.liveStage * .35 +
-        e.cameraTalk * .10);
-    final star = _round(c.camera * .30 +
-        c.identity * .20 +
-        e.fanConnect * .20 +
-        a.stage * .15 +
-        e.cameraTalk * .15);
+    final live = _round(
+      a.overall * .15 +
+          b.overall * .15 +
+          c.performance * .10 +
+          d.finalScore * .15 +
+          e.liveStage * .35 +
+          e.cameraTalk * .10,
+    );
+    final star = _round(
+      c.camera * .30 +
+          c.identity * .20 +
+          e.fanConnect * .20 +
+          a.stage * .15 +
+          e.cameraTalk * .15,
+    );
     final season = <int>[
       a.overall,
       b.overall,
       c.iconScore,
       d.finalScore,
-      e.liveScore
+      e.liveScore,
     ];
     final early = (season[0] + season[1]) / 2;
     final late = (season[3] + season[4]) / 2;
     final slope = (season.last - season.first) / 4;
-    final growth = _round(74 +
-        (late - early) * .75 +
-        slope * .65 +
-        (_average(season) - 78) * .18);
+    final growth = _round(
+      74 + (late - early) * .75 + slope * .65 + (_average(season) - 78) * .18,
+    );
     final avg = _average(season);
     final deviation = sqrt(
-        season.map((v) => pow(v - avg, 2)).reduce((x, y) => x + y) /
-            season.length);
+      season.map((v) => pow(v - avg, 2)).reduce((x, y) => x + y) /
+          season.length,
+    );
     final consistency = _round(avg - deviation * .55 + 8);
-    final fit =
-        _debutFit(direction, contestant, profile, a, c, e, live, consistency);
+    final fit = _debutFit(
+      direction,
+      contestant,
+      profile,
+      a,
+      c,
+      e,
+      live,
+      consistency,
+    );
     final score = _round(
-        live * .25 + star * .25 + growth * .15 + consistency * .15 + fit * .20);
+      live * .25 + star * .25 + growth * .15 + consistency * .15 + fit * .20,
+    );
     raw[id] = (
       live: live,
       star: star,
       growth: growth,
       consistency: consistency,
       fit: fit,
-      score: score
+      score: score,
     );
   }
   final ranking = finalistIds.toList()
@@ -92,27 +105,34 @@ Day6ResultSnapshot calculateDay6Results({
   for (var i = 0; i < ranking.length; i++) {
     final id = ranking[i], value = raw[id]!;
     results[id] = Day6ContestantResult(
-        contestantId: id,
-        live: value.live,
-        star: value.star,
-        growth: value.growth,
-        consistency: value.consistency,
-        debutFit: value.fit,
-        finalScore: value.score,
-        rank: i + 1);
+      contestantId: id,
+      live: value.live,
+      star: value.star,
+      growth: value.growth,
+      consistency: value.consistency,
+      debutFit: value.fit,
+      finalScore: value.score,
+      rank: i + 1,
+    );
   }
   final combinations = _combinations(finalistIds, 5);
   combinations.sort((a, b) {
-    final score = _recommendationScore(b, results, first, day3, day5)
-        .compareTo(_recommendationScore(a, results, first, day3, day5));
+    final score = _recommendationScore(
+      b,
+      results,
+      first,
+      day3,
+      day5,
+    ).compareTo(_recommendationScore(a, results, first, day3, day5));
     if (score != 0) return score;
     return _key(a).compareTo(_key(b));
   });
   return Day6ResultSnapshot(
-      direction: direction,
-      results: Map.unmodifiable(results),
-      rankingIds: List.unmodifiable(ranking),
-      recommendedLineupIds: List.unmodifiable(combinations.first));
+    direction: direction,
+    results: Map.unmodifiable(results),
+    rankingIds: List.unmodifiable(ranking),
+    recommendedLineupIds: List.unmodifiable(combinations.first),
+  );
 }
 
 LineupBalance calculateLineupBalance({
@@ -124,7 +144,12 @@ LineupBalance calculateLineupBalance({
   final ids = lineupIds.toList();
   if (ids.isEmpty) {
     return const LineupBalance(
-        vocal: 0, dance: 0, stage: 0, camera: 0, harmony: 0);
+      vocal: 0,
+      dance: 0,
+      stage: 0,
+      camera: 0,
+      harmony: 0,
+    );
   }
   double role(int id, GroupRole target) {
     final profile = groupTaskProfiles[id]!;
@@ -135,49 +160,79 @@ LineupBalance calculateLineupBalance({
             : 0;
   }
 
-  final vocal = _round(_average(ids.map((id) =>
-      _contestant(id).vocal * .45 +
-      first[id]!.vocal * .30 +
-      day5.results[id]!.liveStage * .25 +
-      role(id, GroupRole.vocal))));
-  final dance = _round(_average(ids.map((id) =>
-      _contestant(id).dance * .55 +
-      first[id]!.dance * .30 +
-      day5.results[id]!.liveStage * .15 +
-      role(id, GroupRole.dance))));
-  final stage = _round(_average(ids.map((id) =>
-      first[id]!.stage * .40 +
-      day5.results[id]!.liveStage * .35 +
-      _contestant(id).stage * .25 +
-      role(id, GroupRole.stage))));
-  final camera = _round(_average(ids.map((id) =>
-      day3.results[id]!.camera * .50 +
-      day5.results[id]!.cameraTalk * .40 +
-      (groupTaskProfiles[id]!.workStyle == WorkStyle.cameraSavvy ? 8 : 0))));
+  final vocal = _round(
+    _average(
+      ids.map(
+        (id) =>
+            _contestant(id).vocal * .45 +
+            first[id]!.vocal * .30 +
+            day5.results[id]!.liveStage * .25 +
+            role(id, GroupRole.vocal),
+      ),
+    ),
+  );
+  final dance = _round(
+    _average(
+      ids.map(
+        (id) =>
+            _contestant(id).dance * .55 +
+            first[id]!.dance * .30 +
+            day5.results[id]!.liveStage * .15 +
+            role(id, GroupRole.dance),
+      ),
+    ),
+  );
+  final stage = _round(
+    _average(
+      ids.map(
+        (id) =>
+            first[id]!.stage * .40 +
+            day5.results[id]!.liveStage * .35 +
+            _contestant(id).stage * .25 +
+            role(id, GroupRole.stage),
+      ),
+    ),
+  );
+  final camera = _round(
+    _average(
+      ids.map(
+        (id) =>
+            day3.results[id]!.camera * .50 +
+            day5.results[id]!.cameraTalk * .40 +
+            (groupTaskProfiles[id]!.workStyle == WorkStyle.cameraSavvy ? 8 : 0),
+      ),
+    ),
+  );
   final styles = ids.map((id) => groupTaskProfiles[id]!.workStyle).toList();
   final uniqueRoles =
       ids.map((id) => groupTaskProfiles[id]!.primaryRole).toSet().length;
   final calming = styles
-      .where((s) =>
-          s == WorkStyle.calm ||
-          s == WorkStyle.social ||
-          s == WorkStyle.experienced ||
-          s == WorkStyle.protective)
+      .where(
+        (s) =>
+            s == WorkStyle.calm ||
+            s == WorkStyle.social ||
+            s == WorkStyle.experienced ||
+            s == WorkStyle.protective,
+      )
       .length;
   final intense = styles
-      .where((s) =>
-          s == WorkStyle.competitive ||
-          s == WorkStyle.direct ||
-          s == WorkStyle.chaotic)
+      .where(
+        (s) =>
+            s == WorkStyle.competitive ||
+            s == WorkStyle.direct ||
+            s == WorkStyle.chaotic,
+      )
       .length;
-  final harmony =
-      _round(78 + uniqueRoles * 2.2 + calming * 1.6 - max(0, intense - 2) * 3);
+  final harmony = _round(
+    78 + uniqueRoles * 2.2 + calming * 1.6 - max(0, intense - 2) * 3,
+  );
   return LineupBalance(
-      vocal: vocal,
-      dance: dance,
-      stage: stage,
-      camera: camera,
-      harmony: harmony);
+    vocal: vocal,
+    dance: dance,
+    stage: stage,
+    camera: camera,
+    harmony: harmony,
+  );
 }
 
 Map<FinalGroupRole, int> assignSuggestedRoles({
@@ -198,7 +253,14 @@ Map<FinalGroupRole, int> assignSuggestedRoles({
     var total = 0.0;
     for (var i = 0; i < roles.length; i++) {
       total += _roleFit(
-          roles[i], permutation[i], finalResult, first, day3, day4, day5);
+        roles[i],
+        permutation[i],
+        finalResult,
+        first,
+        day3,
+        day4,
+        day5,
+      );
     }
     if (total > bestScore ||
         (total == bestScore &&
@@ -207,19 +269,21 @@ Map<FinalGroupRole, int> assignSuggestedRoles({
       best = permutation;
     }
   }
-  return Map.unmodifiable(
-      {for (var i = 0; i < roles.length; i++) roles[i]: best![i]});
+  return Map.unmodifiable({
+    for (var i = 0; i < roles.length; i++) roles[i]: best![i],
+  });
 }
 
 int _debutFit(
-    Day6DebutDirection direction,
-    Contestant contestant,
-    GroupTaskProfile profile,
-    EvaluationResult first,
-    Day3IconContestantResult day3,
-    Day5ContestantResult day5,
-    int live,
-    int consistency) {
+  Day6DebutDirection direction,
+  Contestant contestant,
+  GroupTaskProfile profile,
+  EvaluationResult first,
+  Day3IconContestantResult day3,
+  Day5ContestantResult day5,
+  int live,
+  int consistency,
+) {
   final primary = profile.primaryRole,
       secondary = profile.secondaryRole,
       style = profile.workStyle;
@@ -248,7 +312,7 @@ int _debutFit(
           WorkStyle.bold,
           WorkStyle.competitive,
           WorkStyle.experienced,
-          WorkStyle.playful
+          WorkStyle.playful,
         }.contains(style)
             ? 2
             : 0),
@@ -265,20 +329,25 @@ int _debutFit(
 }
 
 double _recommendationScore(
-    List<int> ids,
-    Map<int, Day6ContestantResult> results,
-    Map<int, EvaluationResult> first,
-    Day3IconResultSnapshot day3,
-    Day5ResultSnapshot day5) {
+  List<int> ids,
+  Map<int, Day6ContestantResult> results,
+  Map<int, EvaluationResult> first,
+  Day3IconResultSnapshot day3,
+  Day5ResultSnapshot day5,
+) {
   final balance = calculateLineupBalance(
-      lineupIds: ids, first: first, day3: day3, day5: day5);
+    lineupIds: ids,
+    first: first,
+    day3: day3,
+    day5: day5,
+  );
   final individual = _average(ids.map((id) => results[id]!.finalScore));
   final groupBalance = _average([
     balance.vocal,
     balance.dance,
     balance.stage,
     balance.camera,
-    balance.harmony
+    balance.harmony,
   ]);
   final coverage =
       ids.map((id) => groupTaskProfiles[id]!.primaryRole).toSet().length /
@@ -291,13 +360,14 @@ double _recommendationScore(
 }
 
 double _roleFit(
-    FinalGroupRole role,
-    int id,
-    Day6ResultSnapshot result,
-    Map<int, EvaluationResult> first,
-    Day3IconResultSnapshot day3,
-    Day4ResultSnapshot day4,
-    Day5ResultSnapshot day5) {
+  FinalGroupRole role,
+  int id,
+  Day6ResultSnapshot result,
+  Map<int, EvaluationResult> first,
+  Day3IconResultSnapshot day3,
+  Day4ResultSnapshot day4,
+  Day5ResultSnapshot day5,
+) {
   final contestant = _contestant(id),
       profile = groupTaskProfiles[id]!,
       finalScore = result.results[id]!;

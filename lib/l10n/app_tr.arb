@@ -6,6 +6,8 @@
   "english": "English",
   "continueLabel": "Devam Et",
   "back": "Geri",
+  "confirm": "Onayla",
+  "cancel": "İptal",
   "startSeason": "Sezona Başla",
   "howToPlay": "Nasıl Oynanır?",
   "howToIntro": "Sen bir yarışmacı değil, sezonun yapımcısısın. Kararların sahneyi ve ilişkileri değiştirir.",
@@ -24,7 +26,13 @@
   "landingSupport": "Takımları kur, kararlarını ver ve final kadrosunu sen oluştur.",
   "producerMode": "YAPIMCI MODU",
   "seasonNumber": "SEZON {number}",
-  "@seasonNumber": {"placeholders": {"number": {"type": "String"}}},
+  "@seasonNumber": {
+    "placeholders": {
+      "number": {
+        "type": "String"
+      }
+    }
+  },
   "producerRight": "YAPIMCI HAKKINI KULLAN",
   "producerRightTitle": "YAPIMCI HAKKI",
   "selectOnePerson": "Bir kişiyi koruyabilirsin.",
@@ -47,7 +55,13 @@
   "vocalCoach": "Vokal hocası",
   "danceCoach": "Dans hocası",
   "dayLabel": "{day}. GÜN",
-  "@dayLabel": {"placeholders": {"day": {"type": "int"}}},
+  "@dayLabel": {
+    "placeholders": {
+      "day": {
+        "type": "int"
+      }
+    }
+  },
   "castingSeason": "CASTING • SEZON 01",
   "contestants": "YARIŞMACILAR",
   "meetAllContestants": "15 yarışmacıyı tanı. Final kadronu şimdiden düşünmeye başla.",
@@ -56,12 +70,24 @@
   "firstImpressionBody": "15 yarışmacıyla tanıştın.\nŞimdilik sadece dikkatini çeken 5 kişiyi seç.",
   "firstImpressionNote": "Bu bir eleme değil. Fikrini daha sonra değiştirebilirsin.",
   "radarCount": "{count} / 5 RADARDA",
-  "@radarCount": {"placeholders": {"count": {"type": "int"}}},
+  "@radarCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "selectFive": "5 KİŞİ SEÇ",
   "radarReady": "RADARIM HAZIR",
   "radarLimit": "Radarında sadece 5 kişi olabilir.",
   "enteredRadar": "{name} radarına girdi ★",
-  "@enteredRadar": {"placeholders": {"name": {"type": "String"}}},
+  "@enteredRadar": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "firstImpressionsComplete": "İlk izlenimler tamam.",
   "stageLightsChangeEverything": "Ama sahne ışıkları yandığında her şey değişebilir.",
   "firstEvaluationStarting": "İlk değerlendirme başlıyor.",
@@ -74,5 +100,226 @@
   "strength": "GÜÇLÜ TARAF",
   "attention": "DİKKAT",
   "removeFromRadar": "RADARDAN ÇIKAR",
-  "addToRadar": "RADARA AL  ★"
+  "addToRadar": "RADARA AL  ★",
+  "producerDesk": "YAPIMCI MASASI",
+  "tabOverview": "GÜNDEM",
+  "tabTeams": "TAKIMLAR",
+  "tabBackstage": "KULİS",
+  "backstagePreparing": "KULİS HAZIRLANIYOR",
+  "backstagePreparingDesc": "Günün gelişmeleri kısa süre içinde yapımcı masasına düşecek.",
+  "backstageInterview": "KULİS RÖPORTAJI",
+  "applyThisDecision": "BU KARARI UYGULA",
+  "history": "GEÇMİŞ",
+  "captain": "KAPTAN",
+  "roleCenter": "CENTER",
+  "roleMainVocal": "ANA VOKAL",
+  "roleDanceLead": "DANS LİDERİ",
+  "noEventScheduledToday": "Bugün için planlanan kulis olayı yok.",
+  "activeContestants": "Aktif Yarışmacı",
+  "topMorale": "En Yüksek Moral",
+  "topPopularity": "En Popüler",
+  "topBuzz": "En Çok Konuşulan",
+  "criticalEnergy": "Kritik Enerji",
+  "story": "HİKÂYESİ",
+  "personality": "KİŞİLİK",
+  "specialTrait": "ÖZEL ÖZELLİK",
+  "risk": "RİSK",
+  "talentReport": "YETENEK RAPORU",
+  "role": "ROL",
+  "producerNoteLabel": "YAPIMCI NOTU",
+  "potential": "POTANSİYEL",
+  "ageWithCity": "{age} • {city}",
+  "@ageWithCity": {
+    "placeholders": {
+      "age": {
+        "type": "int"
+      },
+      "city": {
+        "type": "String"
+      }
+    }
+  },
+  "stageTest": "1. GÜN • SAHNE TESTİ",
+  "evalCompleteTitle": "İLK DEĞERLENDİRME\nTAMAMLANDI",
+  "evalCompleteDesc": "İlk sahne bazı beklentileri doğruladı.\nBazılarını ise tamamen değiştirdi.",
+  "topFiveTonight": "GECENİN İLK 5’İ",
+  "outsideRadarSurprise": "RADAR DIŞI SÜRPRİZ",
+  "radarTop": "RADARIN EN YÜKSEĞİ",
+  "radarRisk": "RADARIN RİSKLİSİ",
+  "radarPerformance": "RADAR PERFORMANSI",
+  "radarAverageScore": "Radar ortalaması: {score}",
+  "@radarAverageScore": {
+    "placeholders": {
+      "score": {
+        "type": "String"
+      }
+    }
+  },
+  "goToJuryRoom": "JÜRİ ODASINA GEÇ",
+  "seeResults": "SONUÇLARI GÖR",
+  "nextContestant": "SONRAKİ YARIŞMACI",
+  "radarPaidOff": "★ Radar seçimin karşılığını verdi.",
+  "radarDebatable": "★ İlk izlenimin şimdilik tartışmalı.",
+  "notOnRadarThinkAgain": "Onu radarına almamıştın.\nBelki tekrar düşünmelisin.",
+  "revealProgress": "{current} / {total}",
+  "@revealProgress": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "juryDecisionTitle": "JÜRİ KARARI",
+  "scoresDontSayAll": "Puanlar her şeyi söylemez.",
+  "juryIntroDesc": "İlk değerlendirme tamamlandı.\nŞimdi jüri masası konuşuyor.",
+  "lowestFiveRisk": "En düşük 5 puanı alan yarışmacı risk bölgesinde.",
+  "oneDecisionIsYours": "Ama bu gece bir karar sana ait.",
+  "viewRiskZone": "RİSK BÖLGESİNİ GÖR",
+  "safe": "GÜVENDE",
+  "faceTheJury": "JÜRİNİN KARŞISINA ÇIK",
+  "riskZone": "RİSK BÖLGESİ",
+  "riskZoneDesc": "Bu gece elenme riski taşıyan 5 yarışmacı:",
+  "protectOnePerson": "BİR KİŞİYİ KORU",
+  "confirmProtection": "KORUMAYI ONAYLA",
+  "protectingContestant": "{name}’Yİ KORUYORSUN",
+  "@protectingContestant": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "protectionWarning": "{name} bu gece doğrudan güvende olacak.\nBu kararı daha sonra değiştiremezsin.",
+  "@protectionWarning": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "yesProtect": "EVET, KORU",
+  "goBack": "GERİ DÖN",
+  "producerRightUsed": "YAPIMCI HAKKI KULLANILDI",
+  "producerProtectedMsg": "Yapımcı olarak {name}’yi korudun.\nDoğrudan bir sonraki güne geçti.",
+  "@producerProtectedMsg": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "jurySavedTop": "Jüri en yüksek puana sahip adayı korudu.",
+  "juryProtected": "JÜRİ KORUDU",
+  "goToLastChance": "SON ŞANS SAHNESİNE GEÇ",
+  "juryDecisionSummaryTitle": "JÜRİ DEĞERLENDİRMESİ TAMAMLANDI",
+  "juryDecisionSummaryDesc": "Yapımcı hakkı ve jüri tercihi sonrası 3 aday son şans sahnesinde.",
+  "lastChanceTitle": "SON ŞANS SAHNESİ",
+  "threeContestantsOneFarewell": "3 yarışmacı.\n1 veda.",
+  "lastChanceIntroDesc": "Puanlar sıfırlanmadı ama her şey bu performansa bağlı.",
+  "enterStage": "SAHNEYE GEÇ",
+  "givingCoachingNote": "{name}’YE SAHNE NOTU VERİYORSUN",
+  "@givingCoachingNote": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "coachingSingleWarning": "Bu bölümde yalnızca bir yarışmacıya müdahale edebilirsin.",
+  "yesSelect": "EVET, SEÇ",
+  "coachingPrompt": "Bir yarışmacıya kritik sahne notu ver (+3 puan):",
+  "noIntervention": "MÜDAHALE ETMEDEN İZLE",
+  "confirmChoice": "TERCİHİ ONAYLA",
+  "performanceReveal": "PERFORMANS DEĞERLENDİRMESİ",
+  "scoresCompared": "PUANLAR KARŞILAŞTIRILIYOR",
+  "firstSafeContestant": "GÜVENDE OLAN İLK İSİM",
+  "finalTwoTitle": "SON İKİ YARIŞMACI",
+  "farewellTitle": "VEDA ANI",
+  "farewellDesc": "{name} yarışmaya veda etti.",
+  "@farewellDesc": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "coachedBadge": "KOÇLUK DESTEĞİ ALDI (+3)",
+  "continueToRoster": "KADRO GÜNCELLEMESİNE GEÇ",
+  "day1Complete": "1. GÜN TAMAMLANDI",
+  "activeRemainingCount": "{count} KİŞİ KALDI",
+  "@activeRemainingCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "firstDayLessonsDesc": "İlk günün ardından kadro şekillenmeye başladı.\nŞimdi sıra takım görevinde.",
+  "eliminatedMember": "ELENEN YARIŞMACI",
+  "activeRoster": "DEVAM EDEN YARIŞMACILAR",
+  "advanceToDay2": "2. GÜNE GEÇ",
+  "day2Title": "2. GÜN • GRUP GÖREVİ",
+  "groupTaskBriefing": "Grup Görevi: Şarkı ve Uyum",
+  "teamFormationTitle": "TAKIM KURULUMU",
+  "teamA": "A TAKIMI",
+  "teamB": "B TAKIMI",
+  "autoFormTeams": "OTOMATİK TAKIMLARI ONAYLA",
+  "manualBuilder": "MANUEL KADRO KUR",
+  "rehearsalTitle": "PROVA ODASI",
+  "rehearsalCrisesTitle": "PROVA KRİZİ",
+  "resolveCrisis": "KRİZİ ÇÖZ",
+  "groupStageTitle": "GRUP SAHNESİ",
+  "groupResultsTitle": "GRUP SONUÇLARI",
+  "winningTeamImmune": "KAZANAN TAKIM DOKUNULMAZ",
+  "juryTableTitle": "JÜRİ MASASI",
+  "duelTitle": "İKİLİ DÜELLO",
+  "duelWinner": "DÜELLO KAZANANI",
+  "duelElimination": "DÜELLO ELEMESİ",
+  "advanceToDay3": "3. GÜNE GEÇ",
+  "day3Title": "3. GÜN • İKON ŞARKILAR",
+  "iconStageBriefing": "İkon Sahnesi",
+  "iconPerformanceResults": "İkon Performans Sonuçları",
+  "finalCutTitle": "YARI FİNAL ELEMESİ",
+  "advanceToDay4": "4. GÜNE GEÇ",
+  "day4Title": "4. GÜN • POZİSYON SAVAŞI",
+  "positionBattleBriefing": "Pozisyon Savaşı",
+  "roomVocal": "VOKAL ODASI",
+  "roomDance": "DANS ODASI",
+  "roomStage": "SAHNE ODASI",
+  "positionBattleResults": "Pozisyon Savaşı Sonuçları",
+  "advanceToDay5": "5. GÜNE GEÇ",
+  "day5Title": "5. GÜN • CANLI YAYIN",
+  "liveShowBriefing": "Canlı Yayın Gösterisi",
+  "broadcastDirection": "YAYIN STRATEJİSİ",
+  "liveShowResults": "Canlı Yayın Sonuçları",
+  "advanceToGrandFinal": "BÜYÜK FİNALE GEÇ",
+  "grandFinalTitle": "BÜYÜK FİNAL",
+  "selectFinalFive": "FİNAL 5’LİYİ SEÇ",
+  "conceptSelection": "ÇIKIŞ KONSEPTİ",
+  "groupNaming": "GRUP ADINI KOY",
+  "enterGroupName": "Grup Adı Girin",
+  "confirmDebut": "ÇIKIŞI ONAYLA",
+  "debutPoster": "ÇIKIŞ POSTERİ",
+  "seasonComplete": "SEZON TAMAMLANDI",
+  "newSeason": "YENİ SEZON",
+  "startNewSeason": "YENİ SEZONA BAŞLA",
+  "scoreLabel": "Puan: {score}",
+  "@scoreLabel": {
+    "placeholders": {
+      "score": {
+        "type": "int"
+      }
+    }
+  },
+  "rankLabel": "{rank}.",
+  "@rankLabel": {
+    "placeholders": {
+      "rank": {
+        "type": "int"
+      }
+    }
+  }
 }

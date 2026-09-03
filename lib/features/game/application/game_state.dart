@@ -235,9 +235,8 @@ class GameState extends ChangeNotifier {
       seasonSeed: _seasonSeed,
       day: day,
       eligibleIds: activeIds,
-      seenEventIds: _eventHistory
-          .map((record) => record.event.id.split('_d').first)
-          .toSet(),
+      seenEventIds:
+          _eventHistory.map((record) => record.event.templateId).toSet(),
       socialStates: _contestantSocialStates,
       relationships: _contestantRelationships,
       recentContestantIds: _eventHistory.reversed
@@ -255,6 +254,7 @@ class GameState extends ChangeNotifier {
   }
 
   StoryEventRecord? prepareStoryEvent(int day) {
+    if (day < 1 || day > 5) return null;
     final existing = storyEventForDay(day);
     if (existing != null) return existing;
     if (_storyEventSkippedDays.contains(day)) return null;
@@ -266,9 +266,10 @@ class GameState extends ChangeNotifier {
   }
 
   bool _storyEventScheduled(int day) {
-    if (day < 1 || day > 6) return true;
-    final targetCount = 4 + _seasonSeed.abs() % 3;
-    final rankedDays = List<int>.generate(6, (index) => index + 1)
+    if (day < 1 || day > 5) return false;
+    final roll = _seasonSeed.abs() % 6;
+    final targetCount = roll == 0 ? 3 : (roll <= 3 ? 4 : 5);
+    final rankedDays = List<int>.generate(5, (index) => index + 1)
       ..sort((a, b) {
         final aScore = (_seasonSeed * 31 + a * 7919).abs() % 10007;
         final bScore = (_seasonSeed * 31 + b * 7919).abs() % 10007;
@@ -736,7 +737,7 @@ class GameState extends ChangeNotifier {
     );
   }
 
-  int get _currentDay => _day5Completed
+  int get currentDay => _day5Completed
       ? 6
       : _day4Completed
           ? 5
@@ -747,6 +748,8 @@ class GameState extends ChangeNotifier {
                   : _lastChance1Completed
                       ? 2
                       : 1;
+
+  int get _currentDay => currentDay;
 
   String _impactReason(int score, String fallback) => score >= 88
       ? 'Sahnedeki güçlü anı sosyal medyada karşılık buldu.'
@@ -929,7 +932,7 @@ class GameState extends ChangeNotifier {
     required LineupBalance balance,
     required Map<FinalGroupRole, int> suggestedRoles,
   }) {
-    if (_day6FinalLineupConfirmed) return;
+    if (_seasonCompleted) return;
     final ids = contestantIds.toSet();
     final finalists = day5FinalistIds.toSet();
     final roles = suggestedRoles.values.toSet();

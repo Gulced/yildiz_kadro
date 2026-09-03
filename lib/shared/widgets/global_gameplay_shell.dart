@@ -45,13 +45,6 @@ class GlobalGameplayShell extends StatelessWidget {
   void _openDashboard() {
     final navigator = navigatorKey.currentState;
     if (navigator == null) return;
-    navigator.push(
-      MaterialPageRoute<void>(
-        settings: const RouteSettings(
-          name: GameNavigationObserver.dashboardRoute,
-        ),
-        builder: (_) => const ProducerDashboardScreen(),
-      ),
-    );
+    navigator.push(ProducerDashboardScreen.route());
   }
 }

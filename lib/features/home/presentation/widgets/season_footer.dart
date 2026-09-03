@@ -1,3 +1,4 @@
+import 'package:yildiz_kadro/l10n/l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:yildiz_kadro/app/theme/app_colors.dart';
 import 'package:yildiz_kadro/app/theme/app_spacing.dart';
@@ -8,18 +9,19 @@ class SeasonFooter extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final largeText = MediaQuery.textScalerOf(context).scale(1) >= 1.5;
-    final labelStyle = Theme.of(context).textTheme.labelMedium?.copyWith(
-          color: AppColors.paper,
-          letterSpacing: 1.1,
-        );
+    final labelStyle = Theme.of(context)
+        .textTheme
+        .labelMedium
+        ?.copyWith(color: AppColors.paper, letterSpacing: 1.1);
+    final isEn = isAppEnglish(context);
     final season = _FooterLabel(
       icon: Icons.star_outline_rounded,
-      text: 'SEZON 01',
+      text: isEn ? 'SEASON 01' : 'SEZON 01',
       style: labelStyle,
     );
     final producer = _FooterLabel(
       icon: Icons.tune_rounded,
-      text: 'YAPIMCI MODU',
+      text: isEn ? 'PRODUCER MODE' : 'YAPIMCI MODU',
       style: labelStyle,
       iconAfter: true,
     );

@@ -1,7 +1,10 @@
 import 'package:flutter/widgets.dart';
 import 'package:yildiz_kadro/app/app.dart';
+import 'package:yildiz_kadro/app/localization/locale_controller.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(const YildizKadroApp());
+  final localeController = LocaleController();
+  await localeController.restore();
+  runApp(YildizKadroApp(localeController: localeController));
 }

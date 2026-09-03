@@ -1,12 +1,15 @@
+import 'package:yildiz_kadro/l10n/l10n.dart';
+import 'package:flutter/widgets.dart';
 import 'package:yildiz_kadro/features/evaluation/domain/evaluation_result.dart';
 import 'package:yildiz_kadro/features/group_task/data/group_task_profiles.dart';
 import 'package:yildiz_kadro/features/group_task/domain/day3_identity_setup.dart';
 import 'package:yildiz_kadro/features/group_task/domain/group_task_profile.dart';
 
-Day3IdentityAllocation allocateDay3Concepts(
-    {required List<int> activeContestantIds,
-    required Map<int, EvaluationResult> evaluationResults,
-    required Map<int, double> day2Scores}) {
+Day3IdentityAllocation allocateDay3Concepts({
+  required List<int> activeContestantIds,
+  required Map<int, EvaluationResult> evaluationResults,
+  required Map<int, double> day2Scores,
+}) {
   if (activeContestantIds.length != 13 ||
       activeContestantIds.toSet().length != 13) {
     throw ArgumentError('Day 3 için 13 aktif yarışmacı gerekli.');
@@ -25,8 +28,11 @@ Day3IdentityAllocation allocateDay3Concepts(
     final evaluation = evaluationResults[id]!;
     final ranked = Day3Concept.values.toList()
       ..sort((a, b) {
-        final result = _fit(b, profile, evaluation)
-            .compareTo(_fit(a, profile, evaluation));
+        final result = _fit(
+          b,
+          profile,
+          evaluation,
+        ).compareTo(_fit(a, profile, evaluation));
         return result != 0 ? result : a.index.compareTo(b.index);
       });
     final selected = ranked.firstWhere((concept) => counts[concept]! < 4);
@@ -36,42 +42,47 @@ Day3IdentityAllocation allocateDay3Concepts(
     self[id] = _selfDirection(profile.workStyle);
   }
   return Day3IdentityAllocation(
-      conceptByContestantId: Map.unmodifiable(concepts),
-      conceptFitByContestantId: Map.unmodifiable(fits),
-      selfDirectionByContestantId: Map.unmodifiable(self));
+    conceptByContestantId: Map.unmodifiable(concepts),
+    conceptFitByContestantId: Map.unmodifiable(fits),
+    selfDirectionByContestantId: Map.unmodifiable(self),
+  );
 }
 
-Day3IdentitySetupSnapshot createDay3IdentitySetup(
-    {required Day3IdentityAllocation allocation,
-    required Map<int, Day3CreativeDirection> directions,
-    required Map<int, EvaluationResult> evaluationResults}) {
+Day3IdentitySetupSnapshot createDay3IdentitySetup({
+  required Day3IdentityAllocation allocation,
+  required Map<int, Day3CreativeDirection> directions,
+  required Map<int, EvaluationResult> evaluationResults,
+}) {
   if (directions.length != 3 ||
       directions.keys.toSet().length != 3 ||
-      !allocation.conceptByContestantId.keys
-          .toSet()
-          .containsAll(directions.keys)) {
+      !allocation.conceptByContestantId.keys.toSet().containsAll(
+            directions.keys,
+          )) {
     throw ArgumentError('Tam olarak 3 aktif yarışmacı yönlendirilmeli.');
   }
   final modifiers = <int, int>{};
   for (final entry in directions.entries) {
     modifiers[entry.key] = creativeDirectionModifier(
-        contestantId: entry.key,
-        direction: entry.value,
-        allocation: allocation,
-        evaluation: evaluationResults[entry.key]!);
+      contestantId: entry.key,
+      direction: entry.value,
+      allocation: allocation,
+      evaluation: evaluationResults[entry.key]!,
+    );
   }
   return Day3IdentitySetupSnapshot(
-      allocation: allocation,
-      creativeDirectionByContestantId: Map.unmodifiable(directions),
-      creativeModifierByContestantId: Map.unmodifiable(modifiers),
-      stylingSupportContestantIds: List.unmodifiable(directions.keys));
+    allocation: allocation,
+    creativeDirectionByContestantId: Map.unmodifiable(directions),
+    creativeModifierByContestantId: Map.unmodifiable(modifiers),
+    stylingSupportContestantIds: List.unmodifiable(directions.keys),
+  );
 }
 
-int creativeDirectionModifier(
-    {required int contestantId,
-    required Day3CreativeDirection direction,
-    required Day3IdentityAllocation allocation,
-    required EvaluationResult evaluation}) {
+int creativeDirectionModifier({
+  required int contestantId,
+  required Day3CreativeDirection direction,
+  required Day3IdentityAllocation allocation,
+  required EvaluationResult evaluation,
+}) {
   final profile = groupTaskProfiles[contestantId]!;
   final fit = allocation.conceptFitByContestantId[contestantId]!;
   if (direction == Day3CreativeDirection.sharpenIdentity) {
@@ -95,7 +106,7 @@ int creativeDirectionModifier(
       WorkStyle.cameraSavvy => 2,
       WorkStyle.controlled || WorkStyle.calm => -1,
       WorkStyle.experienced => 1,
-      _ => 0
+      _ => 0,
     };
   }
   var value = evaluation.stage >= 95
@@ -122,7 +133,7 @@ int _fit(Day3Concept concept, GroupTaskProfile p, EvaluationResult e) {
         WorkStyle.bold || WorkStyle.cameraSavvy => 3,
         WorkStyle.social => 2,
         WorkStyle.instinctive => 1,
-        _ => 0
+        _ => 0,
       };
       if (e.stage >= 90) score += 2;
       break;
@@ -133,7 +144,7 @@ int _fit(Day3Concept concept, GroupTaskProfile p, EvaluationResult e) {
         WorkStyle.cameraSavvy => 5,
         WorkStyle.controlled || WorkStyle.direct => 3,
         WorkStyle.experienced || WorkStyle.observant => 2,
-        _ => 0
+        _ => 0,
       };
       if (e.stage >= 94) score += 2;
       break;
@@ -144,7 +155,7 @@ int _fit(Day3Concept concept, GroupTaskProfile p, EvaluationResult e) {
         WorkStyle.sensitive => 4,
         WorkStyle.calm => 3,
         WorkStyle.protective || WorkStyle.instinctive => 2,
-        _ => 0
+        _ => 0,
       };
       if (e.vocal >= 88) score += 2;
       break;
@@ -157,7 +168,7 @@ int _fit(Day3Concept concept, GroupTaskProfile p, EvaluationResult e) {
         WorkStyle.bold => 5,
         WorkStyle.competitive || WorkStyle.spontaneous => 4,
         WorkStyle.chaotic => 3,
-        _ => 0
+        _ => 0,
       };
       if (e.stage >= 92) score += 2;
       break;
@@ -170,7 +181,7 @@ int _fit(Day3Concept concept, GroupTaskProfile p, EvaluationResult e) {
         WorkStyle.observant || WorkStyle.instinctive => 4,
         WorkStyle.sensitive || WorkStyle.cameraSavvy => 3,
         WorkStyle.calm => 2,
-        _ => 0
+        _ => 0,
       };
       if (e.stage >= 90) score += 2;
       break;
@@ -185,20 +196,28 @@ Day3SelfDirectionModifiers _selfDirection(WorkStyle style) => switch (style) {
       WorkStyle.spontaneous =>
         const Day3SelfDirectionModifiers(originality: 2),
       WorkStyle.cameraSavvy => const Day3SelfDirectionModifiers(camera: 2),
-      WorkStyle.playful =>
-        const Day3SelfDirectionModifiers(originality: 1, camera: 1),
+      WorkStyle.playful => const Day3SelfDirectionModifiers(
+          originality: 1,
+          camera: 1,
+        ),
       WorkStyle.calm ||
       WorkStyle.protective =>
         const Day3SelfDirectionModifiers(consistency: 1),
       WorkStyle.sensitive => const Day3SelfDirectionModifiers(identity: 1),
       WorkStyle.observant => const Day3SelfDirectionModifiers(styling: 1),
       WorkStyle.direct => const Day3SelfDirectionModifiers(consistency: 2),
-      WorkStyle.chaotic =>
-        const Day3SelfDirectionModifiers(originality: 2, consistency: -1),
-      WorkStyle.instinctive =>
-        const Day3SelfDirectionModifiers(camera: 1, identity: 1),
-      WorkStyle.competitive =>
-        const Day3SelfDirectionModifiers(camera: 1, performance: 1),
+      WorkStyle.chaotic => const Day3SelfDirectionModifiers(
+          originality: 2,
+          consistency: -1,
+        ),
+      WorkStyle.instinctive => const Day3SelfDirectionModifiers(
+          camera: 1,
+          identity: 1,
+        ),
+      WorkStyle.competitive => const Day3SelfDirectionModifiers(
+          camera: 1,
+          performance: 1,
+        ),
       WorkStyle.social => const Day3SelfDirectionModifiers(camera: 1),
     };
 
@@ -207,15 +226,27 @@ String day3ConceptLabel(Day3Concept value) => switch (value) {
       Day3Concept.highFashion => 'HIGH FASHION',
       Day3Concept.romanticStar => 'ROMANTIC STAR',
       Day3Concept.rebelEdge => 'REBEL EDGE',
-      Day3Concept.dreamyCinema => 'DREAMY CINEMA'
+      Day3Concept.dreamyCinema => 'DREAMY CINEMA',
     };
-String day3FitLabel(int fit) => fit >= 82
-    ? 'DOĞAL EŞLEŞME'
-    : fit >= 77
-        ? 'GÜÇLÜ SEÇİM'
-        : 'RİSKLİ SEÇİM';
-String day3DirectionLabel(Day3CreativeDirection value) => switch (value) {
-      Day3CreativeDirection.sharpenIdentity => 'KİMLİĞİNİ KESKİNLEŞTİR',
-      Day3CreativeDirection.surprise => 'TERS KÖŞE YAP',
-      Day3CreativeDirection.ownCamera => 'KAMERAYI SAHİPLEN'
-    };
+String day3FitLabel(int fit, [BuildContext? context]) {
+  final isEn = isAppEnglish(context);
+  return fit >= 82
+      ? (isEn ? 'NATURAL MATCH' : 'DOĞAL EŞLEŞME')
+      : fit >= 77
+          ? (isEn ? 'STRONG CHOICE' : 'GÜÇLÜ SEÇİM')
+          : (isEn ? 'RISKY CHOICE' : 'RİSKLİ SEÇİM');
+}
+
+String day3DirectionLabel(
+  Day3CreativeDirection value, [
+  BuildContext? context,
+]) {
+  final isEn = isAppEnglish(context);
+  return switch (value) {
+    Day3CreativeDirection.sharpenIdentity =>
+      isEn ? 'SHARPEN IDENTITY' : 'KİMLİĞİNİ KESKİNLEŞTİR',
+    Day3CreativeDirection.surprise => isEn ? 'SURPRISE TWIST' : 'TERS KÖŞE YAP',
+    Day3CreativeDirection.ownCamera =>
+      isEn ? 'OWN THE CAMERA' : 'KAMERAYI SAHİPLEN',
+  };
+}

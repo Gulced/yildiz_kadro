@@ -1,4 +1,5 @@
 import 'dart:math';
+
 import 'package:yildiz_kadro/features/evaluation/domain/evaluation_result.dart';
 import 'package:yildiz_kadro/features/group_task/data/group_task_profiles.dart';
 import 'package:yildiz_kadro/features/group_task/domain/day2_group_performance.dart';
@@ -7,15 +8,16 @@ import 'package:yildiz_kadro/features/group_task/domain/day4_position_result.dar
 import 'package:yildiz_kadro/features/group_task/domain/day5_live_result.dart';
 import 'package:yildiz_kadro/features/group_task/domain/group_task_profile.dart';
 
-Day5ResultSnapshot calculateDay5Results(
-    {required List<int> activeIds,
-    required Day5BroadcastDirection direction,
-    required Map<int, EvaluationResult> first,
-    required Day2GroupPerformanceSnapshot day2,
-    required Day3IconResultSnapshot day3,
-    required Day4ResultSnapshot day4,
-    required Set<int> comebackIds,
-    required Set<int> memorableIds}) {
+Day5ResultSnapshot calculateDay5Results({
+  required List<int> activeIds,
+  required Day5BroadcastDirection direction,
+  required Map<int, EvaluationResult> first,
+  required Day2GroupPerformanceSnapshot day2,
+  required Day3IconResultSnapshot day3,
+  required Day4ResultSnapshot day4,
+  required Set<int> comebackIds,
+  required Set<int> memorableIds,
+}) {
   if (activeIds.length != 9 || activeIds.toSet().length != 9) {
     throw ArgumentError('9 aktif yarışmacı gerekli.');
   }
@@ -46,7 +48,7 @@ Day5ResultSnapshot calculateDay5Results(
       WorkStyle.direct ||
       WorkStyle.protective =>
         2,
-      _ => 1
+      _ => 1,
     };
     final camera = (d3.camera * .35 +
             d3.identity * .25 +
@@ -94,26 +96,25 @@ Day5ResultSnapshot calculateDay5Results(
   for (var i = 0; i < ranking.length; i++) {
     final id = ranking[i], v = temp[id]!;
     results[id] = Day5ContestantResult(
-        contestantId: id,
-        liveStage: v.$1,
-        cameraTalk: v.$2,
-        fanConnect: v.$3,
-        broadcastFitModifier: v.$4,
-        rawLiveScore: v.$5,
-        scoreWithoutDirection: v.$6,
-        rank: i + 1);
+      contestantId: id,
+      liveStage: v.$1,
+      cameraTalk: v.$2,
+      fanConnect: v.$3,
+      broadcastFitModifier: v.$4,
+      rawLiveScore: v.$5,
+      scoreWithoutDirection: v.$6,
+      rank: i + 1,
+    );
   }
   return Day5ResultSnapshot(
-      direction: direction,
-      results: Map.unmodifiable(results),
-      rankingIds: List.unmodifiable(ranking),
-      finalistIds: List.unmodifiable(ranking.take(7)),
-      eliminatedIds: List.unmodifiable(ranking.skip(7)),
-      playerChangedCut: ranking
-          .skip(7)
-          .toSet()
-          .difference(baseline.skip(7).toSet())
-          .isNotEmpty);
+    direction: direction,
+    results: Map.unmodifiable(results),
+    rankingIds: List.unmodifiable(ranking),
+    finalistIds: List.unmodifiable(ranking.take(7)),
+    eliminatedIds: List.unmodifiable(ranking.skip(7)),
+    playerChangedCut:
+        ranking.skip(7).toSet().difference(baseline.skip(7).toSet()).isNotEmpty,
+  );
 }
 
 int _directionFit(Day5BroadcastDirection d, GroupTaskProfile p, bool comeback) {
@@ -127,7 +128,7 @@ int _directionFit(Day5BroadcastDirection d, GroupTaskProfile p, bool comeback) {
               WorkStyle.controlled =>
                 1,
               WorkStyle.sensitive => -1,
-              _ => 0
+              _ => 0,
             } +
             (p.primaryRole == GroupRole.dance
                 ? 4
@@ -148,7 +149,7 @@ int _directionFit(Day5BroadcastDirection d, GroupTaskProfile p, bool comeback) {
               WorkStyle.controlled =>
                 1,
               WorkStyle.chaotic => -1,
-              _ => 0
+              _ => 0,
             } +
             (p.primaryRole == GroupRole.stage ? 2 : 0))
         .clamp(-2, 4);
@@ -165,7 +166,7 @@ int _directionFit(Day5BroadcastDirection d, GroupTaskProfile p, bool comeback) {
             WorkStyle.bold ||
             WorkStyle.cameraSavvy =>
               1,
-            _ => 0
+            _ => 0,
           })
       .clamp(-2, 4);
 }
@@ -183,5 +184,5 @@ int _fanStyle(WorkStyle s) => switch (s) {
       WorkStyle.experienced ||
       WorkStyle.chaotic =>
         1,
-      _ => 0
+      _ => 0,
     };

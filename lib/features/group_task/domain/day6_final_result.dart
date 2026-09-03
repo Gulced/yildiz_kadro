@@ -5,7 +5,7 @@ enum FinalGroupRole {
   center,
   performanceLead,
   allRounder,
-  starVisual
+  starVisual,
 }
 
 class Day6ContestantResult {

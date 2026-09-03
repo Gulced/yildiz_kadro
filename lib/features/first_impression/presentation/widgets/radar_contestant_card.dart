@@ -1,7 +1,9 @@
+import 'package:yildiz_kadro/l10n/l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:yildiz_kadro/app/theme/app_colors.dart';
 import 'package:yildiz_kadro/app/theme/app_spacing.dart';
 import 'package:yildiz_kadro/features/contestants/domain/contestant.dart';
+import 'package:yildiz_kadro/features/contestants/domain/contestant_localization.dart';
 import 'package:yildiz_kadro/features/contestants/presentation/widgets/contestant_portrait.dart';
 
 class RadarContestantCard extends StatelessWidget {
@@ -20,11 +22,14 @@ class RadarContestantCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final strongest = contestant.strongestStat;
+    final strongest = contestant.localizedStrongestStat(context);
+    final isEn = isAppEnglish(context);
     return Semantics(
       button: true,
       selected: isSelected,
-      label: '${contestant.name}, ${isSelected ? 'radarda' : 'radarda değil'}',
+      label: isEn
+          ? '${contestant.name}, ${isSelected ? "on radar" : "not on radar"}'
+          : '${contestant.name}, ${isSelected ? 'radarda' : 'radarda değil'}',
       child: AnimatedScale(
         scale: isSelected ? 1.012 : 1,
         duration: const Duration(milliseconds: 160),
@@ -70,7 +75,8 @@ class RadarContestantCard extends StatelessWidget {
                                 color: AppColors.ink.withValues(alpha: .78),
                                 shape: const CircleBorder(),
                                 child: IconButton(
-                                  tooltip: 'Profili incele',
+                                  tooltip:
+                                      isEn ? 'View profile' : 'Profili incele',
                                   onPressed: onInfo,
                                   icon: const Icon(Icons.visibility_outlined),
                                   iconSize: 19,
@@ -123,7 +129,7 @@ class RadarContestantCard extends StatelessWidget {
                     ),
                     const SizedBox(height: AppSpacing.xs),
                     Text(
-                      contestant.archetype.toUpperCase(),
+                      contestant.localizedArchetype(context).toUpperCase(),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.labelMedium?.copyWith(
@@ -136,9 +142,10 @@ class RadarContestantCard extends StatelessWidget {
                       '★ ${strongest.label}  ${strongest.value}',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                            color: AppColors.accentBright,
-                          ),
+                      style: Theme.of(context)
+                          .textTheme
+                          .labelLarge
+                          ?.copyWith(color: AppColors.accentBright),
                     ),
                   ],
                 ),

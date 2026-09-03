@@ -1,11 +1,12 @@
 class Day3IconContestantResult {
-  const Day3IconContestantResult(
-      {required this.contestantId,
-      required this.identity,
-      required this.styling,
-      required this.camera,
-      required this.performance,
-      required this.rawIconScore});
+  const Day3IconContestantResult({
+    required this.contestantId,
+    required this.identity,
+    required this.styling,
+    required this.camera,
+    required this.performance,
+    required this.rawIconScore,
+  });
   final int contestantId;
   final int identity;
   final int styling;
@@ -16,12 +17,13 @@ class Day3IconContestantResult {
 }
 
 class Day3IconResultSnapshot {
-  const Day3IconResultSnapshot(
-      {required this.results,
-      required this.rankingIds,
-      required this.bottom4Ids,
-      required this.jurySavedIds,
-      required this.finalCutContestantIds});
+  const Day3IconResultSnapshot({
+    required this.results,
+    required this.rankingIds,
+    required this.bottom4Ids,
+    required this.jurySavedIds,
+    required this.finalCutContestantIds,
+  });
   final Map<int, Day3IconContestantResult> results;
   final List<int> rankingIds;
   final List<int> bottom4Ids;

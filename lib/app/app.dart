@@ -28,7 +28,9 @@ class _YildizKadroAppState extends State<YildizKadroApp> {
   void initState() {
     super.initState();
     _localeController = widget.localeController ?? LocaleController();
-    _localeController.restore();
+    if (widget.localeController == null) {
+      _localeController.restore();
+    }
   }
 
   @override

@@ -1,3 +1,5 @@
+import 'package:yildiz_kadro/l10n/l10n.dart';
+import 'package:flutter/widgets.dart';
 import 'package:yildiz_kadro/features/evaluation/domain/evaluation_result.dart';
 import 'package:yildiz_kadro/features/group_task/domain/day2_group_performance.dart';
 import 'package:yildiz_kadro/features/group_task/domain/day2_rehearsal.dart';
@@ -51,11 +53,13 @@ Day2GroupPerformanceSnapshot calculateDay2GroupPerformance({
   final losingTeamId = winner == 'A' ? 'B' : 'A';
   final losingIds = losingTeamId == 'A' ? teamAIds : teamBIds;
   final ranking = losingIds.toList()
-    ..sort((a, b) => _compareIndividuals(
-          individuals[a]!,
-          individuals[b]!,
-          evaluationResults,
-        ));
+    ..sort(
+      (a, b) => _compareIndividuals(
+        individuals[a]!,
+        individuals[b]!,
+        evaluationResults,
+      ),
+    );
   final top3 = ranking.take(3).toList(growable: false);
   final risk = ranking.skip(3).toList(growable: false);
   if ({...teamAIds, ...teamBIds}.length != 14 ||
@@ -120,11 +124,13 @@ TeamGroupPerformanceResult _calculateTeam({
     );
   }
   final ranked = teamIds.toList()
-    ..sort((a, b) => _compareIndividuals(
-          individuals[a]!,
-          individuals[b]!,
-          evaluationResults,
-        ));
+    ..sort(
+      (a, b) => _compareIndividuals(
+        individuals[a]!,
+        individuals[b]!,
+        evaluationResults,
+      ),
+    );
   final raw = vocal * .25 + dance * .25 + stage * .30 + metrics.harmony * .20;
   return TeamGroupPerformanceResult(
     teamId: teamId,
@@ -300,9 +306,9 @@ int _compareIndividuals(
   if (vocal != 0) return vocal;
   final dance = b.dance.compareTo(a.dance);
   if (dance != 0) return dance;
-  final firstOverall = evaluationResults[b.contestantId]!
-      .overall
-      .compareTo(evaluationResults[a.contestantId]!.overall);
+  final firstOverall = evaluationResults[b.contestantId]!.overall.compareTo(
+        evaluationResults[a.contestantId]!.overall,
+      );
   return firstOverall != 0
       ? firstOverall
       : a.contestantId.compareTo(b.contestantId);
@@ -326,18 +332,32 @@ bool _teamAIsWinner(
   return captainAId < captainBId;
 }
 
-String arrangementLabel(TeamGroupPerformanceResult result) {
+String arrangementLabel(
+  TeamGroupPerformanceResult result, [
+  BuildContext? context,
+]) {
+  final isEn = isAppEnglish(context);
   final values = [result.vocal, result.dance, result.stage];
   values.sort();
-  if (values.last - values.first <= 2) return 'DENGELİ DÜZENLEME';
-  if (result.vocal >= result.dance && result.vocal >= result.stage) {
-    return 'VOKAL ODAKLI DÜZENLEME';
+  if (values.last - values.first <= 2) {
+    return isEn ? 'BALANCED ARRANGEMENT' : 'DENGELİ DÜZENLEME';
   }
-  if (result.dance >= result.stage) return 'PERFORMANS ODAKLI DÜZENLEME';
-  return 'SAHNE ODAKLI DÜZENLEME';
+  if (result.vocal >= result.dance && result.vocal >= result.stage) {
+    return isEn ? 'VOCAL-FOCUSED ARRANGEMENT' : 'VOKAL ODAKLI DÜZENLEME';
+  }
+  if (result.dance >= result.stage) {
+    return isEn
+        ? 'PERFORMANCE-FOCUSED ARRANGEMENT'
+        : 'PERFORMANS ODAKLI DÜZENLEME';
+  }
+  return isEn ? 'STAGE-FOCUSED ARRANGEMENT' : 'SAHNE ODAKLI DÜZENLEME';
 }
 
-String teamPerformanceNarrative(TeamGroupPerformanceResult result) {
+String teamPerformanceNarrative(
+  TeamGroupPerformanceResult result, [
+  BuildContext? context,
+]) {
+  final isEn = isAppEnglish(context);
   final scores = <String, int>{
     'vocal': result.vocal,
     'dance': result.dance,
@@ -347,9 +367,17 @@ String teamPerformanceNarrative(TeamGroupPerformanceResult result) {
   final strongest =
       scores.entries.reduce((a, b) => a.value >= b.value ? a : b).key;
   return switch (strongest) {
-    'vocal' => 'Ses tarafında gecenin çıtasını yükselttiler.',
-    'dance' => 'Koreografi takımın en güçlü silahı oldu.',
-    'stage' => 'Kamerayı bırakmadılar.',
-    _ => 'Yedi kişi tek bir performans gibi göründü.',
+    'vocal' => isEn
+        ? 'They raised the bar vocally for the entire night.'
+        : 'Ses tarafında gecenin çıtasını yükselttiler.',
+    'dance' => isEn
+        ? 'Choreography was the squad’s deadliest weapon.'
+        : 'Koreografi takımın en güçlü silahı oldu.',
+    'stage' => isEn
+        ? 'They never let go of the camera for a second.'
+        : 'Kamerayı bırakmadılar.',
+    _ => isEn
+        ? 'All seven members moved and breathed as a single stage unit.'
+        : 'Yedi kişi tek bir performans gibi göründü.',
   };
 }

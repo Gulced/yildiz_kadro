@@ -1,21 +1,20 @@
+import 'package:yildiz_kadro/l10n/l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:yildiz_kadro/app/theme/app_colors.dart';
 import 'package:yildiz_kadro/app/theme/app_spacing.dart';
 
 class StatBar extends StatelessWidget {
-  const StatBar({
-    required this.label,
-    required this.value,
-    super.key,
-  });
+  const StatBar({required this.label, required this.value, super.key});
 
   final String label;
   final int value;
 
   @override
   Widget build(BuildContext context) {
+    final isEn = isAppEnglish(context);
     return Semantics(
-      label: '$label, 100 üzerinden $value',
+      label:
+          isEn ? '$label, $value out of 100' : '$label, 100 üzerinden $value',
       excludeSemantics: true,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -30,9 +29,10 @@ class StatBar extends StatelessWidget {
               ),
               Text(
                 '$value',
-                style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                      color: AppColors.accentBright,
-                    ),
+                style: Theme.of(context)
+                    .textTheme
+                    .labelLarge
+                    ?.copyWith(color: AppColors.accentBright),
               ),
             ],
           ),

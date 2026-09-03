@@ -1,9 +1,12 @@
+import 'package:yildiz_kadro/l10n/l10n.dart';
+import 'package:flutter/widgets.dart';
+
 enum FinalMemberPosition {
   mainVocal,
   leadVocal,
   mainDancer,
   leadDancer,
-  rapper
+  rapper,
 }
 
 enum MemberColor {
@@ -21,7 +24,7 @@ enum MemberColor {
   burgundy,
   white,
   black,
-  silver
+  silver,
 }
 
 String finalPositionLabel(FinalMemberPosition value) => switch (value) {
@@ -32,20 +35,23 @@ String finalPositionLabel(FinalMemberPosition value) => switch (value) {
       FinalMemberPosition.rapper => 'RAPPER / RAP PART',
     };
 
-String memberColorLabel(MemberColor value) => switch (value) {
-      MemberColor.pink => 'PEMBE',
-      MemberColor.red => 'KIRMIZI',
-      MemberColor.purple => 'MOR',
-      MemberColor.lavender => 'LAVANTA',
-      MemberColor.blue => 'MAVİ',
-      MemberColor.turquoise => 'TURKUAZ',
-      MemberColor.mint => 'MİNT',
-      MemberColor.green => 'YEŞİL',
-      MemberColor.yellow => 'SARI',
-      MemberColor.orange => 'TURUNCU',
-      MemberColor.coral => 'MERCAN',
-      MemberColor.burgundy => 'BORDO',
-      MemberColor.white => 'BEYAZ',
-      MemberColor.black => 'SİYAH',
-      MemberColor.silver => 'GÜMÜŞ',
-    };
+String memberColorLabel(MemberColor value, [BuildContext? context]) {
+  final isEn = isAppEnglish(context);
+  return switch (value) {
+    MemberColor.pink => isEn ? 'PINK' : 'PEMBE',
+    MemberColor.red => isEn ? 'RED' : 'KIRMIZI',
+    MemberColor.purple => isEn ? 'PURPLE' : 'MOR',
+    MemberColor.lavender => isEn ? 'LAVENDER' : 'LAVANTA',
+    MemberColor.blue => isEn ? 'BLUE' : 'MAVİ',
+    MemberColor.turquoise => isEn ? 'TURQUOISE' : 'TURKUAZ',
+    MemberColor.mint => isEn ? 'MINT' : 'MİNT',
+    MemberColor.green => isEn ? 'GREEN' : 'YEŞİL',
+    MemberColor.yellow => isEn ? 'YELLOW' : 'SARI',
+    MemberColor.orange => isEn ? 'ORANGE' : 'TURUNCU',
+    MemberColor.coral => isEn ? 'CORAL' : 'MERCAN',
+    MemberColor.burgundy => isEn ? 'BURGUNDY' : 'BORDO',
+    MemberColor.white => isEn ? 'WHITE' : 'BEYAZ',
+    MemberColor.black => isEn ? 'BLACK' : 'SİYAH',
+    MemberColor.silver => isEn ? 'SILVER' : 'GÜMÜŞ',
+  };
+}

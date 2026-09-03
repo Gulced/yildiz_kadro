@@ -5,11 +5,12 @@ import 'package:yildiz_kadro/features/group_task/domain/day3_icon_result.dart';
 import 'package:yildiz_kadro/features/group_task/domain/day4_position_result.dart';
 import 'package:yildiz_kadro/features/group_task/domain/group_task_profile.dart';
 
-Day4RoomAllocation allocateDay4Rooms(
-    {required List<int> activeIds,
-    required Map<int, EvaluationResult> first,
-    required Day2GroupPerformanceSnapshot day2,
-    required Day3IconResultSnapshot day3}) {
+Day4RoomAllocation allocateDay4Rooms({
+  required List<int> activeIds,
+  required Map<int, EvaluationResult> first,
+  required Day2GroupPerformanceSnapshot day2,
+  required Day3IconResultSnapshot day3,
+}) {
   if (activeIds.length != 12 || activeIds.toSet().length != 12) {
     throw ArgumentError('12 aktif yarışmacı gerekli.');
   }
@@ -35,7 +36,7 @@ Day4RoomAllocation allocateDay4Rooms(
             WorkStyle.controlled ||
             WorkStyle.protective =>
               1,
-            _ => 0
+            _ => 0,
           };
     }
     if (room == Day4Room.dance) {
@@ -54,7 +55,7 @@ Day4RoomAllocation allocateDay4Rooms(
             WorkStyle.bold ||
             WorkStyle.spontaneous =>
               1,
-            _ => 0
+            _ => 0,
           };
     }
     return f.stage * .35 +
@@ -70,7 +71,7 @@ Day4RoomAllocation allocateDay4Rooms(
           WorkStyle.cameraSavvy => 4,
           WorkStyle.bold || WorkStyle.playful || WorkStyle.instinctive => 2,
           WorkStyle.spontaneous || WorkStyle.social => 1,
-          _ => 0
+          _ => 0,
         };
   }
 
@@ -103,8 +104,9 @@ Day4RoomAllocation allocateDay4Rooms(
     fits[id] = fit(id, room);
   }
   return Day4RoomAllocation(
-      roomByContestantId: Map.unmodifiable(rooms),
-      fitByContestantId: Map.unmodifiable(fits));
+    roomByContestantId: Map.unmodifiable(rooms),
+    fitByContestantId: Map.unmodifiable(fits),
+  );
 }
 
 Iterable<List<int>> _combinations(List<int> values, int count) sync* {
@@ -119,13 +121,14 @@ Iterable<List<int>> _combinations(List<int> values, int count) sync* {
   }
 }
 
-Day4ResultSnapshot calculateDay4Results(
-    {required Day4RoomAllocation allocation,
-    required Day4Room mentorRoom,
-    required Day4MentorChoice mentorChoice,
-    required Map<int, EvaluationResult> first,
-    required Day2GroupPerformanceSnapshot day2,
-    required Day3IconResultSnapshot day3}) {
+Day4ResultSnapshot calculateDay4Results({
+  required Day4RoomAllocation allocation,
+  required Day4Room mentorRoom,
+  required Day4MentorChoice mentorChoice,
+  required Map<int, EvaluationResult> first,
+  required Day2GroupPerformanceSnapshot day2,
+  required Day3IconResultSnapshot day3,
+}) {
   final coaches = <Day4Room, Day4MentorChoice>{};
   for (final room in Day4Room.values) {
     if (room == mentorRoom) {
@@ -134,17 +137,27 @@ Day4ResultSnapshot calculateDay4Results(
     }
     final members = allocation.members(room);
     final a = members.fold<int>(
-        0,
-        (x, id) =>
-            x +
-            _choiceMod(
-                room, Day4MentorChoice.optionA, groupTaskProfiles[id]!, false));
+      0,
+      (x, id) =>
+          x +
+          _choiceMod(
+            room,
+            Day4MentorChoice.optionA,
+            groupTaskProfiles[id]!,
+            false,
+          ),
+    );
     final b = members.fold<int>(
-        0,
-        (x, id) =>
-            x +
-            _choiceMod(
-                room, Day4MentorChoice.optionB, groupTaskProfiles[id]!, false));
+      0,
+      (x, id) =>
+          x +
+          _choiceMod(
+            room,
+            Day4MentorChoice.optionB,
+            groupTaskProfiles[id]!,
+            false,
+          ),
+    );
     coaches[room] =
         a >= b ? Day4MentorChoice.optionA : Day4MentorChoice.optionB;
   }
@@ -210,7 +223,7 @@ Day4ResultSnapshot calculateDay4Results(
         a.clamp(0, 100),
         b.clamp(0, 100),
         c.clamp(0, 100),
-        raw.clamp(0, 100)
+        raw.clamp(0, 100),
       );
     }
     return out;
@@ -245,30 +258,36 @@ Day4ResultSnapshot calculateDay4Results(
     for (var i = 0; i < ids.length; i++) {
       final v = scored[ids[i]]!;
       results[ids[i]] = Day4ContestantRoomResult(
-          contestantId: ids[i],
-          room: room,
-          categoryA: v.$1,
-          categoryB: v.$2,
-          categoryC: v.$3,
-          rawScore: v.$4,
-          rank: i + 1,
-          playerMentored: room == mentorRoom);
+        contestantId: ids[i],
+        room: room,
+        categoryA: v.$1,
+        categoryB: v.$2,
+        categoryC: v.$3,
+        rawScore: v.$4,
+        rank: i + 1,
+        playerMentored: room == mentorRoom,
+      );
     }
   }
   return Day4ResultSnapshot(
-      allocation: allocation,
-      mentorRoom: mentorRoom,
-      mentorChoice: mentorChoice,
-      coachChoiceByRoom: Map.unmodifiable(coaches),
-      results: Map.unmodifiable(results),
-      winnerByRoom: Map.unmodifiable(winners),
-      eliminatedByRoom: Map.unmodifiable(eliminated),
-      playerChangedRoomElimination:
-          loser(scored, mentorRoom) != loser(baseline, mentorRoom));
+    allocation: allocation,
+    mentorRoom: mentorRoom,
+    mentorChoice: mentorChoice,
+    coachChoiceByRoom: Map.unmodifiable(coaches),
+    results: Map.unmodifiable(results),
+    winnerByRoom: Map.unmodifiable(winners),
+    eliminatedByRoom: Map.unmodifiable(eliminated),
+    playerChangedRoomElimination:
+        loser(scored, mentorRoom) != loser(baseline, mentorRoom),
+  );
 }
 
 int _choiceMod(
-    Day4Room room, Day4MentorChoice choice, GroupTaskProfile p, bool player) {
+  Day4Room room,
+  Day4MentorChoice choice,
+  GroupTaskProfile p,
+  bool player,
+) {
   var v = 0;
   if (choice == Day4MentorChoice.optionA) {
     v = switch (p.workStyle) {
@@ -276,7 +295,7 @@ int _choiceMod(
       WorkStyle.experienced || WorkStyle.observant => 2,
       WorkStyle.chaotic => -2,
       WorkStyle.spontaneous => -1,
-      _ => 0
+      _ => 0,
     };
     if (room == Day4Room.star &&
         (p.workStyle == WorkStyle.cameraSavvy ||
@@ -292,7 +311,7 @@ int _choiceMod(
       WorkStyle.instinctive =>
         2,
       WorkStyle.sensitive || WorkStyle.social => 1,
-      _ => 0
+      _ => 0,
     };
   }
   return player ? v.clamp(-3, 3) : (v * .67).round().clamp(-2, 2);
@@ -308,5 +327,5 @@ int _style(WorkStyle s, Day4Room r, int category) => switch (s) {
       WorkStyle.spontaneous =>
         category == 2 ? 3 : 1,
       WorkStyle.chaotic => category == 0 ? -2 : 2,
-      _ => 1
+      _ => 1,
     };

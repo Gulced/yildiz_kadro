@@ -1,15 +1,19 @@
+import 'package:yildiz_kadro/l10n/l10n.dart';
+import 'package:flutter/widgets.dart';
+
 enum Day5BroadcastDirection { bigStage, closeCamera, storyNight }
 
 class Day5ContestantResult {
-  const Day5ContestantResult(
-      {required this.contestantId,
-      required this.liveStage,
-      required this.cameraTalk,
-      required this.fanConnect,
-      required this.broadcastFitModifier,
-      required this.rawLiveScore,
-      required this.scoreWithoutDirection,
-      required this.rank});
+  const Day5ContestantResult({
+    required this.contestantId,
+    required this.liveStage,
+    required this.cameraTalk,
+    required this.fanConnect,
+    required this.broadcastFitModifier,
+    required this.rawLiveScore,
+    required this.scoreWithoutDirection,
+    required this.rank,
+  });
   final int contestantId;
   final int liveStage;
   final int cameraTalk;
@@ -24,13 +28,14 @@ class Day5ContestantResult {
 }
 
 class Day5ResultSnapshot {
-  const Day5ResultSnapshot(
-      {required this.direction,
-      required this.results,
-      required this.rankingIds,
-      required this.finalistIds,
-      required this.eliminatedIds,
-      required this.playerChangedCut});
+  const Day5ResultSnapshot({
+    required this.direction,
+    required this.results,
+    required this.rankingIds,
+    required this.finalistIds,
+    required this.eliminatedIds,
+    required this.playerChangedCut,
+  });
   final Day5BroadcastDirection direction;
   final Map<int, Day5ContestantResult> results;
   final List<int> rankingIds;
@@ -39,8 +44,12 @@ class Day5ResultSnapshot {
   final bool playerChangedCut;
 }
 
-String day5DirectionLabel(Day5BroadcastDirection d) => switch (d) {
-      Day5BroadcastDirection.bigStage => 'BÜYÜK SAHNE',
-      Day5BroadcastDirection.closeCamera => 'YAKIN KAMERA',
-      Day5BroadcastDirection.storyNight => 'HİKÂYE GECESİ'
-    };
+String day5DirectionLabel(Day5BroadcastDirection d, [BuildContext? context]) {
+  final isEn = isAppEnglish(context);
+  return switch (d) {
+    Day5BroadcastDirection.bigStage => isEn ? 'BIG ARENA STAGE' : 'BÜYÜK SAHNE',
+    Day5BroadcastDirection.closeCamera =>
+      isEn ? 'INTIMATE CAMERA' : 'YAKIN KAMERA',
+    Day5BroadcastDirection.storyNight => isEn ? 'STORY NIGHT' : 'HİKÂYE GECESİ',
+  };
+}
