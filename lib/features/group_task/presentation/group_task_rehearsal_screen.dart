@@ -15,6 +15,7 @@ import 'package:yildiz_kadro/features/producer/presentation/story_event_dialog.d
 import 'package:yildiz_kadro/features/producer/presentation/widgets/performance_aftermath_panel.dart';
 import 'package:yildiz_kadro/shared/widgets/app_button.dart';
 import 'package:yildiz_kadro/shared/widgets/max_width_container.dart';
+import 'package:yildiz_kadro/shared/widgets/tv_components.dart';
 
 enum _Phase { intro, rolesIntro, teamA, teamB, metrics, crises, choice, result }
 
@@ -595,6 +596,38 @@ class _PlayerChoice extends StatelessWidget {
   final ValueChanged<String> onSelect;
   final VoidCallback? onConfirm;
 
+  List<({String label, bool isPositive})> _effects(
+    RehearsalChoice choice,
+    BuildContext context,
+  ) {
+    final isEn = isAppEnglish(context);
+    final effects = <({String label, bool isPositive})>[];
+    if (choice.harmonyModifier != 0) {
+      final sign = choice.harmonyModifier > 0 ? '+' : '';
+      effects.add((
+        label:
+            '$sign${choice.harmonyModifier} ${isEn ? "Harmony" : "Takım Uyumu"}',
+        isPositive: choice.harmonyModifier > 0,
+      ));
+    }
+    if (choice.readinessModifier != 0) {
+      final sign = choice.readinessModifier > 0 ? '+' : '';
+      effects.add((
+        label:
+            '$sign${choice.readinessModifier} ${isEn ? "Readiness" : "Hazırlık"}',
+        isPositive: choice.readinessModifier > 0,
+      ));
+    }
+    if (choice.energyModifier != 0) {
+      final sign = choice.energyModifier > 0 ? '+' : '';
+      effects.add((
+        label: '$sign${choice.energyModifier} ${isEn ? "Energy" : "Enerji"}',
+        isPositive: choice.energyModifier > 0,
+      ));
+    }
+    return effects;
+  }
+
   @override
   Widget build(BuildContext context) {
     final isEn = isAppEnglish(context);
@@ -603,69 +636,34 @@ class _PlayerChoice extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            isEn ? 'REHEARSAL DECISION' : 'PROVA KARARI',
-            style: _pinkLabel(context),
+          TvSectionHeader(
+            eyebrow: isEn ? 'REHEARSAL CRISIS' : 'PROVA KRİZİ',
+            title: crisis.localizedTitle(context),
+            subtitle: crisis.localizedHeadline(context),
           ),
           const SizedBox(height: AppSpacing.sm),
           Text(
-            crisis.localizedTitle(context),
-            style: Theme.of(context).textTheme.displayLarge,
+            crisis.localizedDescription(context),
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: AppColors.paperMuted,
+                ),
           ),
-          const SizedBox(height: AppSpacing.md),
-          Text(
-            isEn
-                ? 'This time you call the shot.'
-                : 'Bu kez yönü sen belirleyeceksin.',
-            style: Theme.of(context).textTheme.bodyLarge,
-          ),
-          const SizedBox(height: AppSpacing.xl),
+          const SizedBox(height: AppSpacing.lg),
           ...choices.map(
-            (choice) => GestureDetector(
+            (choice) => TvDecisionCard(
+              title: choice.localizedTitle(context),
+              description: choice.localizedDescription(context),
+              isSelected: selectedChoiceId == choice.id,
               onTap: () => onSelect(choice.id),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 180),
-                width: double.infinity,
-                margin: const EdgeInsets.only(bottom: AppSpacing.md),
-                padding: const EdgeInsets.all(AppSpacing.lg),
-                decoration: BoxDecoration(
-                  color: AppColors.inkSoft,
-                  border: Border.all(
-                    color: selectedChoiceId == choice.id
-                        ? AppColors.accentBright
-                        : AppColors.line,
-                    width: selectedChoiceId == choice.id ? 2 : 1,
-                  ),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      choice.localizedTitle(context),
-                      style: Theme.of(context).textTheme.headlineSmall,
-                    ),
-                    const SizedBox(height: AppSpacing.xs),
-                    Text(
-                      choice.localizedDescription(context),
-                      style: Theme.of(context).textTheme.bodyLarge,
-                    ),
-                    if (selectedChoiceId == choice.id) ...[
-                      const SizedBox(height: AppSpacing.sm),
-                      Text(
-                        isEn ? '★ SELECTED' : '★ SEÇİLDİ',
-                        style: _pinkLabel(context),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
+              estimatedEffects: _effects(choice, context),
+              selectedBadgeText: isEn ? '✓ SELECTED' : '✓ SEÇİLDİ',
             ),
           ),
           const SizedBox(height: AppSpacing.lg),
           AppButton(
             label: selectedChoiceId == null
                 ? (isEn ? 'PICK A DECISION' : 'BİR KARAR SEÇ')
-                : (isEn ? 'APPLY MY DECISION' : 'KARARIMI UYGULA'),
+                : (isEn ? 'APPLY DECISION' : 'KARARI UYGULA'),
             onPressed: onConfirm,
           ),
         ],
@@ -717,18 +715,43 @@ class _RehearsalResult extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            isEn ? 'REHEARSAL CONCLUDED' : 'PROVA TAMAMLANDI',
-            style: Theme.of(context).textTheme.displayLarge,
-          ),
-          const SizedBox(height: AppSpacing.md),
-          Text(
-            isEn
+          TvSectionHeader(
+            eyebrow: isEn ? 'REHEARSAL REPORT' : 'PROVA RAPORU',
+            title: isEn ? 'REHEARSAL CONCLUDED' : 'PROVA TAMAMLANDI',
+            subtitle: isEn
                 ? 'Final status before taking the stage.'
                 : 'Sahneye çıkmadan önce son durum.',
-            style: Theme.of(context).textTheme.bodyLarge,
           ),
-          const SizedBox(height: AppSpacing.xl),
+          const SizedBox(height: AppSpacing.md),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: AppColors.inkSoft,
+              border: Border.all(
+                  color: AppColors.accentBright.withValues(alpha: 0.5)),
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.trending_up_rounded,
+                    color: AppColors.accentBright, size: 18),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    isEn
+                        ? 'Team Momentum ↑ · Chemistry & stage presence primed'
+                        : 'Takım Momentumu ↑ · Uyum ve sahne enerjisi yükselişte',
+                    style: const TextStyle(
+                      color: AppColors.paper,
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: AppSpacing.lg),
           _FinalMetricCard(
             captain: captainA,
             metrics: outcome.teamAFinalMetrics,
@@ -935,26 +958,29 @@ class _MetricCard extends StatelessWidget {
   final RehearsalMetrics metrics;
 
   @override
-  Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        decoration: BoxDecoration(
-          color: AppColors.inkSoft,
-          border: Border.all(color: AppColors.line),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              '${Localizations.localeOf(context).languageCode == "en" ? "TEAM" : "TAKIM"} ${captain.displayName}',
-              style: Theme.of(context).textTheme.headlineSmall,
-            ),
-            const SizedBox(height: AppSpacing.md),
-            _MetricBar('UYUM', metrics.harmony),
-            _MetricBar('HAZIRLIK', metrics.readiness),
-            _MetricBar('ENERJİ', metrics.energy),
-          ],
-        ),
-      );
+  Widget build(BuildContext context) {
+    final isEn = isAppEnglish(context);
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: AppColors.inkSoft,
+        border: Border.all(color: AppColors.line),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '${isEn ? "TEAM" : "TAKIM"} ${captain.displayName}',
+            style: Theme.of(context).textTheme.headlineSmall,
+          ),
+          const SizedBox(height: AppSpacing.md),
+          _MetricBar(isEn ? 'HARMONY' : 'UYUM', metrics.harmony),
+          _MetricBar(isEn ? 'READINESS' : 'HAZIRLIK', metrics.readiness),
+          _MetricBar(isEn ? 'ENERGY' : 'ENERJİ', metrics.energy),
+        ],
+      ),
+    );
+  }
 }
 
 class _MetricBar extends StatelessWidget {

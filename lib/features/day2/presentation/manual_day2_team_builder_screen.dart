@@ -16,6 +16,7 @@ import 'package:yildiz_kadro/features/group_task/domain/day2_rehearsal.dart';
 import 'package:yildiz_kadro/features/group_task/presentation/group_task_rehearsal_screen.dart';
 import 'package:yildiz_kadro/shared/widgets/app_button.dart';
 import 'package:yildiz_kadro/shared/widgets/max_width_container.dart';
+import 'package:yildiz_kadro/shared/widgets/tv_components.dart';
 
 enum _BuilderPhase { teams, rolesA, rolesB, review }
 
@@ -333,52 +334,10 @@ class _ManualDay2TeamBuilderScreenState
     CandidateTeamEvaluation report,
     BuildContext context,
   ) {
-    final isEn = isAppEnglish(context);
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(AppSpacing.md),
-      decoration: BoxDecoration(
-        color: AppColors.ink,
-        border: Border.all(color: AppColors.line),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(title, style: Theme.of(context).textTheme.titleLarge),
-          Text(
-            '${isEn ? "CHEMISTRY" : "UYUM"} ${report.compatibility}  •  ${isEn ? "RISK" : "RİSK"} ${report.risk}',
-            style: accent(),
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          Text(isEn ? 'STRENGTHS' : 'GÜÇLÜ YÖNLER', style: accent()),
-          Text(
-            report
-                .localizedStrengths(context)
-                .map((text) => '• $text')
-                .join('\n'),
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          Text(
-            isEn ? 'POINTS OF CONCERN' : 'DİKKAT EDİLECEKLER',
-            style: accent(),
-          ),
-          Text(
-            report
-                .localizedConcerns(context)
-                .map((text) => '• $text')
-                .join('\n'),
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          ...report.localizedRelationshipNotes(context).entries.map(
-                (entry) => Text(
-                  isEn
-                      ? 'WITH ${c(entry.key).displayName} — ${entry.value}'
-                      : '${c(entry.key).displayName} İLE — ${entry.value}',
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-              ),
-        ],
-      ),
+    return _CandidateAnalysisBox(
+      title: title,
+      report: report,
+      c: c,
     );
   }
 
@@ -566,20 +525,62 @@ class _ManualDay2TeamBuilderScreenState
 
   Widget reviewPage() {
     final isEn = isAppEnglish(context);
+    final captainA = c(widget.captainAId);
+    final captainB = c(widget.captainBId);
+    final results = GameScope.of(context).evaluation1Results;
+    final avgA = calculateTeamAverages(teamA, results);
+    final avgB = calculateTeamAverages(teamB, results);
+
     return page([
-      Text(
-        isEn ? 'TEAMS ASSEMBLED' : 'TAKIMLAR HAZIR',
-        style: Theme.of(context).textTheme.displayLarge,
+      TvSectionHeader(
+        eyebrow:
+            isEn ? '2ND STAGE • TEAMS ASSEMBLED' : '2. GÜN • TAKIMLAR HAZIR',
+        title: isEn ? 'TEAMS ASSEMBLED' : 'TAKIMLAR HAZIR',
+        subtitle: isEn
+            ? '14 Contestants · 2 Teams · One Stage'
+            : '14 Yarışmacı · 2 Takım · Tek Sahne',
       ),
-      teamStrip('A', teamA),
-      const SizedBox(height: 10),
-      teamStrip('B', teamB),
-      const SizedBox(height: AppSpacing.lg),
-      roleSummary(teamA, rolesA),
-      roleSummary(teamB, rolesB),
+      const SizedBox(height: AppSpacing.md),
+      _TeamRevealCard(
+        teamLetter: 'A',
+        captain: captainA,
+        memberIds: teamA,
+        roles: rolesA,
+        averages: avgA,
+        c: c,
+      ),
+      const SizedBox(height: AppSpacing.sm),
+      Center(
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+          decoration: BoxDecoration(
+            color: AppColors.accentInk,
+            border: Border.all(color: AppColors.accentBright),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: const Text(
+            'VS',
+            style: TextStyle(
+              color: AppColors.accentBright,
+              fontSize: 13,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 2,
+            ),
+          ),
+        ),
+      ),
+      const SizedBox(height: AppSpacing.sm),
+      _TeamRevealCard(
+        teamLetter: 'B',
+        captain: captainB,
+        memberIds: teamB,
+        roles: rolesB,
+        averages: avgB,
+        c: c,
+      ),
       const SizedBox(height: AppSpacing.xl),
       AppButton(
-        label: isEn ? 'ENTER TEAM REHEARSAL' : 'İKİ TAKIMIN PROVASINA GİR',
+        label: isEn ? 'START REHEARSAL →' : 'PROVAYA BAŞLA →',
         onPressed: complete,
       ),
     ]);
@@ -687,5 +688,357 @@ class _ManualDay2TeamBuilderScreenState
         : styles >= 3
             ? 'DENGELİ'
             : 'RİSKLİ';
+  }
+}
+
+class _CandidateAnalysisBox extends StatefulWidget {
+  const _CandidateAnalysisBox({
+    required this.title,
+    required this.report,
+    required this.c,
+  });
+
+  final String title;
+  final CandidateTeamEvaluation report;
+  final Contestant Function(int) c;
+
+  @override
+  State<_CandidateAnalysisBox> createState() => _CandidateAnalysisBoxState();
+}
+
+class _CandidateAnalysisBoxState extends State<_CandidateAnalysisBox> {
+  bool _expanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final isEn = isAppEnglish(context);
+    final report = widget.report;
+    final strengths = report.localizedStrengths(context);
+    final concerns = report.localizedConcerns(context);
+    final topStrength = strengths.isNotEmpty
+        ? strengths.first
+        : (isEn ? 'Consistent team presence' : 'Dengeli takım varlığı');
+    final topConcern = concerns.isNotEmpty
+        ? concerns.first
+        : (isEn ? 'No immediate conflict noted' : 'Belirgin bir çatışma yok');
+    final pairCount = report.relationshipNotes.length;
+    final riskCount = concerns.length;
+    final balancedCount = (pairCount - riskCount).clamp(0, pairCount);
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: AppColors.inkSoft,
+        border: Border.all(color: AppColors.line),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  widget.title,
+                  style: const TextStyle(
+                    color: AppColors.paper,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+              TvBadge(
+                label: '${isEn ? "CHEMISTRY" : "UYUM"} ${report.compatibility}',
+                isAccent: true,
+              ),
+              const SizedBox(width: 6),
+              TvBadge(
+                label: '${isEn ? "RISK" : "RİSK"} ${report.risk}',
+                color:
+                    report.risk > 50 ? const Color(0xFF381219) : AppColors.ink,
+                borderColor:
+                    report.risk > 50 ? const Color(0xFFFF526E) : AppColors.line,
+                textColor: report.risk > 50
+                    ? const Color(0xFFFF526E)
+                    : AppColors.paperMuted,
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF0D2919),
+                  borderRadius: BorderRadius.circular(3),
+                ),
+                child: Text(
+                  isEn ? 'STRENGTH' : 'GÜÇLÜ',
+                  style: const TextStyle(
+                    color: Color(0xFF4EFA9A),
+                    fontSize: 9.5,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  topStrength,
+                  style: const TextStyle(
+                    color: AppColors.paper,
+                    fontSize: 12.5,
+                    height: 1.3,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF330E17),
+                  borderRadius: BorderRadius.circular(3),
+                ),
+                child: Text(
+                  isEn ? 'RISK' : 'RİSK',
+                  style: const TextStyle(
+                    color: Color(0xFFFF6B6B),
+                    fontSize: 9.5,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  topConcern,
+                  style: const TextStyle(
+                    color: AppColors.paper,
+                    fontSize: 12.5,
+                    height: 1.3,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Row(
+            children: [
+              Text(
+                isEn ? 'TEAM DYNAMICS: ' : 'TAKIM DİNAMİĞİ: ',
+                style: const TextStyle(
+                  color: AppColors.paperMuted,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.5,
+                ),
+              ),
+              Text(
+                isEn
+                    ? '$balancedCount balanced · $riskCount competitive'
+                    : '$balancedCount dengeli eşleşme · $riskCount rekabet',
+                style: const TextStyle(
+                  color: AppColors.paper,
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          InkWell(
+            onTap: () => setState(() => _expanded = !_expanded),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    _expanded
+                        ? (isEn ? 'HIDE DETAILS ▲' : 'DETAYLARI GİZLE ▲')
+                        : (isEn ? 'SEE DETAILS ▼' : 'DETAYLARI GÖR ▼'),
+                    style: const TextStyle(
+                      color: AppColors.accentBright,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.6,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          if (_expanded) ...[
+            const SizedBox(height: 6),
+            const Divider(color: AppColors.line, height: 1),
+            const SizedBox(height: 6),
+            ...report.localizedRelationshipNotes(context).entries.map(
+                  (entry) => Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 2),
+                    child: Text(
+                      isEn
+                          ? '• WITH ${widget.c(entry.key).displayName}: ${entry.value}'
+                          : '• ${widget.c(entry.key).displayName} İLE: ${entry.value}',
+                      style: const TextStyle(
+                        color: AppColors.paperMuted,
+                        fontSize: 11.5,
+                        height: 1.3,
+                      ),
+                    ),
+                  ),
+                ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _TeamRevealCard extends StatelessWidget {
+  const _TeamRevealCard({
+    required this.teamLetter,
+    required this.captain,
+    required this.memberIds,
+    required this.roles,
+    required this.averages,
+    required this.c,
+  });
+
+  final String teamLetter;
+  final Contestant captain;
+  final List<int> memberIds;
+  final Map<String, int> roles;
+  final TeamAverages averages;
+  final Contestant Function(int) c;
+
+  @override
+  Widget build(BuildContext context) {
+    final isEn = isAppEnglish(context);
+    final slots = getRolesForTeamSize(memberIds.length);
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: AppColors.inkSoft,
+        border: Border.all(color: AppColors.line),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(4),
+                child: SizedBox(
+                  width: 50,
+                  height: 62,
+                  child: ContestantPortrait(contestant: captain),
+                ),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Text(
+                          '${isEn ? "TEAM" : "TAKIM"} ${captain.displayName}',
+                          style: const TextStyle(
+                            color: AppColors.paper,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        TvBadge(
+                          label: isEn ? 'CAPTAIN' : 'KAPTAN',
+                          isAccent: true,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      teamProfileLabel(averages, context),
+                      style: const TextStyle(
+                        color: AppColors.accentBright,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.8,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.md),
+          Row(
+            children: [
+              Expanded(
+                child: TvScoreMeter(
+                  label: context.l10n.vocal,
+                  score: averages.vocal.round(),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: TvScoreMeter(
+                  label: context.l10n.dance,
+                  score: averages.dance.round(),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: TvScoreMeter(
+                  label: context.l10n.stage,
+                  score: averages.stage.round(),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.md),
+          Text(
+            isEn ? 'LINEUP & ROLES' : 'KADRO VE ROLLER',
+            style: const TextStyle(
+              color: AppColors.paperMuted,
+              fontSize: 10.5,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 1,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: memberIds.map((id) {
+              final slotMatch = roles.entries.where((e) => e.value == id);
+              String? role;
+              if (slotMatch.isNotEmpty) {
+                final slot =
+                    slots.firstWhere((s) => s.id == slotMatch.first.key);
+                role = day2TeamRoleLabel(slot.type, context);
+              }
+              return TvContestantChip(
+                contestant: c(id),
+                roleLabel: role,
+                isCaptain: id == captain.id,
+                isCompact: true,
+              );
+            }).toList(),
+          ),
+        ],
+      ),
+    );
   }
 }

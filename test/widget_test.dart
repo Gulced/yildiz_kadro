@@ -413,6 +413,8 @@ void main() {
     await tester.tap(find.text('SEZONA BAŞLA'));
     await tester.pumpAndSettle();
     await tester.scrollUntilVisible(find.text('GÜLCE'), 200);
+    await tester.ensureVisible(find.text('GÜLCE').first);
+    await tester.pumpAndSettle();
     await tester.tap(find.text('GÜLCE').first);
     await tester.pumpAndSettle();
 

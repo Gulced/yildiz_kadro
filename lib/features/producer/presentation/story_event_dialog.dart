@@ -4,11 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:yildiz_kadro/app/theme/app_colors.dart';
 import 'package:yildiz_kadro/app/theme/app_spacing.dart';
 import 'package:yildiz_kadro/features/contestants/data/contestant_seed_data.dart';
-import 'package:yildiz_kadro/features/contestants/presentation/widgets/contestant_portrait.dart';
 import 'package:yildiz_kadro/features/game/application/game_scope.dart';
 import 'package:yildiz_kadro/features/game/application/game_state.dart';
 import 'package:yildiz_kadro/features/producer/domain/story_event.dart';
 import 'package:yildiz_kadro/l10n/l10n.dart';
+import 'package:yildiz_kadro/shared/widgets/tv_components.dart';
 
 final Set<int> _activeStoryDialogDays = {};
 
@@ -73,16 +73,11 @@ class _StoryEventDialogState extends State<_StoryEventDialog> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Text(
-                  _category(context, widget.event.category),
-                  style: _overline(context),
+                TvSectionHeader(
+                  eyebrow: _category(context, widget.event.category),
+                  title: widget.event.localizedTitle(context),
                 ),
                 const SizedBox(height: AppSpacing.sm),
-                Text(
-                  widget.event.localizedTitle(context),
-                  style: Theme.of(context).textTheme.headlineLarge,
-                ),
-                const SizedBox(height: AppSpacing.md),
                 Wrap(
                   spacing: AppSpacing.sm,
                   runSpacing: AppSpacing.sm,
@@ -90,66 +85,62 @@ class _StoryEventDialogState extends State<_StoryEventDialog> {
                     final contestant = contestantSeedData.firstWhere(
                       (value) => value.id == id,
                     );
-                    return Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        ClipOval(
-                          child: SizedBox(
-                            width: 44,
-                            height: 44,
-                            child: ContestantPortrait(contestant: contestant),
-                          ),
-                        ),
-                        const SizedBox(width: AppSpacing.xs),
-                        Text(contestant.displayName),
-                      ],
+                    return TvContestantChip(
+                      contestant: contestant,
+                      isCompact: true,
                     );
                   }).toList(),
                 ),
-                const SizedBox(height: AppSpacing.md),
-                Text(widget.event.localizedBody(context)),
-                const SizedBox(height: AppSpacing.md),
+                const SizedBox(height: AppSpacing.sm),
+                Text(
+                  widget.event.localizedBody(context),
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: AppColors.paper,
+                        height: 1.4,
+                      ),
+                ),
+                const SizedBox(height: AppSpacing.sm),
                 Text(context.l10n.why, style: _overline(context)),
-                Text(widget.event.localizedWhy(context)),
+                Text(
+                  widget.event.localizedWhy(context),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: AppColors.paperMuted,
+                      ),
+                ),
                 if (widget.event.localizedConfessional(context) != null) ...[
-                  const SizedBox(height: AppSpacing.md),
-                  Text(
-                    widget.event.localizedConfessional(context)!,
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          fontStyle: FontStyle.italic,
-                          color: AppColors.paperMuted,
-                        ),
+                  const SizedBox(height: AppSpacing.sm),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(AppSpacing.sm),
+                    decoration: BoxDecoration(
+                      color: AppColors.inkSoft,
+                      border: const Border(
+                        left:
+                            BorderSide(color: AppColors.accentBright, width: 3),
+                      ),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      '“${widget.event.localizedConfessional(context)!}”',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            fontStyle: FontStyle.italic,
+                            color: AppColors.paper,
+                          ),
+                    ),
                   ),
                 ],
-                const SizedBox(height: AppSpacing.lg),
+                const SizedBox(height: AppSpacing.md),
                 if (!resolved)
                   ...widget.event.choices.map((option) {
                     final selected = selectedId == option.id;
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-                      child: InkWell(
-                        onTap: () => setState(() => selectedId = option.id),
-                        child: Container(
-                          padding: const EdgeInsets.all(AppSpacing.md),
-                          decoration: BoxDecoration(
-                            color: AppColors.ink,
-                            border: Border.all(
-                              color: selected
-                                  ? AppColors.accentBright
-                                  : AppColors.line,
-                            ),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                option.localizedLabel(context),
-                                style: Theme.of(context).textTheme.titleMedium,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
+                    return TvDecisionCard(
+                      title: option.localizedLabel(context),
+                      description: '',
+                      isSelected: selected,
+                      onTap: () => setState(() => selectedId = option.id),
+                      estimatedEffects: _estimatedEffects(context, option),
+                      selectedBadgeText:
+                          isAppEnglish(context) ? '✓ SELECTED' : '✓ SEÇİLDİ',
                     );
                   }),
                 if (resolved && choice != null) ...[
@@ -257,6 +248,26 @@ class _StoryEventDialogState extends State<_StoryEventDialog> {
         StoryEventCategory.relationship => context.l10n.relationshipEvent,
       };
 
+  List<({String label, bool isPositive})> _estimatedEffects(
+    BuildContext context,
+    StoryChoice choice,
+  ) {
+    final list = <({String label, bool isPositive})>[];
+    for (final entry in choice.effects.entries) {
+      final metricName = _metric(entry.key);
+      final val = entry.value;
+      final sign = val > 0 ? '+' : '';
+      final formattedVal = entry.key == 'followers'
+          ? _displayValue(entry.key, val)
+          : '$sign$val';
+      list.add((
+        label: '$formattedVal $metricName',
+        isPositive: val >= 0,
+      ));
+    }
+    return list;
+  }
+
   TextStyle _overline(BuildContext context) => Theme.of(context)
       .textTheme
       .labelLarge!
@@ -265,7 +276,7 @@ class _StoryEventDialogState extends State<_StoryEventDialog> {
   String _metric(String key) => switch (key) {
         'morale' || 'motivation' => context.l10n.motivation,
         'popularity' => context.l10n.popularity,
-        'buzz' => 'Buzz',
+        'buzz' => isAppEnglish(context) ? 'Buzz' : 'Gündem',
         'followers' => context.l10n.followers,
         'confidence' => context.l10n.confidence,
         'professionalism' => context.l10n.professionalism,

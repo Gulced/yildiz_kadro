@@ -1375,6 +1375,447 @@ const _templates = <_Template>[
       ),
     ],
   ),
+  (
+    id: 'choreography_delay',
+    family: StoryEventFamily.rehearsal,
+    category: StoryEventCategory.crisis,
+    title: "KOREOGRAFİ YETİŞMİYOR",
+    titleEn: "CHOREOGRAPHY DELAY",
+    bodies: [
+      "{first} zorlu dans sekansında adımları yetiştirmekte zorlanıyor.",
+      "{first} hızlı ritim geçişlerinde senkronizasyonu kaybetti.",
+    ],
+    bodiesEn: [
+      "{first} is struggling to keep up with the fast-paced choreography sequence.",
+      "{first} lost synchronization during the rapid rhythm transitions.",
+    ],
+    choices: [
+      StoryChoice(
+        id: 'simplify',
+        label: "KOREOGRAFİYİ SADELEŞTİR",
+        labelEn: "SIMPLIFY THE STEPS",
+        feedback: "Adımlar netleşti; sahne güvenliği sağlandı.",
+        feedbackEn: "Steps are cleaner; stage execution is secure.",
+        effects: {'preparation': 6, 'confidence': 3, 'buzz': -1},
+        followUpFlags: ['choreography_simplified'],
+      ),
+      StoryChoice(
+        id: 'grind',
+        label: "EKSTRA GECE PROVASI KOY",
+        labelEn: "SCHEDULE NIGHT DRILL",
+        feedback: "Hatasız ezberlendi fakat enerji düştü.",
+        feedbackEn: "Flawlessly memorized, but fatigue set in.",
+        effects: {'preparation': 8, 'energy': -6, 'buzz': 3},
+        followUpFlags: ['hardcore_rehearsal'],
+      ),
+      StoryChoice(
+        id: 'peer_coach',
+        label: "LİDER DANSÇIYI DESTEĞE VER",
+        labelEn: "ASSIGN DANCE LEAD TO COACH",
+        feedback: "Birebir çalışma hem uyumu hem dansı kurtardı.",
+        feedbackEn:
+            "One-on-one coaching saved both choreography and team morale.",
+        effects: {'relationship': 5, 'preparation': 5, 'morale': 3},
+      ),
+    ],
+  ),
+  (
+    id: 'vocal_partition_dispute',
+    family: StoryEventFamily.rehearsal,
+    category: StoryEventCategory.crisis,
+    title: "VOKAL PARTİSYONU TARTIŞMASI",
+    titleEn: "VOCAL PARTITION DISPUTE",
+    bodies: [
+      "{first} ve {second} şarkının en kritik vokal bölümünü paylaşamıyor.",
+      "{first} yüksek notanın kendisine ait olması gerektiğini savunuyor.",
+    ],
+    bodiesEn: [
+      "{first} and {second} are clashing over the song’s most demanding vocal climax.",
+      "{first} insists she has the dynamic range needed for the high note.",
+    ],
+    choices: [
+      StoryChoice(
+        id: 'harmonize',
+        label: "İKİ SESİ HARMONİDE BİRLEŞTİR",
+        labelEn: "MERGE BOTH VOICES IN HARMONY",
+        feedback: "İki ses birleşince sahnede büyüleyici bir an doğdu.",
+        feedbackEn: "Merging both voices created a stunning stage moment.",
+        effects: {'relationship': 7, 'preparation': 4, 'buzz': 4},
+        followUpFlags: ['vocal_synergy'],
+      ),
+      StoryChoice(
+        id: 'key_fit',
+        label: "ŞARKI TONUNA GÖRE SEÇİM YAP",
+        labelEn: "SELECT BASED ON KEY FIT",
+        feedback: "Teknik karar profesyonelce karşılandı.",
+        feedbackEn: "Technical assessment was accepted professionally.",
+        effects: {'professionalism': 6, 'relationship': -3, 'buzz': 3},
+      ),
+    ],
+  ),
+  (
+    id: 'center_change_request',
+    family: StoryEventFamily.rehearsal,
+    category: StoryEventCategory.crisis,
+    title: "CENTER DEĞİŞİKLİĞİ TALEBİ",
+    titleEn: "CENTER CHANGE REQUEST",
+    bodies: [
+      "{first} sahne etkisini yükseltmek için center rolünün değişmesini istedi.",
+      "Takım içinde görsel odağın kimde kalacağı tartışma yarattı.",
+    ],
+    bodiesEn: [
+      "{first} requested a center change to maximize team stage presence.",
+      "A debate flared inside the room regarding who commands visual focus.",
+    ],
+    choices: [
+      StoryChoice(
+        id: 'preserve_center',
+        label: "MEVCUT CENTER'I KORU",
+        labelEn: "DEFEND CURRENT CENTER",
+        feedback: "Rol netliği korundu; kaptanın kararı arkasında duruldu.",
+        feedbackEn:
+            "Role clarity preserved; management backed the original plan.",
+        effects: {'confidence': 6, 'morale': -2, 'buzz': 3},
+        followUpFlags: ['captain_backed'],
+      ),
+      StoryChoice(
+        id: 'rotate_center',
+        label: "BÖLÜMLERE GÖRE DÖNÜŞÜMLÜ YAP",
+        labelEn: "ROTATE CENTER PER CHORUS",
+        feedback: "Her iki isim de parladı; adil paylaşım takımı rahatlattı.",
+        feedbackEn: "Both members shone; fair distribution eased room tension.",
+        effects: {'relationship': 6, 'preparation': -2, 'buzz': 5},
+        followUpFlags: ['shared_center'],
+      ),
+    ],
+  ),
+  (
+    id: 'captain_authority_pushback',
+    family: StoryEventFamily.relationship,
+    category: StoryEventCategory.crisis,
+    title: "KAPTANIN KARARINA İTİRAZ",
+    titleEn: "CAPTAIN'S DECISION CONTESTED",
+    bodies: [
+      "{first} kaptanın prova planına ve rol dağıtımına açıkça itiraz etti.",
+      "Kaptanın otoritesi provada ilk kez bu kadar sert sorgulandı.",
+    ],
+    bodiesEn: [
+      "{first} openly challenged the captain's rehearsal strategy.",
+      "The captain's leadership faced its stiffest challenge yet in the practice room.",
+    ],
+    choices: [
+      StoryChoice(
+        id: 'back_captain',
+        label: "KAPTANIN ARKASINDA DUR",
+        labelEn: "BACK THE CAPTAIN",
+        feedback: "Liderlik otoritesi perçinlendi, hiyerarşi korundu.",
+        feedbackEn:
+            "Leadership authority solidified, maintaining room hierarchy.",
+        effects: {'professionalism': 7, 'confidence': 5, 'morale': -3},
+        followUpFlags: ['captain_authority_solid'],
+      ),
+      StoryChoice(
+        id: 'open_discussion',
+        label: "TAKIMCA ORTAK KARAR ALDIR",
+        labelEn: "FACILITATE SQUAD CONSENSUS",
+        feedback: "İtiraz edenler dinlendi, takım bağları tazelendi.",
+        feedbackEn: "Grievances were heard, revitalizing squad cohesion.",
+        effects: {'relationship': 8, 'morale': 4, 'confidence': -2},
+      ),
+    ],
+  ),
+  (
+    id: 'backstage_clique',
+    family: StoryEventFamily.relationship,
+    category: StoryEventCategory.crisis,
+    title: "KULİS GRUPLAŞMASI",
+    titleEn: "BACKSTAGE CLIQUE",
+    bodies: [
+      "{first} kulisteki klikleşme nedeniyle kendini izole hissediyor.",
+      "Kuliste oluşan ikili gruplar prova motivasyonuna gölge düşürdü.",
+    ],
+    bodiesEn: [
+      "{first} feels isolated by cliques forming in the dressing rooms.",
+      "Backstage factions began casting a shadow over rehearsal synergy.",
+    ],
+    choices: [
+      StoryChoice(
+        id: 'open_huddle',
+        label: "KULİS YÜZLEŞMESİ DÜZENLE",
+        labelEn: "HOLD A CLEARING HUDDLE",
+        feedback: "Buzlar eridi; kulisteki samimiyet sahneye yansıdı.",
+        feedbackEn: "Ice melted; dressing room warmth carried onto the floor.",
+        effects: {'relationship': 8, 'morale': 6, 'buzz': 2},
+        followUpFlags: ['cliques_resolved'],
+      ),
+      StoryChoice(
+        id: 'pair_drill',
+        label: "FARKLI İSİMLERİ EŞLEŞTİR",
+        labelEn: "PAIR UNFAMILIAR MEMBERS",
+        feedback: "Birlikte çalışma mecburiyeti yeni dostluklar doğurdu.",
+        feedbackEn:
+            "Shared drill responsibility fostered surprising new bonds.",
+        effects: {'preparation': 5, 'relationship': 6, 'confidence': 3},
+      ),
+    ],
+  ),
+  (
+    id: 'costume_delay',
+    family: StoryEventFamily.rehearsal,
+    category: StoryEventCategory.crisis,
+    title: "KOSTÜM YETİŞMEMESİ",
+    titleEn: "STAGE COSTUME DELAY",
+    bodies: [
+      "{first} için hazırlanan sahne kostümünde son dakika aksilik çıktı.",
+      "Canlı şov öncesi {first}’in kıyafetinde acil revizyon gerekti.",
+    ],
+    bodiesEn: [
+      "{first}’s stage outfit encountered a major last-minute malfunction.",
+      "An urgent revision was demanded for {first}’s look ahead of showtime.",
+    ],
+    choices: [
+      StoryChoice(
+        id: 'backup_outfit',
+        label: "YEDEK KONSEPTİ UYGULA",
+        labelEn: "DEPLOY BACKUP LOOK",
+        feedback: "Risk almadan sahne güvenliği sağlandı.",
+        feedbackEn: "Stage readiness preserved with zero unnecessary risks.",
+        effects: {'confidence': 5, 'preparation': 4, 'buzz': 2},
+      ),
+      StoryChoice(
+        id: 'bold_styling',
+        label: "ÖZEL BOLD STYLING YAP",
+        labelEn: "GO BOLD AND EXPERIMENTAL",
+        feedback: "Beklenmedik tarz gecenin en çok konuşulan detayı oldu!",
+        feedbackEn:
+            "The makeshift styling became the night’s most talked-about fashion statement!",
+        effects: {'buzz': 9, 'followers': 15000, 'confidence': 4},
+        followUpFlags: ['styling_icon'],
+      ),
+    ],
+  ),
+  (
+    id: 'viral_practice_video',
+    family: StoryEventFamily.viral,
+    category: StoryEventCategory.positive,
+    title: "VİRAL PROVA VİDEOSU",
+    titleEn: "VIRAL PRACTICE CLIP",
+    bodies: [
+      "{first}’in prova anından paylaşılan kısa video trendlere girdi.",
+      "Hayranlar {first}’in çalışma azmini öven klipleri hızla yaydı.",
+    ],
+    bodiesEn: [
+      "{first}’s candid rehearsal clip trended instantly across platforms.",
+      "Fans widely circulated clips praising {first}’s tireless work ethic.",
+    ],
+    choices: [
+      StoryChoice(
+        id: 'amplify',
+        label: "RESMİ HESAPLARDAN KÖRÜKLE",
+        labelEn: "AMPLIFY ON OFFICIAL CHANNELS",
+        feedback: "Takipçi ve gündem sıçraması yaşandı!",
+        feedbackEn: "Massive follower surge and buzz spiked across platforms!",
+        effects: {'followers': 25000, 'buzz': 11, 'popularity': 5},
+        followUpFlags: ['viral_hype'],
+      ),
+      StoryChoice(
+        id: 'keep_focus',
+        label: "DİKKATİ ÇALIŞMAYA KORU",
+        labelEn: "KEEP FOCUS GROUNDED",
+        feedback: "Yarışmacı rehavete kapılmadan sahneye odaklandı.",
+        feedbackEn:
+            "Contestant avoided complacency and honed in on stage execution.",
+        effects: {'confidence': 6, 'professionalism': 5, 'buzz': 3},
+      ),
+    ],
+  ),
+  (
+    id: 'vocal_harmony_spark',
+    family: StoryEventFamily.coach,
+    category: StoryEventCategory.positive,
+    title: "BEKLENMEDİK VOKAL UYUMU",
+    titleEn: "UNEXPECTED VOCAL HARMONY",
+    bodies: [
+      "{first} ve {second} provada birbirini kusursuz tamamlayan bir harmoni buldu.",
+      "Vokal koçu iki sesin kimyasına hayran kaldı.",
+    ],
+    bodiesEn: [
+      "{first} and {second} unlocked an immaculate vocal harmony during soundcheck.",
+      "The vocal coach was blown away by their complementary tonal colors.",
+    ],
+    choices: [
+      StoryChoice(
+        id: 'duo_spotlight',
+        label: "İKİLİYE AYRI SPOTLIGHT VER",
+        labelEn: "GIVE THE DUO A SPECIAL SPOTLIGHT",
+        feedback: "Sahnenin en büyüleyici bölümü ikiliden geldi.",
+        feedbackEn:
+            "The duo delivered the performance’s standout emotional peak.",
+        effects: {
+          'popularity': 5,
+          'buzz': 7,
+          'followers': 18000,
+          'relationship': 6
+        },
+        followUpFlags: ['iconic_duo'],
+      ),
+      StoryChoice(
+        id: 'anchor_team',
+        label: "TAKIMIN OMURGASI YAP",
+        labelEn: "USE AS TEAM VOCAL ANCHOR",
+        feedback: "Takım vokali tek parça gibi parıldadı.",
+        feedbackEn: "The entire team’s vocal cohesion reached new heights.",
+        effects: {'preparation': 7, 'morale': 6, 'relationship': 5},
+      ),
+    ],
+  ),
+  (
+    id: 'dance_break_highlight',
+    family: StoryEventFamily.coach,
+    category: StoryEventCategory.positive,
+    title: "DANS BREAK PATLAMASI",
+    titleEn: "DANCE BREAK SHOWSTOPPER",
+    bodies: [
+      "{first} koreografideki solo dans break’ini büyüleyici şekilde sergiledi.",
+      "Dans hocası {first}’in enerjisinin tüm salonu ayağa kaldırdığını söyledi.",
+    ],
+    bodiesEn: [
+      "{first} nailed the center solo dance break with explosive precision.",
+      "The dance mentor praised {first} for electrifying the entire rehearsal studio.",
+    ],
+    choices: [
+      StoryChoice(
+        id: 'extend_break',
+        label: "DANS BREAK'İNİ UZAT",
+        labelEn: "EXTEND THE DANCE BREAK",
+        feedback: "Sahnenin tempo zirvesi bu an oldu!",
+        feedbackEn:
+            "The break became the absolute climax of the entire routine!",
+        effects: {'popularity': 6, 'buzz': 9, 'followers': 16000, 'energy': -3},
+      ),
+      StoryChoice(
+        id: 'team_frame',
+        label: "TAKIMLA BÜTÜNLÜĞÜ KORU",
+        labelEn: "BALANCE WITH THE TEAM",
+        feedback: "Grup dengesi bozulmadan profesyonel bir şov çıktı.",
+        feedbackEn: "A tight, polished showcase that respected group cohesion.",
+        effects: {'preparation': 6, 'professionalism': 5, 'morale': 4},
+      ),
+    ],
+  ),
+  (
+    id: 'fancam_breakout',
+    family: StoryEventFamily.viral,
+    category: StoryEventCategory.social,
+    title: "FANCAM REKORU",
+    titleEn: "FANCAM BREAKOUT RECORD",
+    bodies: [
+      "{first}’in bireysel fancam videosu milyonluk izlenmeye koştu.",
+      "Sosyal medyada {first} için açılan hayran hesapları patlama yaptı.",
+    ],
+    bodiesEn: [
+      "{first}’s individual performance fancam soared toward one million views.",
+      "Fan communities rallied behind {first} with unprecedented engagement.",
+    ],
+    choices: [
+      StoryChoice(
+        id: 'engage_fandom',
+        label: "HAYRAN İLGİSİNİ KÖRÜKLE",
+        labelEn: "FEED THE FAN PHENOMENON",
+        feedback:
+            "Takipçi rekoru kırıldı, yarışmacı popülerlik zirvesine tırmandı!",
+        feedbackEn:
+            "Follower counts smashed records as she ascended the popularity ranks!",
+        effects: {'followers': 32000, 'buzz': 12, 'popularity': 6},
+        followUpFlags: ['fandom_leader'],
+      ),
+      StoryChoice(
+        id: 'modest_focus',
+        label: "MÜTEVAZI DURUŞU KORU",
+        labelEn: "MAINTAIN HUMBLE FOCUS",
+        feedback: "Mütevazı tavır jüriden ve kamuoyundan tam not aldı.",
+        feedbackEn:
+            "Her grounded humility won unanimous praise from fans and judges alike.",
+        effects: {'professionalism': 7, 'preparation': 5, 'confidence': 4},
+      ),
+    ],
+  ),
+  (
+    id: 'ship_fandom_surge',
+    family: StoryEventFamily.viral,
+    category: StoryEventCategory.social,
+    title: "İKİLİ SHIP TRENDİ",
+    titleEn: "DUO SHIP TREND",
+    bodies: [
+      "{first} ve {second}’nin kulisteki sevimli anı sosyal medyada akıma dönüştü.",
+      "Hayranlar {first} ve {second} için ortak hesaplar açıp klipler hazırlıyor.",
+    ],
+    bodiesEn: [
+      "A heartwarming backstage clip of {first} and {second} went viral as a major trend.",
+      "Fans began launching collaborative fanpages dedicated to their friendship.",
+    ],
+    choices: [
+      StoryChoice(
+        id: 'embrace_duo',
+        label: "KİMYAYI SAHNEYE TAŞI",
+        labelEn: "SPOTLIGHT THEIR CAMARADERIE",
+        feedback: "İkili etkileşim gündemi salladı, izlenme rekoru geldi.",
+        feedbackEn:
+            "Their on-stage camaraderie dominated trending topics and viewing stats.",
+        effects: {
+          'buzz': 10,
+          'followers': 22000,
+          'popularity': 5,
+          'relationship': 6
+        },
+      ),
+      StoryChoice(
+        id: 'craft_first',
+        label: "YALNIZCA PERFORMANSA ODAKLAN",
+        labelEn: "KEEP THE SPOTLIGHT ON MUSIC",
+        feedback: "Yarışmacıların müzisyen kimliği korundu.",
+        feedbackEn:
+            "Artistic credibility was preserved without unnecessary fandom hype.",
+        effects: {'professionalism': 6, 'confidence': 5, 'buzz': 2},
+      ),
+    ],
+  ),
+  (
+    id: 'critique_wave',
+    family: StoryEventFamily.viral,
+    category: StoryEventCategory.crisis,
+    title: "SOSYAL MEDYA ELEŞTİRİSİ",
+    titleEn: "ONLINE CRITIQUE WAVE",
+    bodies: [
+      "{first} son performansı nedeniyle sosyal medyada eleştiri oklarının hedefi oldu.",
+      "{first} hakkında yapılan acımasız yorumlar provada moralini sarstı.",
+    ],
+    bodiesEn: [
+      "{first} found herself fielding harsh social media critiques after the showcase.",
+      "Unforgiving online comments temporarily unsettled {first}’s rehearsal confidence.",
+    ],
+    choices: [
+      StoryChoice(
+        id: 'stand_by_her',
+        label: "PRODÜKSİYON DESTEĞİ VER",
+        labelEn: "PROVIDE PRODUCER BACKING",
+        feedback: "Menajerlik desteği moralini hızla toparladı.",
+        feedbackEn:
+            "Direct producer backing quickly restored her competitive fire.",
+        effects: {'morale': 8, 'confidence': 5, 'buzz': 4},
+      ),
+      StoryChoice(
+        id: 'stage_answer',
+        label: "CEVABI SAHNEDE VERMEYE ODAKLA",
+        labelEn: "LET HER STAGE BE THE ANSWER",
+        feedback: "Hırslandı ve sonraki prova için daha sıkı çalıştı.",
+        feedbackEn:
+            "Criticism was turned into fuel for intense, focused rehearsal.",
+        effects: {'confidence': 6, 'preparation': 6, 'morale': -2},
+        followUpFlags: ['comeback_driven'],
+      ),
+    ],
+  ),
 ];
 const _templateMetadata = <String, _TemplateMeta>{
   'visibility_conflict': (

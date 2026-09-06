@@ -85,7 +85,7 @@ void main() {
 
   group('Localization Audit - Story Event System', () {
     test('Story event catalog template count is complete', () {
-      expect(storyEventTemplateCount, equals(30));
+      expect(storyEventTemplateCount, equals(42));
     });
 
     testWidgets('StoryEvent getter methods respect BuildContext locale', (

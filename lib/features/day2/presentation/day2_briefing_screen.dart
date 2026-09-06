@@ -18,6 +18,7 @@ import 'package:yildiz_kadro/features/group_task/domain/group_task_profile.dart'
 import 'package:yildiz_kadro/features/group_task/presentation/group_task_rehearsal_screen.dart';
 import 'package:yildiz_kadro/shared/widgets/app_button.dart';
 import 'package:yildiz_kadro/shared/widgets/max_width_container.dart';
+import 'package:yildiz_kadro/shared/widgets/tv_components.dart';
 
 enum _Phase { briefing, mission, captains, draft, summary }
 
@@ -529,11 +530,16 @@ class _TeamSummary extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            isEn ? 'TEAMS ASSEMBLED' : 'TAKIMLAR HAZIR',
-            style: Theme.of(context).textTheme.displayLarge,
+          TvSectionHeader(
+            eyebrow: isEn
+                ? '2ND STAGE • TEAMS ASSEMBLED'
+                : '2. GÜN • TAKIMLAR HAZIR',
+            title: isEn ? 'TEAMS ASSEMBLED' : 'TAKIMLAR HAZIR',
+            subtitle: isEn
+                ? '14 Contestants · 2 Teams · One Stage'
+                : '14 Yarışmacı · 2 Takım · Tek Sahne',
           ),
-          const SizedBox(height: AppSpacing.xl),
+          const SizedBox(height: AppSpacing.lg),
           LayoutBuilder(
             builder: (context, constraints) {
               final cards = [

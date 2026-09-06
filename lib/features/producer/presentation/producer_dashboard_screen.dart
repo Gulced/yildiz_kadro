@@ -355,7 +355,7 @@ class _ProducerDashboardScreenState extends State<ProducerDashboardScreen> {
   String _metricName(String key) => switch (key) {
         'morale' || 'motivation' => context.l10n.motivation,
         'popularity' => context.l10n.popularity,
-        'buzz' => 'Buzz',
+        'buzz' => isAppEnglish(context) ? 'Buzz' : 'Gündem',
         'followers' => context.l10n.followers,
         'confidence' => context.l10n.confidence,
         'professionalism' => context.l10n.professionalism,
